@@ -123,7 +123,8 @@ The live XDR smoke verifies pre-simulation unsigned Soroban transaction
 templates without signing or submission.
 The live flow smoke verifies a mock full live checkout chain from prepared DB
 action to preflight, mock Freighter signing, mock RPC finality, and pass
-persistence without submitting to testnet.
+persistence using the decoded token ID return value without submitting to
+testnet.
 The live persistence smoke verifies the post-RPC-success DB recording path for
 real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC
@@ -131,7 +132,8 @@ prepare/simulation orchestration with a mock RPC server, without signing.
 The live signing smoke verifies the Freighter signing adapter with a mock
 signer, without opening Freighter or requesting a real wallet signature.
 The live submission smoke verifies signed transaction submission and finality
-polling with a mock RPC server, without submitting to testnet.
+polling with a mock RPC server, including purchase token ID and withdraw amount
+return value decoding, without submitting to testnet.
 
 ## Live Testnet Boundary
 

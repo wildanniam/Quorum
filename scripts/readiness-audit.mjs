@@ -121,6 +121,7 @@ const requiredLiveHandoffTerms = [
   "recordLiveWithdrawal",
   "freighter-live-signing.ts",
   "live-submission.ts",
+  "return value decoding",
 ];
 
 const failures = [];
@@ -305,7 +306,7 @@ function checkLiveBoundaries() {
   for (const term of [
     "Live RPC preflight can prepare transaction XDR for signing",
     "Freighter signing boundary validates signed transaction output",
-    "Signed transaction submission boundary polls finality",
+    "Signed transaction submission boundary polls finality and decodes return values",
     "Mock live transaction flow persists only after success",
     "Verified live transaction results can be recorded",
     "Unsigned Soroban XDR templates are parseable",

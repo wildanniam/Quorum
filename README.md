@@ -97,7 +97,8 @@ future Freighter-signed publish, checkout, check-in, and withdraw flows.
 
 `npm run live:flow:smoke` verifies the mock full live checkout chain from
 prepared DB action to preflight, mock Freighter signing, mock RPC finality, and
-post-success pass persistence without submitting to testnet.
+post-success pass persistence using the decoded token ID return value, without
+submitting to testnet.
 
 `npm run live:persistence:smoke` verifies the DB path for recording verified
 live publish, pass, check-in, and withdrawal transaction results while rejecting
@@ -113,7 +114,8 @@ rejection normalization, and signed XDR parsing.
 
 `npm run live:submission:smoke` verifies the signed transaction submission and
 finality polling adapter with a mock RPC server, including rejection, failure,
-and timeout paths.
+timeout paths, and Soroban return value decoding for purchase token IDs and
+withdraw amounts.
 
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live

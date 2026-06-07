@@ -110,8 +110,8 @@ Run `npm run live:args:smoke`, `npm run live:xdr:smoke`,
 `npm run live:persistence:smoke`, and `npm run demo:live-policy` before wiring
 Freighter signing to verify the argument encoding, XDR template, pre-signing RPC
 preflight, mock wallet signing adapter, signed transaction submission/finality
-polling, full mock live checkout flow, post-success persistence, and preparation
-boundaries.
+polling, finality return value decoding, full mock live checkout flow,
+post-success persistence, and preparation boundaries.
 
 Before asking Freighter to sign, the live implementation must fetch the
 signer's current account sequence from testnet, simulate the Soroban transaction
@@ -122,10 +122,12 @@ pre-signing orchestration behind a mockable RPC boundary.
 Freighter `signTransaction` boundary and validates signer address, wallet
 errors, and returned XDR before submission.
 `src/lib/stellar/live-submission.ts` implements the RPC `sendTransaction` and
-`getTransaction` finality polling boundary for signed XDR.
+`getTransaction` finality polling boundary for signed XDR, including Soroban
+return value decoding for purchase token IDs and withdraw amounts.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
-signing, and mockable submission so the checkout chain can be tested without a
-real wallet signature.
+signing, mockable submission, decoded token ID handling, and post-success
+persistence inputs so the checkout chain can be tested without a real wallet
+signature.
 
 ## Contract Call Inputs
 

@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {
   Account,
+  nativeToScVal,
   rpc,
   StrKey,
   type FeeBumpTransaction,
@@ -60,6 +61,7 @@ function getSuccess(hash: string): GetTransactionResponse {
     ledger: 42,
     oldestLedger: 1,
     oldestLedgerCloseTime: Date.now(),
+    returnValue: nativeToScVal(BigInt("9001"), { type: "u64" }),
     status: rpc.Api.GetTransactionStatus.SUCCESS,
     txHash: hash,
   } as GetTransactionResponse;
@@ -168,6 +170,11 @@ async function main() {
   assert.equal(flowResult.signedTransaction.signerAddress, attendeeWallet);
   assert.equal(flowResult.submission.status, "SUCCESS");
   assert.equal(flowResult.submission.txHash, txHash);
+  if (flowResult.submission.returnValue.kind !== "token_id") {
+    throw new Error("Expected live checkout finality to return a token ID.");
+  }
+  const tokenId = flowResult.submission.returnValue.value;
+  assert.equal(tokenId, "9001");
   assert.equal(preflightAccountCalls, 1);
   assert.equal(preflightPrepareCalls, 1);
   assert.equal(signCalls, 1);
@@ -179,7 +186,7 @@ async function main() {
     metadataHash: purchaseArgs.metadataHashHex,
     metadataUri: purchaseArgs.metadataUri,
     ownerWallet: attendeeWallet,
-    tokenId: "9001",
+    tokenId,
     txHash: flowResult.submission.txHash,
   });
 
@@ -261,6 +268,7 @@ async function main() {
           "preflight-before-signing",
           "freighter-signing-options",
           "submit-and-poll-finality",
+          "decode-token-id-from-finality",
           "persist-after-success-only",
           "reject-finality-failure-without-persistence",
         ],

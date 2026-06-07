@@ -3,6 +3,7 @@ import {
   Account,
   Networks,
   StrKey,
+  nativeToScVal,
   rpc,
   type FeeBumpTransaction,
   type Transaction,
@@ -31,6 +32,7 @@ const eventIdHex = "a7e602bb740076b86ae7a7f4d23b6738bc9eddf6d600ca67db3b72fe8d20
 const metadataHashHex =
   "84aa0f60f0db1e95387b09ace00af75db46d7e7f2ea2ae0b499f7f94045fd7a8";
 const txHash = Buffer.alloc(32, 19).toString("hex");
+const withdrawTxHash = Buffer.alloc(32, 20).toString("hex");
 
 const preparedAction: PreparedLiveContractAction = {
   action: "checkout_pass",
@@ -74,13 +76,17 @@ function getMissing(hash: string): GetTransactionResponse {
   };
 }
 
-function getSuccess(hash: string): GetTransactionResponse {
+function getSuccess(
+  hash: string,
+  returnValue = nativeToScVal(BigInt("9001"), { type: "u64" }),
+): GetTransactionResponse {
   return {
     ...getMissing(hash),
     applicationOrder: 1,
     createdAt: Date.now(),
     feeBump: false,
     ledger: 42,
+    returnValue,
     status: rpc.Api.GetTransactionStatus.SUCCESS,
   } as GetTransactionResponse;
 }
@@ -141,6 +147,44 @@ async function main() {
   assert.equal(result.status, "SUCCESS");
   assert.equal(result.txHash, txHash);
   assert.equal(result.ledger, 42);
+  assert.deepEqual(result.returnValue, {
+    kind: "token_id",
+    value: "9001",
+  });
+
+  const withdrawResult = await submitSignedLiveTransaction({
+    options: {
+      pollIntervalMs: 1,
+      rpcServer: {
+        async sendTransaction() {
+          return {
+            hash: withdrawTxHash,
+            latestLedger: 1,
+            latestLedgerCloseTime: Date.now(),
+            status: "PENDING",
+          };
+        },
+        async getTransaction(hash) {
+          assert.equal(hash, withdrawTxHash);
+          return getSuccess(
+            hash,
+            nativeToScVal(BigInt("15000000"), { type: "i128" }),
+          );
+        },
+      },
+      timeoutMs: 100,
+    },
+    signedTransaction: {
+      ...signedTransaction,
+      action: "withdraw_balance",
+      functionName: "withdraw",
+    },
+  });
+
+  assert.deepEqual(withdrawResult.returnValue, {
+    kind: "withdraw_amount_atomic",
+    value: "15000000",
+  });
 
   await assert.rejects(
     () =>
@@ -167,6 +211,69 @@ async function main() {
     (error) => {
       assert(error instanceof LiveTransactionSubmissionError);
       assert.match(error.message, /rejected/);
+      assert.equal(error.txHash, txHash);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          pollIntervalMs: 1,
+          rpcServer: {
+            async sendTransaction() {
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return {
+                ...getSuccess(hash),
+                returnValue: undefined,
+              } as GetTransactionResponse;
+            },
+          },
+          timeoutMs: 50,
+        },
+        signedTransaction,
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /token ID/);
+      assert.equal(error.txHash, txHash);
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          pollIntervalMs: 1,
+          rpcServer: {
+            async sendTransaction() {
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return getSuccess(hash, nativeToScVal(true));
+            },
+          },
+          timeoutMs: 50,
+        },
+        signedTransaction,
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /return value type/);
       assert.equal(error.txHash, txHash);
       return true;
     },
@@ -269,13 +376,18 @@ async function main() {
         checks: [
           "submit-signed-transaction",
           "poll-until-success",
+          "decode-purchase-token-id",
+          "decode-withdraw-amount",
           "reject-submission-error",
           "reject-submission-retry-later",
           "reject-finality-failure",
           "reject-finality-timeout",
+          "reject-missing-return-value",
+          "reject-wrong-return-value-type",
         ],
         ledger: result.ledger,
         pollCalls,
+        tokenId: result.returnValue.value,
         txHash: result.txHash,
       },
       null,

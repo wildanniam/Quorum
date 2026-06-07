@@ -1,5 +1,6 @@
 import {
   TransactionBuilder,
+  scValToNative,
   rpc,
   type FeeBumpTransaction,
   type Transaction,
@@ -32,9 +33,24 @@ export type LiveTransactionSubmissionResult = {
   contractId: string;
   functionName: SignedLiveTransaction["functionName"];
   ledger: number;
+  returnValue: LiveTransactionReturnValue;
   status: "SUCCESS";
   txHash: string;
 };
+
+export type LiveTransactionReturnValue =
+  | {
+      kind: "void";
+      value: null;
+    }
+  | {
+      kind: "token_id";
+      value: string;
+    }
+  | {
+      kind: "withdraw_amount_atomic";
+      value: string;
+    };
 
 export class LiveTransactionSubmissionError extends Error {
   readonly txHash?: string;
@@ -70,6 +86,102 @@ function assertTransactionHash(txHash: string) {
       txHash,
     );
   }
+}
+
+function decodeIntegerReturnValue({
+  expectedType,
+  functionName,
+  kind,
+  returnValue,
+  txHash,
+}: {
+  expectedType: "scvI128" | "scvU64";
+  functionName: SignedLiveTransaction["functionName"];
+  kind: "token_id" | "withdraw_amount_atomic";
+  returnValue: NonNullable<
+    Extract<GetTransactionResponse, { status: rpc.Api.GetTransactionStatus.SUCCESS }>["returnValue"]
+  >;
+  txHash: string;
+}): LiveTransactionReturnValue {
+  if (returnValue.switch().name !== expectedType) {
+    throw new LiveTransactionSubmissionError(
+      `Unexpected ${functionName} return value type from Stellar RPC.`,
+      txHash,
+    );
+  }
+
+  const nativeValue = scValToNative(returnValue);
+
+  if (typeof nativeValue !== "bigint" || nativeValue < BigInt(0)) {
+    throw new LiveTransactionSubmissionError(
+      `Unexpected ${functionName} return value from Stellar RPC.`,
+      txHash,
+    );
+  }
+
+  return {
+    kind,
+    value: nativeValue.toString(),
+  };
+}
+
+function decodeLiveTransactionReturnValue({
+  functionName,
+  returnValue,
+  txHash,
+}: {
+  functionName: SignedLiveTransaction["functionName"];
+  returnValue: Extract<
+    GetTransactionResponse,
+    { status: rpc.Api.GetTransactionStatus.SUCCESS }
+  >["returnValue"];
+  txHash: string;
+}): LiveTransactionReturnValue {
+  if (functionName === "purchase") {
+    if (!returnValue) {
+      throw new LiveTransactionSubmissionError(
+        "Stellar RPC did not return the minted pass token ID.",
+        txHash,
+      );
+    }
+
+    return decodeIntegerReturnValue({
+      expectedType: "scvU64",
+      functionName,
+      kind: "token_id",
+      returnValue,
+      txHash,
+    });
+  }
+
+  if (functionName === "withdraw") {
+    if (!returnValue) {
+      throw new LiveTransactionSubmissionError(
+        "Stellar RPC did not return the withdrawn amount.",
+        txHash,
+      );
+    }
+
+    return decodeIntegerReturnValue({
+      expectedType: "scvI128",
+      functionName,
+      kind: "withdraw_amount_atomic",
+      returnValue,
+      txHash,
+    });
+  }
+
+  if (returnValue && returnValue.switch().name !== "scvVoid") {
+    throw new LiveTransactionSubmissionError(
+      `Unexpected ${functionName} return value from Stellar RPC.`,
+      txHash,
+    );
+  }
+
+  return {
+    kind: "void",
+    value: null,
+  };
 }
 
 export async function submitSignedLiveTransaction({
@@ -135,6 +247,11 @@ export async function submitSignedLiveTransaction({
         contractId: signedTransaction.contractId,
         functionName: signedTransaction.functionName,
         ledger: transactionStatus.ledger,
+        returnValue: decodeLiveTransactionReturnValue({
+          functionName: signedTransaction.functionName,
+          returnValue: transactionStatus.returnValue,
+          txHash: submitted.hash,
+        }),
         status: "SUCCESS",
         txHash: submitted.hash.toLowerCase(),
       };
