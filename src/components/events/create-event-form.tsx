@@ -8,9 +8,11 @@ import {
   Loader2,
   Percent,
   Plus,
+  Rocket,
   Trash2,
   WalletCards,
 } from "lucide-react";
+import Link from "next/link";
 import { useWallet } from "@/components/wallet-provider";
 
 type DraftResponse = {
@@ -74,6 +76,7 @@ export function CreateEventForm() {
   const { sessionWalletAddress, status } = useWallet();
   const [mode, setMode] = useState<"paid" | "free">("paid");
   const [submitting, setSubmitting] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [result, setResult] = useState<DraftResponse | null>(null);
   const [savedEventId, setSavedEventId] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<CollaboratorFormRow[]>([
@@ -259,6 +262,21 @@ export function CreateEventForm() {
       setSavedEventId(payload.event.id);
     }
     setSubmitting(false);
+  }
+
+  async function publishDraft() {
+    if (!savedEventId) return;
+
+    setPublishing(true);
+    setResult(null);
+
+    const response = await fetch(`/api/events/${savedEventId}/publish`, {
+      method: "POST",
+    });
+    const payload = (await response.json()) as DraftResponse;
+
+    setResult(payload);
+    setPublishing(false);
   }
 
   return (
@@ -673,7 +691,7 @@ export function CreateEventForm() {
           <CheckCircle2 className="text-accent" size={20} />
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>
-              Draft saved:{" "}
+              {result.event.status === "published" ? "Published: " : "Draft saved: "}
               <span className="font-medium">{result.event.title}</span>
             </span>
             <span className="inline-flex items-center gap-1 text-muted">
@@ -684,6 +702,14 @@ export function CreateEventForm() {
               <FileKey2 size={14} />
               {result.resources?.length ?? 0} resources
             </span>
+            {result.event.status === "published" ? (
+              <Link
+                className="inline-flex items-center gap-1 text-accent"
+                href={`/events/${result.event.slug}`}
+              >
+                Open event <Rocket size={14} />
+              </Link>
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -695,18 +721,35 @@ export function CreateEventForm() {
       ) : null}
 
       <div className="flex justify-end">
-        <button
-          className="inline-flex min-h-11 items-center gap-2 border border-accent bg-accent px-5 text-sm font-semibold text-background transition hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-muted"
-          disabled={!canSubmit}
-          type="submit"
-        >
-          {submitting ? (
-            <Loader2 className="animate-spin" size={17} />
-          ) : (
-            <CalendarPlus size={17} />
-          )}
-          {savedEventId ? "Save changes" : "Save draft"}
-        </button>
+        <div className="flex flex-wrap justify-end gap-3">
+          {savedEventId && result?.event?.status !== "published" ? (
+            <button
+              className="inline-flex min-h-11 items-center gap-2 border border-line bg-panel px-5 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-70"
+              disabled={publishing}
+              onClick={publishDraft}
+              type="button"
+            >
+              {publishing ? (
+                <Loader2 className="animate-spin" size={17} />
+              ) : (
+                <Rocket size={17} />
+              )}
+              Publish
+            </button>
+          ) : null}
+          <button
+            className="inline-flex min-h-11 items-center gap-2 border border-accent bg-accent px-5 text-sm font-semibold text-background transition hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-muted"
+            disabled={!canSubmit}
+            type="submit"
+          >
+            {submitting ? (
+              <Loader2 className="animate-spin" size={17} />
+            ) : (
+              <CalendarPlus size={17} />
+            )}
+            {savedEventId ? "Save changes" : "Save draft"}
+          </button>
+        </div>
       </div>
     </form>
   );

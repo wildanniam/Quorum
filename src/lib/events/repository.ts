@@ -1,4 +1,5 @@
 import { StrKey } from "@stellar/stellar-sdk";
+import { createHash } from "node:crypto";
 import { getDatabase } from "@/lib/db/client";
 import { createId } from "@/lib/db/ids";
 import type {
@@ -330,6 +331,58 @@ export function updateDraftEventWithSetup({
     for (const resource of resources) {
       addResource(eventId, resource);
     }
+
+    return {
+      event: getEventById(eventId),
+      collaborators: listCollaborators(eventId),
+      resources: listResources(eventId),
+    };
+  })();
+}
+
+export function publishDraftEventStub(eventId: string, organizerWallet: string) {
+  assertWalletAddress(organizerWallet);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const event = db
+      .prepare(
+        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
+      )
+      .get(eventId, organizerWallet) as EventRow | undefined;
+
+    if (!event) {
+      throw new Error("Draft event not found for connected organizer.");
+    }
+
+    if (event.status !== "draft") {
+      throw new Error("Only draft events can be published.");
+    }
+
+    const splitTotal = getCollaboratorSplitTotal(eventId);
+    const resourceCount = listResources(eventId).length;
+
+    if (Math.abs(splitTotal - 100) > 0.001) {
+      throw new Error("Collaborator split total must equal 100% before publish.");
+    }
+
+    if (resourceCount < 1) {
+      throw new Error("Add at least one gated resource before publish.");
+    }
+
+    const metadataHash = createHash("sha256")
+      .update(`${eventId}:${event.updated_at}:${splitTotal}:${resourceCount}`)
+      .digest("hex");
+    const publishTxHash = `stub:publish:${Date.now()}`;
+
+    db.prepare(
+      `
+      UPDATE events
+      SET status = 'published', metadata_hash = ?, publish_tx_hash = ?
+      WHERE id = ?
+      `,
+    ).run(`sha256:${metadataHash}`, publishTxHash, eventId);
 
     return {
       event: getEventById(eventId),
