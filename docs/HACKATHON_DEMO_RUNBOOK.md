@@ -98,6 +98,7 @@ npm run db:seed
 npm run lint
 npm run build
 npm run demo:smoke
+npm run demo:live-policy
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
@@ -106,6 +107,8 @@ npm run evidence:local
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
 The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
+The live policy smoke verifies fake configured contract IDs require live
+transaction submission and do not create local proof records.
 
 ## Live Testnet Boundary
 

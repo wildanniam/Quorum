@@ -13,6 +13,7 @@ const checks = [
   { label: "Build", command: "npm", args: ["run", "build"] },
   { label: "Audit", command: "npm", args: ["audit", "--audit-level=moderate"] },
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
+  { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
   { label: "Contract tests", command: "npm", args: ["run", "contracts:test"] },
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },
