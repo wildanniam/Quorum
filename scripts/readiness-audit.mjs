@@ -105,6 +105,16 @@ const requiredSmokeCoverage = [
   "dashboard-action-policy",
 ];
 
+const requiredLiveFlowCoverage = [
+  "publish-live-flow",
+  "checkout-live-flow",
+  "check-in-live-flow",
+  "withdraw-live-flow",
+  "decode-token-id-from-finality",
+  "decode-withdraw-amount-from-finality",
+  "reject-finality-failure-without-persistence",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
@@ -255,6 +265,12 @@ function checkEvidence() {
   for (const coverage of requiredSmokeCoverage) {
     if (!evidence.includes(`- ${coverage}`)) {
       fail(`DEMO_EVIDENCE is missing smoke coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveFlowCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live flow coverage: ${coverage}`);
     }
   }
 
