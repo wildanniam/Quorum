@@ -70,6 +70,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:flow:smoke
 npm run live:persistence:smoke
 npm run live:preflight:smoke
 npm run live:signing:smoke
@@ -93,6 +94,10 @@ checks and regenerates `docs/BROWSER_QA.md`.
 
 `npm run live:args:smoke` verifies deterministic contract argument encoding for
 future Freighter-signed publish, checkout, check-in, and withdraw flows.
+
+`npm run live:flow:smoke` verifies the mock full live checkout chain from
+prepared DB action to preflight, mock Freighter signing, mock RPC finality, and
+post-success pass persistence without submitting to testnet.
 
 `npm run live:persistence:smoke` verifies the DB path for recording verified
 live publish, pass, check-in, and withdrawal transaction results while rejecting

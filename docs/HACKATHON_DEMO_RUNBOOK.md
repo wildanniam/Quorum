@@ -101,6 +101,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:flow:smoke
 npm run live:persistence:smoke
 npm run live:preflight:smoke
 npm run live:signing:smoke
@@ -120,6 +121,9 @@ transaction submission, exposes non-signing live action prepare responses, and
 does not create local proof records.
 The live XDR smoke verifies pre-simulation unsigned Soroban transaction
 templates without signing or submission.
+The live flow smoke verifies a mock full live checkout chain from prepared DB
+action to preflight, mock Freighter signing, mock RPC finality, and pass
+persistence without submitting to testnet.
 The live persistence smoke verifies the post-RPC-success DB recording path for
 real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC
