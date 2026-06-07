@@ -70,6 +70,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:xdr:smoke
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -88,6 +89,10 @@ checks and regenerates `docs/BROWSER_QA.md`.
 
 `npm run live:args:smoke` verifies deterministic contract argument encoding for
 future Freighter-signed publish, checkout, check-in, and withdraw flows.
+
+`npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
+for the same contract actions. These XDRs are not signed and still require live
+account sequence fetch plus RPC simulation/assembly before Freighter signing.
 
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 

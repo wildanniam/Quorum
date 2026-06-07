@@ -81,7 +81,9 @@ The app should replace each `local_proof` mutation with a two-step live flow:
    The current non-signing boundary is
    `GET /api/events/[eventId]/contract-action?action=<action>`, which returns
    the target contract ID, network metadata, contract function name, signer, and
-   encoded args without building, signing, or submitting a transaction.
+   encoded args without signing or submitting a transaction. If `sourceSequence`
+   is supplied, the response also includes a pre-simulation unsigned transaction
+   XDR template.
 2. Browser asks Freighter to sign the prepared transaction.
 3. Server or browser submits the signed transaction to RPC.
 4. Server verifies the result, then stores the real transaction hash, token ID,
@@ -100,9 +102,14 @@ Keep the fail-safe behavior until every row above has a real transaction path.
 Partial live mode must not mix live IDs with local proof writes for these
 actions.
 
-Run `npm run live:args:smoke` and `npm run demo:live-policy` before wiring
-Freighter signing to verify the non-signing argument encoding and preparation
-boundaries.
+Run `npm run live:args:smoke`, `npm run live:xdr:smoke`, and
+`npm run demo:live-policy` before wiring Freighter signing to verify the
+non-signing argument encoding, XDR template, and preparation boundaries.
+
+Before asking Freighter to sign, the live implementation must fetch the
+signer's current account sequence from testnet, simulate the Soroban transaction
+through RPC, assemble the simulated transaction data, and only then request the
+wallet signature.
 
 ## Contract Call Inputs
 

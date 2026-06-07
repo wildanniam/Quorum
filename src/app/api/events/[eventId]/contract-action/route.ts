@@ -6,6 +6,7 @@ import {
   LiveActionPreparationError,
   prepareLiveContractAction,
 } from "@/lib/stellar/live-action";
+import { buildUnsignedLiveTransaction } from "@/lib/stellar/live-xdr";
 
 type ContractActionRouteContext = {
   params: Promise<{
@@ -15,6 +16,7 @@ type ContractActionRouteContext = {
 
 const prepareActionRequestSchema = z.object({
   action: z.enum(CONTRACT_ACTIONS),
+  sourceSequence: z.string().trim().regex(/^\d+$/).optional(),
   tokenId: z.string().trim().optional(),
 });
 
@@ -35,6 +37,7 @@ export async function GET(
   const searchParams = request.nextUrl.searchParams;
   const parsed = prepareActionRequestSchema.safeParse({
     action: searchParams.get("action"),
+    sourceSequence: searchParams.get("sourceSequence") ?? undefined,
     tokenId: searchParams.get("tokenId") ?? undefined,
   });
 
@@ -60,8 +63,19 @@ export async function GET(
       signerWallet: session.walletAddress,
       tokenId: parsed.data.tokenId,
     });
+    const unsignedTransaction = parsed.data.sourceSequence
+      ? buildUnsignedLiveTransaction({
+          options: {
+            sourceSequence: parsed.data.sourceSequence,
+          },
+          preparedAction,
+        })
+      : null;
 
-    return NextResponse.json(preparedAction);
+    return NextResponse.json({
+      ...preparedAction,
+      ...(unsignedTransaction ? { unsignedTransaction } : {}),
+    });
   } catch (error) {
     if (error instanceof LiveActionPreparationError) {
       return NextResponse.json(

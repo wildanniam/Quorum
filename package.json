@@ -14,6 +14,7 @@
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "browser:qa": "node scripts/browser-qa.mjs",
     "live:args:smoke": "tsx scripts/live-args-smoke.ts",
+    "live:xdr:smoke": "tsx scripts/live-xdr-smoke.ts",
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
     "contracts:test": "cargo test",

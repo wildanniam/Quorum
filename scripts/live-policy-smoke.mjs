@@ -354,7 +354,7 @@ async function main() {
     const checkoutPrepare = await assertPreparedAction(
       "prepare checkout",
       await fetch(
-        `${baseUrl}/api/events/${eventId}/contract-action?action=checkout_pass`,
+        `${baseUrl}/api/events/${eventId}/contract-action?action=checkout_pass&sourceSequence=0`,
         { headers: { cookie: attendeeCookie } },
       ),
       {
@@ -370,6 +370,12 @@ async function main() {
     assert(
       checkoutPrepare.args?.metadataUri?.includes(attendeeWallet),
       "prepared checkout should bind pass metadata URI to buyer",
+    );
+    assert(
+      checkoutPrepare.unsignedTransaction?.simulationRequired === true &&
+        typeof checkoutPrepare.unsignedTransaction?.unsignedTransactionXdr ===
+          "string",
+      "prepared checkout should include optional pre-simulation unsigned XDR",
     );
 
     const checkInPrepare = await assertPreparedAction(
@@ -460,6 +466,7 @@ async function main() {
             "dashboard-live-action-policy",
             "prepare-publish-live-args",
             "prepare-checkout-live-args",
+            "prepare-checkout-unsigned-xdr",
             "prepare-check-in-live-args",
             "prepare-withdraw-live-args",
             "publish-live-required",

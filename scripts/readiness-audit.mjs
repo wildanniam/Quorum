@@ -36,6 +36,7 @@ const requiredPackageScripts = [
   "evidence:local",
   "lint",
   "live:args:smoke",
+  "live:xdr:smoke",
   "readiness:audit",
 ];
 
@@ -50,6 +51,7 @@ const requiredEvidenceChecks = [
   "Live policy smoke",
   "Browser QA",
   "Live args smoke",
+  "Live XDR smoke",
   "Contract tests",
   "Contract build",
   "Contract doctor",

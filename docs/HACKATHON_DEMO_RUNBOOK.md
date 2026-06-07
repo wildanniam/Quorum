@@ -101,6 +101,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:xdr:smoke
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
@@ -113,6 +114,8 @@ The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
 The live policy smoke verifies fake configured contract IDs require live
 transaction submission, exposes non-signing live action prepare responses, and
 does not create local proof records.
+The live XDR smoke verifies pre-simulation unsigned Soroban transaction
+templates without signing or submission.
 
 ## Live Testnet Boundary
 
