@@ -75,6 +75,7 @@ export function CreateEventForm() {
   const [mode, setMode] = useState<"paid" | "free">("paid");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<DraftResponse | null>(null);
+  const [savedEventId, setSavedEventId] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<CollaboratorFormRow[]>([
     {
       displayName: "Jakarta Stellar Guild",
@@ -228,8 +229,10 @@ export function CreateEventForm() {
     setSubmitting(true);
     setResult(null);
 
-    const response = await fetch("/api/events", {
-      method: "POST",
+    const response = await fetch(
+      savedEventId ? `/api/events/${savedEventId}` : "/api/events",
+      {
+        method: savedEventId ? "PATCH" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         ...form,
@@ -247,10 +250,14 @@ export function CreateEventForm() {
           sortOrder: Number(resource.sortOrder || index + 1),
         })),
       }),
-    });
+      },
+    );
     const payload = (await response.json()) as DraftResponse;
 
     setResult(payload);
+    if (response.ok && payload.event?.id) {
+      setSavedEventId(payload.event.id);
+    }
     setSubmitting(false);
   }
 
@@ -698,7 +705,7 @@ export function CreateEventForm() {
           ) : (
             <CalendarPlus size={17} />
           )}
-          Save draft
+          {savedEventId ? "Save changes" : "Save draft"}
         </button>
       </div>
     </form>

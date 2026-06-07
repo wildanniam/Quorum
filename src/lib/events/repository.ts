@@ -252,6 +252,93 @@ export function createDraftEventWithSetup(
   })();
 }
 
+export function updateDraftEventWithSetup({
+  eventId,
+  organizerWallet,
+  input,
+  collaborators,
+  resources,
+}: {
+  eventId: string;
+  organizerWallet: string;
+  input: Omit<CreateDraftEventInput, "slug" | "organizerWallet">;
+  collaborators: UpsertCollaboratorInput[];
+  resources: CreateResourceInput[];
+}) {
+  assertWalletAddress(organizerWallet);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const existing = db
+      .prepare(
+        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
+      )
+      .get(eventId, organizerWallet) as EventRow | undefined;
+
+    if (!existing) {
+      throw new Error("Draft event not found for connected organizer.");
+    }
+
+    if (existing.status !== "draft") {
+      throw new Error("Published events cannot be edited in the MVP.");
+    }
+
+    db.prepare(
+      `
+      UPDATE events
+      SET
+        title = ?,
+        event_type = ?,
+        short_description = ?,
+        cover_image_url = ?,
+        start_date_time = ?,
+        end_date_time = ?,
+        timezone = ?,
+        location_type = ?,
+        location_text = ?,
+        meeting_url = ?,
+        price_usdc = ?,
+        is_free = ?,
+        capacity = ?
+      WHERE id = ?
+      `,
+    ).run(
+      input.title,
+      input.eventType,
+      input.shortDescription,
+      input.coverImageUrl ?? null,
+      input.startDateTime,
+      input.endDateTime,
+      input.timezone,
+      input.locationType,
+      input.locationText ?? null,
+      input.meetingUrl ?? null,
+      input.isFree ? "0" : input.priceUsdc,
+      input.isFree ? 1 : 0,
+      input.capacity,
+      eventId,
+    );
+
+    db.prepare("DELETE FROM collaborators WHERE event_id = ?").run(eventId);
+    db.prepare("DELETE FROM resources WHERE event_id = ?").run(eventId);
+
+    for (const collaborator of collaborators) {
+      addCollaborator(eventId, collaborator);
+    }
+
+    for (const resource of resources) {
+      addResource(eventId, resource);
+    }
+
+    return {
+      event: getEventById(eventId),
+      collaborators: listCollaborators(eventId),
+      resources: listResources(eventId),
+    };
+  })();
+}
+
 export function getEventById(id: string) {
   const row = getDatabase().prepare("SELECT * FROM events WHERE id = ?").get(id) as
     | EventRow
