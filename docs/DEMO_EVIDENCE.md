@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T23:09:24.414Z`
+Generated at: `2026-06-07T23:20:42.857Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `eaf7b45`
+- Commit: `1cfba52`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -45,7 +45,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-25e3c4`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-660b40`
 
 Covered checks:
 
@@ -149,8 +149,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_6347541d-e3d9-4ddb-80f7-d6872a2efe50",
-    "slug": "smoke-6347541d",
+    "id": "evt_667e19e5-ba6d-4f3a-a90d-785451f6f98f",
+    "slug": "smoke-667e19e5",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -181,15 +181,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 4.1s
+✓ Compiled successfully in 3.4s
   Running TypeScript ...
-  Finished TypeScript in 2.6s ...
+  Finished TypeScript in 2.4s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 198ms
+✓ Generating static pages using 7 workers (10/10) in 164ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -241,9 +241,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-f6455140-bc5d-47eb-bcc9-0df575e58bac.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-464df6af-70ac-4d33-8a0a-680007c3d4c0.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-25e3c4",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-660b40",
   "checks": [
     "marketplace",
     "event-detail",
@@ -324,7 +324,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-06-07T23:10:50.931Z",
+  "generatedAt": "2026-06-07T23:21:21.483Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -392,8 +392,8 @@ found 0 vulnerabilities
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-e1709788-1689-43e0-87ee-a58a8ac60085.db",
-  "persistedEventId": "evt_5dcc3630-dde6-4745-90b0-1b01cfc2be1a",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-401a3b1e-6890-4494-b8ca-aebf1515c4b4.db",
+  "persistedEventId": "evt_354c4f13-799f-4f1e-bbaa-79dcd487e10d",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -418,7 +418,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-4d7372cf-a388-4ffe-8bc4-7e7660668eeb.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-c1577a21-f0e3-4b08-9f4d-a232d21bd7f6.db",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -474,7 +474,9 @@ found 0 vulnerabilities
     "reject-invalid-prepared-xdr",
     "reject-prepared-xdr-function-mismatch-before-wallet",
     "reject-prepared-xdr-contract-mismatch-before-wallet",
-    "reject-signed-xdr-function-mismatch"
+    "reject-prepared-xdr-argument-mismatch-before-wallet",
+    "reject-signed-xdr-function-mismatch",
+    "reject-signed-xdr-argument-mismatch"
   ],
   "signedXdrLength": 556,
   "signerAddress": "GACAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAJJHP"
@@ -500,6 +502,7 @@ found 0 vulnerabilities
     "reject-source-mismatch-before-rpc",
     "reject-function-mismatch-before-rpc",
     "reject-contract-mismatch-before-rpc",
+    "reject-argument-mismatch-before-rpc",
     "reject-submission-error",
     "reject-submission-retry-later",
     "reject-finality-failure",
@@ -530,6 +533,7 @@ found 0 vulnerabilities
     "purchase-xdr",
     "check-in-xdr",
     "withdraw-xdr",
+    "invocation-args-xdr",
     "split-recipient-symbol-map",
     "invalid-source-sequence"
   ],
@@ -599,7 +603,8 @@ found 0 vulnerabilities
     "browser-live-submit-signed-xdr",
     "browser-live-preflight-error",
     "browser-live-submit-error",
-    "browser-live-reject-mismatched-preflight"
+    "browser-live-reject-mismatched-preflight",
+    "browser-live-reject-mismatched-preflight-args"
   ],
   "txHash": "1515151515151515151515151515151515151515151515151515151515151515"
 }
@@ -637,27 +642,27 @@ found 0 vulnerabilities
 > cargo test
 running 18 tests
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::collaborator_can_withdraw_balance ... ok
-test test::purchase_mints_pass_and_splits_balance ... ok
-test test::admin_can_withdraw_platform_fee ... ok
 test test::duplicate_check_in_is_idempotent ... ok
+test test::admin_can_withdraw_platform_fee ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
 test test::organizer_can_check_in_pass ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
-test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
-test test::rejects_duplicate_free_claim - should panic ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_invalid_split_total - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.26s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.44s
 running 6 tests
 test test::rejects_unauthorized_mint - should panic ... ok
-test test::mints_uniqu
+test test::core_can_ma
 ... [truncated]
 ```
 
@@ -671,7 +676,7 @@ test test::mints_uniqu
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.20s
+    Finished `release` profile [optimized] target(s) in 0.10s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (13347 bytes)
     Wasm Hash: f67c4483f74bdfce3931a7d30577fabc5b4b6d1bdb7bdb1cec4696818c917761
@@ -691,7 +696,7 @@ test test::mints_uniqu
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.11s
+    Finished `release` profile [optimized] target(s) in 0.05s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5155 bytes)
     Wasm Hash: 3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1
