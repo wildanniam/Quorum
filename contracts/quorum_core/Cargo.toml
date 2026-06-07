@@ -12,4 +12,5 @@ doctest = false
 soroban-sdk = { workspace = true }
 
 [dev-dependencies]
+quorum_pass_nft = { path = "../quorum_pass_nft" }
 soroban-sdk = { workspace = true, features = ["testutils"] }

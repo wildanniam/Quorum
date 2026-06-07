@@ -1030,6 +1030,7 @@ dependencies = [
 name = "quorum_core"
 version = "0.0.0"
 dependencies = [
+ "quorum_pass_nft",
  "soroban-sdk",
 ]
 
