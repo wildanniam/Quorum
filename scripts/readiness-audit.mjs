@@ -135,6 +135,7 @@ const requiredLiveFlowCoverage = [
 const requiredLivePolicyCoverage = [
   "preflight-route-invalid-request",
   "submit-invalid-signed-xdr-no-persistence",
+  "check-in-short-live-token-required",
 ];
 
 const requiredLiveSubmissionCoverage = [

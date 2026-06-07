@@ -492,6 +492,17 @@ async function main() {
       }),
     );
     await assertLiveRequired(
+      "check-in short live token",
+      await fetch(`${baseUrl}/api/events/${eventId}/check-ins`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: organizerCookie,
+        },
+        body: JSON.stringify({ tokenId: "42" }),
+      }),
+    );
+    await assertLiveRequired(
       "withdraw",
       await fetch(`${baseUrl}/api/events/${eventId}/withdrawals`, {
         method: "POST",
@@ -528,6 +539,7 @@ async function main() {
             "publish-live-required",
             "checkout-live-required",
             "check-in-live-required",
+            "check-in-short-live-token-required",
             "withdraw-live-required",
             "no-local-proof-mutations",
           ],

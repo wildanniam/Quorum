@@ -14,7 +14,7 @@ type CheckInRouteContext = {
 };
 
 const checkInRequestSchema = z.object({
-  tokenId: z.string().min(3),
+  tokenId: z.string().trim().min(1),
 });
 
 function getSession(request: NextRequest) {
