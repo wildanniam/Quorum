@@ -88,6 +88,24 @@ fn setup() -> Setup {
     setup_with_platform_fee(500)
 }
 
+fn create_free_event(s: &Setup, event_byte: u8, capacity: u32) -> BytesN<32> {
+    let event_id = BytesN::from_array(&s.env, &[event_byte; 32]);
+
+    s.core.create_event(
+        &s.organizer,
+        &event_id,
+        &0,
+        &s.currency,
+        &capacity,
+        &true,
+        &splits(&s.env, &s.organizer, &s.speaker, &s.partner),
+        &BytesN::from_array(&s.env, &[6; 32]),
+        &s.pass.address,
+    );
+
+    event_id
+}
+
 #[test]
 fn purchase_mints_pass_and_splits_balance() {
     let s = setup();
@@ -119,6 +137,50 @@ fn demo_zero_fee_routes_full_amount_to_collaborators() {
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 200);
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.partner), 100);
     assert_eq!(s.core.platform_balance(&s.currency), 0);
+}
+
+#[test]
+fn free_event_claim_mints_pass_without_balances() {
+    let s = setup();
+    let free_event_id = create_free_event(&s, 5, 2);
+    let uri = String::from_str(&s.env, "ipfs://free-pass-1");
+    let hash = BytesN::from_array(&s.env, &[5; 32]);
+
+    let token_id = s.core.purchase(&s.buyer, &free_event_id, &0, &uri, &hash);
+
+    assert_eq!(token_id, 1);
+    assert!(s.core.has_purchased(&free_event_id, &s.buyer));
+    assert!(s.pass.has_pass(&s.buyer, &free_event_id));
+    assert_eq!(s.core.get_event(&free_event_id).sold_count, 1);
+    assert_eq!(s.core.collaborator_balance(&free_event_id, &s.organizer), 0);
+    assert_eq!(s.core.collaborator_balance(&free_event_id, &s.speaker), 0);
+    assert_eq!(s.core.collaborator_balance(&free_event_id, &s.partner), 0);
+    assert_eq!(s.core.platform_balance(&s.currency), 0);
+}
+
+#[test]
+#[should_panic]
+fn rejects_duplicate_free_claim() {
+    let s = setup();
+    let free_event_id = create_free_event(&s, 6, 2);
+    let uri = String::from_str(&s.env, "ipfs://free-pass-1");
+    let hash = BytesN::from_array(&s.env, &[5; 32]);
+
+    s.core.purchase(&s.buyer, &free_event_id, &0, &uri, &hash);
+    s.core.purchase(&s.buyer, &free_event_id, &0, &uri, &hash);
+}
+
+#[test]
+#[should_panic]
+fn rejects_free_claim_when_capacity_is_full() {
+    let s = setup();
+    let free_event_id = create_free_event(&s, 7, 1);
+    let second_buyer = Address::generate(&s.env);
+    let uri = String::from_str(&s.env, "ipfs://free-pass-1");
+    let hash = BytesN::from_array(&s.env, &[5; 32]);
+
+    s.core.purchase(&s.buyer, &free_event_id, &0, &uri, &hash);
+    s.core.purchase(&second_buyer, &free_event_id, &0, &uri, &hash);
 }
 
 #[test]
