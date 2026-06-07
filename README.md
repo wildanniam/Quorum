@@ -92,4 +92,5 @@ npm run contracts:init:testnet
 - `TECHNICAL_SPEC.md`
 - `DEVELOPMENT_PLAN.md`
 - `docs/QUORUM_PM_GOAL_BRIEF.md`
+- `docs/HACKATHON_DEMO_RUNBOOK.md`
 - `docs/DEMO_EVIDENCE.md`
