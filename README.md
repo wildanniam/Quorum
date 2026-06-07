@@ -13,29 +13,28 @@ The Soroban contracts cover event registry, NFT pass minting, split accounting, 
 Implemented in the app shell:
 
 - public marketplace surface;
-- featured demo event;
+- featured published event from the local database;
 - event detail pages;
-- dashboard placeholder;
-- create event placeholder;
+- role-aware transparency dashboard;
+- draft event create/update form;
 - checkout and claim page;
 - attendee pass index and pass detail pages;
 - session-gated resources page;
 - organizer check-in page;
 - Freighter-first wallet auth foundation;
 - signed wallet session API routes;
-- local SQLite migration foundation.
+- local SQLite migration foundation;
 - draft event create/update API routes;
 - publish-to-marketplace DB stub;
-- database-backed public marketplace and event detail pages;
 - collaborator percentage split setup;
 - gated resource setup;
 - `QuorumPassNFT` Soroban contract;
-- `QuorumCore` Soroban contract.
+- `QuorumCore` Soroban contract;
 - local checkout/claim API route;
 - local pass proof and purchase recording;
-- marketplace metrics for minted passes and routed USDC.
+- marketplace metrics for minted passes and routed USDC;
 - organizer-authorized local check-in API route;
-- role-aware transparency dashboard.
+- dashboard metrics for organizer revenue, collaborator balances, attendee passes, and proof queue.
 
 Not implemented yet:
 
