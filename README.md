@@ -64,10 +64,13 @@ npm run db:smoke
 npm run lint
 npm run build
 npm audit --audit-level=moderate
+npm run demo:smoke
 cargo test
 stellar contract build
 npm run contracts:deploy:testnet
 ```
+
+`npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, checkout, duplicate pass guard, gated resources, organizer check-in, pass detail, and dashboard proof surfaces.
 
 ## Planning Docs
 
