@@ -106,11 +106,17 @@ fn create_free_event(s: &Setup, event_byte: u8, capacity: u32) -> BytesN<32> {
     event_id
 }
 
+fn pass_metadata(env: &Env) -> (String, BytesN<32>) {
+    (
+        String::from_str(env, "ipfs://pass-1"),
+        BytesN::from_array(env, &[9; 32]),
+    )
+}
+
 #[test]
 fn purchase_mints_pass_and_splits_balance() {
     let s = setup();
-    let uri = String::from_str(&s.env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&s.env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&s.env);
 
     let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
@@ -187,18 +193,48 @@ fn rejects_free_claim_when_capacity_is_full() {
 #[should_panic]
 fn rejects_duplicate_purchase() {
     let s = setup();
-    let uri = String::from_str(&s.env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&s.env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&s.env);
 
     s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
     s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 }
 
 #[test]
+#[should_panic]
+fn rejects_paid_purchase_with_wrong_amount() {
+    let s = setup();
+    let (uri, hash) = pass_metadata(&s.env);
+
+    s.core.purchase(&s.buyer, &s.event_id, &0, &uri, &hash);
+}
+
+#[test]
+#[should_panic]
+fn rejects_free_claim_with_nonzero_amount() {
+    let s = setup();
+    let free_event_id = create_free_event(&s, 8, 2);
+    let (uri, hash) = pass_metadata(&s.env);
+
+    s.core.purchase(&s.buyer, &free_event_id, &1, &uri, &hash);
+}
+
+#[test]
+#[should_panic]
+fn rejects_paid_purchase_when_capacity_is_full() {
+    let s = setup();
+    let second_buyer = Address::generate(&s.env);
+    let third_buyer = Address::generate(&s.env);
+    let (uri, hash) = pass_metadata(&s.env);
+
+    s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+    s.core.purchase(&second_buyer, &s.event_id, &1_000, &uri, &hash);
+    s.core.purchase(&third_buyer, &s.event_id, &1_000, &uri, &hash);
+}
+
+#[test]
 fn collaborator_can_withdraw_balance() {
     let s = setup();
-    let uri = String::from_str(&s.env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&s.env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&s.env);
 
     s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
@@ -207,10 +243,18 @@ fn collaborator_can_withdraw_balance() {
 }
 
 #[test]
+#[should_panic]
+fn rejects_withdraw_without_balance() {
+    let s = setup();
+    let outsider = Address::generate(&s.env);
+
+    s.core.withdraw(&outsider, &s.event_id);
+}
+
+#[test]
 fn organizer_can_check_in_pass() {
     let s = setup();
-    let uri = String::from_str(&s.env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&s.env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&s.env);
     let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
     s.core.check_in(&s.organizer, &s.event_id, &token_id);
