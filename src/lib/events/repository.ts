@@ -226,9 +226,10 @@ export function createDraftEvent(input: CreateDraftEventInput) {
   return getEventById(id);
 }
 
-export function createDraftEventWithCollaborators(
+export function createDraftEventWithSetup(
   input: CreateDraftEventInput,
   collaborators: UpsertCollaboratorInput[],
+  resources: CreateResourceInput[],
 ) {
   const db = getDatabase();
 
@@ -239,9 +240,14 @@ export function createDraftEventWithCollaborators(
       addCollaborator(event.id, collaborator);
     }
 
+    for (const resource of resources) {
+      addResource(event.id, resource);
+    }
+
     return {
       event,
       collaborators: listCollaborators(event.id),
+      resources: listResources(event.id),
     };
   })();
 }

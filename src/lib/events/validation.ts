@@ -52,6 +52,23 @@ export const createDraftEventRequestSchema = z
       )
       .min(1)
       .max(12),
+    resources: z
+      .array(
+        z.object({
+          title: z.string().trim().min(2).max(100),
+          description: z
+            .string()
+            .trim()
+            .max(220)
+            .optional()
+            .transform((value) => (value ? value : null)),
+          type: z.enum(["link", "file", "text"]),
+          url: optionalUrl,
+          sortOrder: z.coerce.number().int().min(0).max(1000),
+        }),
+      )
+      .min(1)
+      .max(20),
   })
   .superRefine((value, context) => {
     if (Date.parse(value.endDateTime) <= Date.parse(value.startDateTime)) {
@@ -82,6 +99,16 @@ export const createDraftEventRequestSchema = z
         path: ["collaborators"],
       });
     }
+
+    value.resources.forEach((resource, index) => {
+      if (resource.type !== "text" && !resource.url) {
+        context.addIssue({
+          code: "custom",
+          message: "Link and file resources need a URL.",
+          path: ["resources", index, "url"],
+        });
+      }
+    });
   });
 
 export type CreateDraftEventRequest = z.infer<typeof createDraftEventRequestSchema>;

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
-  createDraftEventWithCollaborators,
+  createDraftEventWithSetup,
   getEventBySlug,
   listOrganizerEvents,
   upsertUser,
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
   try {
     upsertUser(session.walletAddress);
 
-    const { collaborators, ...eventInput } = parsed.data;
-    const eventDraft = createDraftEventWithCollaborators(
+    const { collaborators, resources, ...eventInput } = parsed.data;
+    const eventDraft = createDraftEventWithSetup(
       {
         ...eventInput,
         slug: createUniqueSlug(parsed.data.title),
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
         priceUsdc: parsed.data.isFree ? "0" : parsed.data.priceUsdc,
       },
       collaborators,
+      resources,
     );
 
     return NextResponse.json(eventDraft, { status: 201 });

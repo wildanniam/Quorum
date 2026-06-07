@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import {
   CalendarPlus,
   CheckCircle2,
+  FileKey2,
   Loader2,
   Percent,
   Plus,
@@ -26,6 +27,12 @@ type DraftResponse = {
     walletAddress: string;
     splitPercentage: number;
   }>;
+  resources?: Array<{
+    id: string;
+    title: string;
+    type: string;
+    url: string | null;
+  }>;
   error?: string;
   issues?: Array<{ path: string; message: string }>;
 };
@@ -35,6 +42,14 @@ type CollaboratorFormRow = {
   role: string;
   walletAddress: string;
   splitPercentage: string;
+};
+
+type ResourceFormRow = {
+  title: string;
+  description: string;
+  type: "link" | "file" | "text";
+  url: string;
+  sortOrder: string;
 };
 
 const inputClass =
@@ -78,6 +93,22 @@ export function CreateEventForm() {
       role: "Community Partner",
       walletAddress: sampleCollaboratorWallets[2],
       splitPercentage: "10",
+    },
+  ]);
+  const [resources, setResources] = useState<ResourceFormRow[]>([
+    {
+      title: "Workshop Deck",
+      description: "Slides for attendees after pass mint.",
+      type: "link",
+      url: "https://example.com/deck",
+      sortOrder: "1",
+    },
+    {
+      title: "Soroban Starter Repo",
+      description: "Private starter repository for the mini workshop.",
+      type: "link",
+      url: "https://example.com/repo",
+      sortOrder: "2",
     },
   ]);
   const [form, setForm] = useState({
@@ -159,6 +190,39 @@ export function CreateEventForm() {
     );
   }
 
+  function updateResource(
+    index: number,
+    name: keyof ResourceFormRow,
+    value: string,
+  ) {
+    setResources((current) =>
+      current.map((resource, resourceIndex) =>
+        resourceIndex === index ? { ...resource, [name]: value } : resource,
+      ),
+    );
+  }
+
+  function addResourceRow() {
+    setResources((current) => [
+      ...current,
+      {
+        title: "",
+        description: "",
+        type: "link",
+        url: "",
+        sortOrder: String(current.length + 1),
+      },
+    ]);
+  }
+
+  function removeResourceRow(index: number) {
+    setResources((current) =>
+      current.length === 1
+        ? current
+        : current.filter((_, resourceIndex) => resourceIndex !== index),
+    );
+  }
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
@@ -177,6 +241,10 @@ export function CreateEventForm() {
         collaborators: collaboratorRows.map((collaborator) => ({
           ...collaborator,
           splitPercentage: Number(collaborator.splitPercentage),
+        })),
+        resources: resources.map((resource, index) => ({
+          ...resource,
+          sortOrder: Number(resource.sortOrder || index + 1),
         })),
       }),
     });
@@ -486,15 +554,130 @@ export function CreateEventForm() {
         </div>
       </div>
 
+      <div className="border border-line bg-panel p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-normal text-muted">
+              Resources
+            </p>
+            <p className="mt-2 text-2xl font-semibold">{resources.length} gated</p>
+          </div>
+          <button
+            className="inline-flex min-h-10 items-center gap-2 border border-line bg-background/40 px-3 text-sm font-medium transition hover:border-accent hover:text-accent"
+            onClick={addResourceRow}
+            type="button"
+          >
+            <Plus size={16} />
+            Add
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {resources.map((resource, index) => (
+            <div
+              className="grid gap-3 border border-line bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.3fr_0.4fr_auto]"
+              key={`${resource.title}-${index}`}
+            >
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Title
+                </span>
+                <input
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateResource(index, "title", event.target.value)
+                  }
+                  required
+                  value={resource.title}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Type
+                </span>
+                <select
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateResource(index, "type", event.target.value)
+                  }
+                  value={resource.type}
+                >
+                  <option value="link">Link</option>
+                  <option value="file">File</option>
+                  <option value="text">Text</option>
+                </select>
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  URL
+                </span>
+                <input
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateResource(index, "url", event.target.value)
+                  }
+                  type="url"
+                  value={resource.url}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Order
+                </span>
+                <input
+                  className={inputClass}
+                  min="0"
+                  onChange={(event) =>
+                    updateResource(index, "sortOrder", event.target.value)
+                  }
+                  type="number"
+                  value={resource.sortOrder}
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  aria-label="Remove resource"
+                  className="grid min-h-11 w-full place-items-center border border-line bg-panel text-muted transition hover:border-coral hover:text-coral lg:w-11"
+                  onClick={() => removeResourceRow(index)}
+                  type="button"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+              <label className="grid gap-2 lg:col-span-5">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Description
+                </span>
+                <input
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateResource(index, "description", event.target.value)
+                  }
+                  value={resource.description}
+                />
+              </label>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {result?.event ? (
         <div className="grid grid-cols-[auto_1fr] items-center gap-3 border border-accent/60 bg-accent/10 p-4 text-sm">
           <CheckCircle2 className="text-accent" size={20} />
-          <span>
-            Draft saved: <span className="font-medium">{result.event.title}</span>
-            {result.collaborators?.length
-              ? ` with ${result.collaborators.length} collaborators`
-              : ""}
-          </span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>
+              Draft saved:{" "}
+              <span className="font-medium">{result.event.title}</span>
+            </span>
+            <span className="inline-flex items-center gap-1 text-muted">
+              <Percent size={14} />
+              {result.collaborators?.length ?? 0} collaborators
+            </span>
+            <span className="inline-flex items-center gap-1 text-muted">
+              <FileKey2 size={14} />
+              {result.resources?.length ?? 0} resources
+            </span>
+          </div>
         </div>
       ) : null}
 
