@@ -6,7 +6,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 2 is complete and Phase 3 database work is underway.
+Phase 3 is complete. The app can create and update local draft events with wallet-owned organizer identity, collaborator split validation, and gated resource setup.
 
 Implemented in the app shell:
 
@@ -21,10 +21,12 @@ Implemented in the app shell:
 - Freighter-first wallet auth foundation;
 - signed wallet session API routes;
 - local SQLite migration foundation.
+- draft event create/update API routes;
+- collaborator percentage split setup;
+- gated resource setup.
 
 Not implemented yet:
 
-- event CRUD persistence;
 - Soroban contracts;
 - real checkout;
 - real NFT minting;
