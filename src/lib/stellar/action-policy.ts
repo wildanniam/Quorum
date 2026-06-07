@@ -38,7 +38,7 @@ export class LiveContractActionRequiredError extends Error {
 
   constructor(action: ContractAction) {
     super(
-      `Live Stellar contracts are configured for ${actionLabels[action]}, but app-side Freighter transaction submission is not enabled yet.`,
+      `Live Stellar contracts are configured for ${actionLabels[action]}. Continue with Freighter transaction submission through the live action flow.`,
     );
     this.action = action;
     this.name = "LiveContractActionRequiredError";

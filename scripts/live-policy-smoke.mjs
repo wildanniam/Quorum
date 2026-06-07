@@ -142,8 +142,9 @@ async function assertLiveRequired(label, response) {
   assert(body?.proofMode === "live", `${label} should report live proof mode`);
   assert(
     typeof body?.error === "string" &&
-      body.error.includes("Freighter transaction submission"),
-    `${label} should explain the missing app-side signing boundary`,
+      body.error.includes("Freighter transaction submission") &&
+      body.error.includes("live action flow"),
+    `${label} should explain the live signing handoff`,
   );
 
   return body;
