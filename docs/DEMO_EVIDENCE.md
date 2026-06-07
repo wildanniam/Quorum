@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T22:02:09.294Z`
+Generated at: `2026-06-07T22:08:31.671Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `485f547`
+- Commit: `2cc9dae`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -42,7 +42,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-301567`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-753f3b`
 
 Covered checks:
 
@@ -146,8 +146,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_ce4f9569-30bd-4fe6-a3f1-e1efc1f8f675",
-    "slug": "smoke-ce4f9569",
+    "id": "evt_58ba5400-455f-48a0-8b78-97cc9f91abfb",
+    "slug": "smoke-58ba5400",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -178,15 +178,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 8.3s
+✓ Compiled successfully in 2.3s
   Running TypeScript ...
-  Finished TypeScript in 2.9s ...
+  Finished TypeScript in 1948ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 168ms
+✓ Generating static pages using 7 workers (10/10) in 89ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -237,9 +237,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-3a197dcd-b88f-4212-822c-b848ff5945e8.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-5203d0f7-d5c2-40de-9f2b-a8d13ec6610f.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-301567",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-753f3b",
   "checks": [
     "marketplace",
     "event-detail",
@@ -317,7 +317,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-06-07T22:03:03.983Z",
+  "generatedAt": "2026-06-07T22:09:04.800Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -380,11 +380,13 @@ found 0 vulnerabilities
     "withdraw-live-flow",
     "decode-token-id-from-finality",
     "decode-withdraw-amount-from-finality",
+    "persist-live-result-helper",
+    "reject-mismatched-live-result",
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-e0bbf7ea-f489-4869-ad27-37d47b0a0766.db",
-  "persistedEventId": "evt_dc56cee7-6fee-4c55-9c1d-aa6bb05a1891",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-afd08e9d-5037-4585-b5ad-f1929fec205a.db",
+  "persistedEventId": "evt_66816ca3-0ac1-4d50-8377-0033ebc96c07",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -409,7 +411,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-47608d56-dbdc-49ea-a0bb-04e22a0e30ac.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-cab9d32c-5af1-4d87-b5fd-ec306597a448.db",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -557,28 +559,28 @@ found 0 vulnerabilities
 > quorum@0.1.0 contracts:test
 > cargo test
 running 18 tests
-test test::purchase_mints_pass_and_splits_balance ... ok
-test test::free_event_claim_mints_pass_without_balances ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
+test test::free_event_claim_mints_pass_without_balances ... ok
+test test::duplicate_check_in_is_idempotent ... ok
 test test::organizer_can_check_in_pass ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
 test test::admin_can_withdraw_platform_fee ... ok
 test test::collaborator_can_withdraw_balance ... ok
-test test::duplicate_check_in_is_idempotent ... ok
 test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
-test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.46s
 running 6 tests
 test test::rejects_unauthorized_mint - should panic ... ok
-test test::mints_uniqu
+test test::core_can_ma
 ... [truncated]
 ```
 
