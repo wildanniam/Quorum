@@ -46,6 +46,7 @@ Copy `.env.example` to `.env.local` when you need local secrets. The default dat
 
 ```bash
 npm run db:migrate
+npm run db:smoke
 npm run lint
 npm run build
 npm audit --audit-level=moderate
