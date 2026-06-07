@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:28:40.687Z`
+Generated at: `2026-06-07T18:30:46.284Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `255aa63`
+- Commit: `7355144`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -33,7 +33,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-28b5f9`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-d65ee7`
 
 Covered checks:
 
@@ -129,8 +129,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_c40b72cb-06d0-4afe-b3bb-67e64cb158d6",
-    "slug": "smoke-c40b72cb",
+    "id": "evt_28e606a3-18b3-4918-b32c-81a9ca610e60",
+    "slug": "smoke-28e606a3",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -161,15 +161,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 2.5s
+✓ Compiled successfully in 2.4s
   Running TypeScript ...
-  Finished TypeScript in 1861ms ...
+  Finished TypeScript in 1891ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 88ms
+✓ Generating static pages using 7 workers (10/10) in 104ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -219,9 +219,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-cd78327a-6102-415d-8d52-f4eedd79acab.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-b12e39e1-c9b0-47f2-b3a9-9f39004a26c5.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-28b5f9",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-d65ee7",
   "checks": [
     "marketplace",
     "event-detail",
@@ -254,26 +254,26 @@ found 0 vulnerabilities
 running 17 tests
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
-test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::collaborator_can_withdraw_balance ... ok
-test test::duplicate_check_in_is_idempotent ... ok
+test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::organizer_can_check_in_pass ... ok
+test test::duplicate_check_in_is_idempotent ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
 test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
-running 4 tests
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.32s
+running 6 tests
+test test::rejects_unauthorized_mint - should panic ... ok
 test test::mints_unique_pass_for_owner_event ... ok
-test test::core_can_mark_pass_checked_in ... ok
-test test::transfer_is_disabled
+test test::rejects_u
 ... [truncated]
 ```
 
