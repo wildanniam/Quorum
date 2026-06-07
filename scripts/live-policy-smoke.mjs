@@ -209,6 +209,19 @@ async function main() {
       "all contract actions should require live submission",
     );
 
+    const dashboard = await fetch(`${baseUrl}/dashboard`);
+    const dashboardHtml = await dashboard.text();
+    assert(dashboard.status === 200, "dashboard should render in live policy mode");
+    assert(
+      dashboardHtml.includes("Action execution"),
+      "dashboard should show contract action policy rows",
+    );
+    assert(
+      dashboardHtml.includes("Live transaction submission is required.") &&
+        dashboardHtml.includes("live required"),
+      "dashboard should show live-required action policy",
+    );
+
     const attendeeCookie = `quorum_session=${createSession(attendeeWallet)}`;
     const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
     const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
@@ -262,6 +275,7 @@ async function main() {
           mutationCounts: counts,
           checks: [
             "live-contract-status",
+            "dashboard-live-action-policy",
             "publish-live-required",
             "checkout-live-required",
             "check-in-live-required",

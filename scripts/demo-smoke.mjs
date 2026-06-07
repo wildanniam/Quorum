@@ -542,6 +542,15 @@ async function main() {
       dashboardHtml.includes("Local proof mode"),
       "dashboard should show local proof mode before live contracts",
     );
+    assert(
+      dashboardHtml.includes("Action execution"),
+      "dashboard should show contract action execution policy",
+    );
+    assert(
+      dashboardHtml.includes("Checkout / claim") &&
+        dashboardHtml.includes("local proof"),
+      "dashboard should show local proof action rows",
+    );
 
     console.log(
       JSON.stringify(
@@ -570,6 +579,7 @@ async function main() {
             "duplicate-withdraw-guard",
             "pass-page",
             "dashboard-proof",
+            "dashboard-action-policy",
           ],
         },
         null,

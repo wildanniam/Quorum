@@ -1,8 +1,20 @@
-import { Boxes, FileKey2, RadioTower, ShieldCheck } from "lucide-react";
+import {
+  Boxes,
+  FileKey2,
+  ListChecks,
+  RadioTower,
+  ShieldCheck,
+} from "lucide-react";
+import {
+  CONTRACT_ACTIONS,
+  getContractActionLabel,
+  getContractActionPolicy,
+} from "@/lib/stellar/action-policy";
 import { getContractReadiness } from "@/lib/stellar/contracts";
 
 export function ContractReadiness() {
   const readiness = getContractReadiness();
+  const actions = CONTRACT_ACTIONS.map((action) => getContractActionPolicy(action));
 
   const rows = [
     {
@@ -74,6 +86,41 @@ export function ContractReadiness() {
             </div>
           );
         })}
+      </div>
+
+      <div className="mt-5 border border-line bg-background/25">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-line p-3">
+          <ListChecks className="text-accent" size={17} />
+          <div>
+            <p className="text-sm font-medium">Action execution</p>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              {readiness.configured
+                ? "Live transaction submission is required."
+                : "Local proof execution is active."}
+            </p>
+          </div>
+        </div>
+        {actions.map((action) => (
+          <div
+            className="grid grid-cols-[1fr_auto] gap-3 border-b border-line p-3 last:border-b-0"
+            key={action.action}
+          >
+            <span className="text-sm text-muted">
+              {getContractActionLabel(action.action)}
+            </span>
+            <span
+              className={`font-mono text-xs ${
+                action.executionMode === "live_required"
+                  ? "text-amber"
+                  : "text-accent"
+              }`}
+            >
+              {action.executionMode === "live_required"
+                ? "live required"
+                : "local proof"}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

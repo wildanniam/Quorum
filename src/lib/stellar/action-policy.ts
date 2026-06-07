@@ -13,12 +13,23 @@ export type ContractActionPolicy = {
   message: string;
 };
 
+export const CONTRACT_ACTIONS = [
+  "publish_event",
+  "checkout_pass",
+  "check_in_pass",
+  "withdraw_balance",
+] as const satisfies readonly ContractAction[];
+
 const actionLabels: Record<ContractAction, string> = {
-  check_in_pass: "check-in",
-  checkout_pass: "checkout or free claim",
-  publish_event: "event publish",
-  withdraw_balance: "collaborator withdraw",
+  check_in_pass: "Check-in",
+  checkout_pass: "Checkout / claim",
+  publish_event: "Publish",
+  withdraw_balance: "Withdraw",
 };
+
+export function getContractActionLabel(action: ContractAction) {
+  return actionLabels[action];
+}
 
 export class LiveContractActionRequiredError extends Error {
   readonly action: ContractAction;

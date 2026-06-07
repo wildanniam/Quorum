@@ -4,17 +4,13 @@ import {
   getRpcServer,
   normalizeContractError,
 } from "@/lib/stellar/contracts";
-import { getContractActionPolicy } from "@/lib/stellar/action-policy";
-
-const contractActions = [
-  "publish_event",
-  "checkout_pass",
-  "check_in_pass",
-  "withdraw_balance",
-] as const;
+import {
+  CONTRACT_ACTIONS,
+  getContractActionPolicy,
+} from "@/lib/stellar/action-policy";
 
 function getActionPolicies() {
-  return contractActions.map((action) => getContractActionPolicy(action));
+  return CONTRACT_ACTIONS.map((action) => getContractActionPolicy(action));
 }
 
 export async function GET() {
