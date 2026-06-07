@@ -254,23 +254,26 @@ Implement wallet-only auth and wallet readiness.
 
 ### Sub-phases
 
-#### 2.1 Integrate Stellar Wallets Kit
+#### 2.1 Integrate Freighter-first wallet adapter
 
 Tasks:
 
-- Add Stellar Wallets Kit dependency.
+- Evaluate Stellar Wallets Kit dependency health before adding it to the app.
+- Use direct Freighter API integration for MVP if the Wallets Kit dependency tree has unacceptable audit risk.
+- Add a wallet adapter boundary that can support Stellar Wallets Kit or WalletConnect later.
 - Configure Freighter as primary demo wallet.
-- Keep WalletConnect path available if low-friction.
+- Keep WalletConnect path deferred if package audit risk or setup friction is high.
 
 Verification:
 
-- Wallet connect modal/button renders.
+- Wallet dependency audit is reviewed.
+- Wallet connection button renders.
 - Freighter can be detected.
 
 Suggested commit:
 
 ```txt
-feat: integrate Stellar wallet kit
+feat: integrate Freighter wallet adapter
 ```
 
 #### 2.2 Implement Connect/Disconnect State
@@ -1293,7 +1296,7 @@ Fallbacks are allowed only when they preserve the core product thesis or are exp
 
 ### Allowed Technical Fallbacks
 
-- If WalletConnect adds risk, ship Freighter-first with Stellar Wallets Kit architecture still present.
+- If WalletConnect or Stellar Wallets Kit adds risk, ship Freighter-first with a wallet adapter boundary still present.
 - If wallet NFT display is unreliable, use Quorum pass page as canonical visual pass.
 - If QR dependency adds risk, use manual token verification code for MVP.
 - If dashboard real-time contract reads are slow, use DB cache plus explicit tx/proof links.

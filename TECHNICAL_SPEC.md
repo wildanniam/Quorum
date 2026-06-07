@@ -227,8 +227,9 @@ flowchart TD
 
     WebApp --> DB["App Database"]
     WebApp --> Storage["Metadata / Asset Storage"]
-    WebApp --> WalletKit["Stellar Wallets Kit"]
-    WalletKit --> Freighter["Freighter Demo Wallet"]
+    WebApp --> WalletAdapter["Wallet Adapter Boundary"]
+    WalletAdapter --> Freighter["Freighter Demo Wallet"]
+    WalletAdapter -. "post-MVP" .-> WalletKit["Stellar Wallets Kit / WalletConnect"]
 
     WebApp --> Core["QuorumCore Contract"]
     Core --> PassNFT["QuorumPassNFT Contract"]
@@ -852,10 +853,17 @@ Must show:
 
 ### Wallet Strategy
 
-- Use Stellar Wallets Kit as wallet abstraction.
+- Use an internal wallet adapter boundary so Quorum can support multiple Stellar wallets over time.
 - Freighter is the primary demo wallet.
-- WalletConnect support is allowed if it does not slow the MVP.
+- Direct Freighter API integration is acceptable for MVP if the current Stellar Wallets Kit dependency tree introduces unacceptable audit risk.
+- Stellar Wallets Kit and WalletConnect support should be revisited after the Freighter-first demo path is stable and dependency risk is acceptable.
 - Wallet-only auth; no email/password.
+
+Phase 2 correction record:
+
+- `@creit.tech/stellar-wallets-kit@2.3.0` was evaluated for MVP integration.
+- The package brought a large optional wallet dependency tree with npm audit findings including critical transitive issues.
+- MVP implementation therefore uses a Freighter-first adapter with `@stellar/freighter-api`, while preserving a future multi-wallet boundary.
 
 ### Session Strategy
 

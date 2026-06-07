@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowUpRight, WalletCards } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { navItems } from "@/lib/demo-data";
+import { WalletButton } from "@/components/wallet-button";
 
 type AppShellProps = {
   children: React.ReactNode;
@@ -35,10 +36,7 @@ export function AppShell({ children }: AppShellProps) {
             ))}
           </nav>
 
-          <button className="inline-flex min-h-10 items-center gap-2 border border-line bg-panel px-3 text-sm font-medium text-foreground transition hover:border-accent hover:text-accent">
-            <WalletCards size={16} />
-            <span className="hidden sm:inline">Connect wallet</span>
-          </button>
+          <WalletButton />
         </div>
       </header>
 

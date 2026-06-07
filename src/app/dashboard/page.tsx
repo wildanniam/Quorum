@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { WalletReadiness } from "@/components/wallet-readiness";
 import { dashboardCards, demoEvent } from "@/lib/demo-data";
 
 export default function DashboardPage() {
@@ -65,27 +66,30 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="border border-line bg-panel p-5">
-            <p className="font-mono text-xs uppercase tracking-normal text-muted">
-              Proof queue
-            </p>
-            <div className="mt-4 overflow-hidden border border-line">
-              {["publish", "purchase", "mint", "check-in", "withdraw"].map(
-                (item, index) => (
-                  <div
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line bg-background/30 p-3 last:border-b-0"
-                    key={item}
-                  >
-                    <span className="font-mono text-xs text-muted">
-                      0{index + 1}
-                    </span>
-                    <span className="capitalize">{item}</span>
-                    <span className="font-mono text-xs text-accent">
-                      pending
-                    </span>
-                  </div>
-                ),
-              )}
+          <div className="grid gap-5">
+            <WalletReadiness />
+            <div className="border border-line bg-panel p-5">
+              <p className="font-mono text-xs uppercase tracking-normal text-muted">
+                Proof queue
+              </p>
+              <div className="mt-4 overflow-hidden border border-line">
+                {["publish", "purchase", "mint", "check-in", "withdraw"].map(
+                  (item, index) => (
+                    <div
+                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line bg-background/30 p-3 last:border-b-0"
+                      key={item}
+                    >
+                      <span className="font-mono text-xs text-muted">
+                        0{index + 1}
+                      </span>
+                      <span className="capitalize">{item}</span>
+                      <span className="font-mono text-xs text-accent">
+                        pending
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
             </div>
           </div>
         </div>
