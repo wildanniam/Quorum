@@ -18,6 +18,14 @@ const requiredFiles = [
   "docs/MVP_READINESS.md",
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
+  "scripts/live-args-smoke.ts",
+  "scripts/live-persistence-smoke.ts",
+  "scripts/live-preflight-smoke.ts",
+  "scripts/live-xdr-smoke.ts",
+  "src/lib/stellar/live-action.ts",
+  "src/lib/stellar/live-encoding.ts",
+  "src/lib/stellar/live-preflight.ts",
+  "src/lib/stellar/live-xdr.ts",
 ];
 
 const requiredPackageScripts = [
@@ -92,6 +100,12 @@ const requiredLiveHandoffTerms = [
   "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
   "Acceptance Evidence For Live Mode",
   "Partial live mode must not mix live IDs with local proof writes",
+  "sourceSequence",
+  "live-preflight.ts",
+  "recordLivePublishedEvent",
+  "recordLivePass",
+  "recordLiveCheckIn",
+  "recordLiveWithdrawal",
 ];
 
 const failures = [];
@@ -271,6 +285,16 @@ function checkLiveBoundaries() {
 
   if (!readiness.includes("The testnet USDC token contract ID is confirmed")) {
     fail("MVP_READINESS does not list the USDC token contract ID live gate.");
+  }
+
+  for (const term of [
+    "Live RPC preflight can prepare transaction XDR for signing",
+    "Verified live transaction results can be recorded",
+    "Unsigned Soroban XDR templates are parseable",
+  ]) {
+    if (!readiness.includes(term)) {
+      fail(`MVP_READINESS is missing live readiness row: ${term}`);
+    }
   }
 
   if (!readiness.includes("not yet a complete live testnet submission")) {
