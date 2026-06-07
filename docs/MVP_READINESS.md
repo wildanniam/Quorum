@@ -83,7 +83,8 @@ deployment and signing:
 6. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
 7. Configure the hosted app environment and verify Freighter signing on the
    deployed URL.
-8. Record the approved live run in `docs/LIVE_TESTNET_EVIDENCE.json` and run
+8. Record pass deploy, core deploy, pass init, core init, pass `set_core`, and
+   app flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
    `npm run live:evidence:audit`.
 
 Until those steps are intentionally approved and executed, Quorum is demo-ready

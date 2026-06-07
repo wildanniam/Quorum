@@ -177,6 +177,8 @@ npm run contracts:init:testnet
 
 Until those values are configured, the web app uses local proof records that
 mirror the contract flow.
+The final live evidence packet must record the pass deploy, core deploy, pass
+init, core init, and pass `set_core` transaction hashes.
 
 ## Submission Evidence Checklist
 
@@ -185,6 +187,8 @@ mirror the contract flow.
 - `docs/MVP_READINESS.md`
 - contract WASM hashes from `npm run contracts:build`
 - `docs/LIVE_SIGNING_HANDOFF.md` for the remaining live transaction handoff
+- `docs/LIVE_TESTNET_EVIDENCE.example.json` as the machine-readable checklist
+  for approved live deployment and Freighter-signed transaction evidence
 - screenshot or short clip of marketplace, checkout, pass page, resources,
   check-in, dashboard, and withdrawal proof
 - deployed URL and contract IDs once funded deployment is approved

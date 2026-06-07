@@ -68,8 +68,9 @@ export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID="<printed core id>"
 npm run contracts:init:testnet
 ```
 
-Record the deployment transaction hashes, contract IDs, network, WASM hashes,
-and admin address in the final evidence packet.
+Record the pass deploy, core deploy, pass init, core init, and pass `set_core`
+transaction hashes, plus contract IDs, network, WASM hashes, and admin address
+in the final evidence packet.
 
 ## App Signing Architecture
 
@@ -197,6 +198,9 @@ Live mode is not complete until the evidence packet includes:
 - deployed app URL;
 - pass and core contract IDs;
 - confirmed testnet USDC contract ID;
+- pass deploy, core deploy, pass init, core init, and pass `set_core`
+  transaction hashes (`passDeployTxHash`, `coreDeployTxHash`,
+  `passInitTxHash`, `coreInitTxHash`, `passSetCoreTxHash`);
 - publish transaction hash for a paid event;
 - checkout transaction hash showing token transfer into `QuorumCore` escrow;
 - minted pass token ID from `QuorumPassNFT`;

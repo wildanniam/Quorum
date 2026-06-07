@@ -55,6 +55,10 @@ The init script signs transactions and performs:
 2. `QuorumCore.init(admin, platform_fee_bps)`;
 3. `QuorumPassNFT.set_core(admin, core_contract_id)`.
 
+Record the transaction hash for each deployment and initialization step in
+`docs/LIVE_TESTNET_EVIDENCE.json`: `passDeployTxHash`, `coreDeployTxHash`,
+`passInitTxHash`, `coreInitTxHash`, and `passSetCoreTxHash`.
+
 ## Current Boundary
 
 The contracts are fully unit-tested locally. Live testnet deployment is intentionally gated by wallet/funding approval.

@@ -152,6 +152,10 @@ npm run contracts:deploy:testnet
 npm run contracts:init:testnet
 ```
 
+After approved live signing, record the pass deploy, core deploy, pass init,
+core init, and pass `set_core` transaction hashes in
+`docs/LIVE_TESTNET_EVIDENCE.json`, then run `npm run live:evidence:audit`.
+
 ## Planning Docs
 
 - `TECHNICAL_SPEC.md`

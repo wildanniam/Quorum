@@ -197,6 +197,8 @@ const requiredLiveHandoffTerms = [
   "atomic-to-decimal",
   "LIVE_TESTNET_EVIDENCE.example.json",
   "live:evidence:audit",
+  "passInitTxHash",
+  "passSetCoreTxHash",
   "contract-action/preflight",
   "live-browser-flow.ts",
   "executeLiveBrowserContractAction",

@@ -21,7 +21,9 @@
   "deploymentTransactions": {
     "passDeployTxHash": "<64 hex transaction hash>",
     "coreDeployTxHash": "<64 hex transaction hash>",
-    "coreInitTxHash": "<64 hex transaction hash>"
+    "passInitTxHash": "<64 hex transaction hash>",
+    "coreInitTxHash": "<64 hex transaction hash>",
+    "passSetCoreTxHash": "<64 hex transaction hash>"
   },
   "liveFlows": {
     "publishPaidEvent": {
