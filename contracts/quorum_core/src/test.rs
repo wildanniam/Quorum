@@ -40,7 +40,7 @@ fn splits(
     ]
 }
 
-fn setup() -> Setup {
+fn setup_with_platform_fee(platform_fee_bps: u32) -> Setup {
     let env = Env::default();
     env.mock_all_auths();
 
@@ -58,7 +58,7 @@ fn setup() -> Setup {
 
     pass.init(&admin);
     pass.set_core(&admin, &core_id);
-    core.init(&admin, &500);
+    core.init(&admin, &platform_fee_bps);
     core.create_event(
         &organizer,
         &event_id,
@@ -84,6 +84,10 @@ fn setup() -> Setup {
     }
 }
 
+fn setup() -> Setup {
+    setup_with_platform_fee(500)
+}
+
 #[test]
 fn purchase_mints_pass_and_splits_balance() {
     let s = setup();
@@ -100,6 +104,21 @@ fn purchase_mints_pass_and_splits_balance() {
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 190);
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.partner), 95);
     assert_eq!(s.core.platform_balance(&s.currency), 50);
+}
+
+#[test]
+fn demo_zero_fee_routes_full_amount_to_collaborators() {
+    let s = setup_with_platform_fee(0);
+    let uri = String::from_str(&s.env, "ipfs://demo-pass-1");
+    let hash = BytesN::from_array(&s.env, &[7; 32]);
+
+    let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    assert_eq!(token_id, 1);
+    assert_eq!(s.core.collaborator_balance(&s.event_id, &s.organizer), 700);
+    assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 200);
+    assert_eq!(s.core.collaborator_balance(&s.event_id, &s.partner), 100);
+    assert_eq!(s.core.platform_balance(&s.currency), 0);
 }
 
 #[test]
