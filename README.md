@@ -56,6 +56,8 @@ npm run db:smoke
 npm run lint
 npm run build
 npm audit --audit-level=moderate
+cargo test
+stellar contract build
 ```
 
 ## Planning Docs
