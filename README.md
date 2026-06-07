@@ -6,7 +6,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 3 is complete. The app can create and update local draft events with wallet-owned organizer identity, collaborator split validation, and gated resource setup.
+Phase 4 is complete. The app can create, update, publish, and publicly list local events with wallet-owned organizer identity, collaborator split validation, and gated resource setup.
 
 Implemented in the app shell:
 
@@ -22,6 +22,8 @@ Implemented in the app shell:
 - signed wallet session API routes;
 - local SQLite migration foundation.
 - draft event create/update API routes;
+- publish-to-marketplace DB stub;
+- database-backed public marketplace and event detail pages;
 - collaborator percentage split setup;
 - gated resource setup.
 
