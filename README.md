@@ -73,6 +73,7 @@ npm run live:args:smoke
 npm run live:persistence:smoke
 npm run live:preflight:smoke
 npm run live:signing:smoke
+npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run evidence:local
 npm run readiness:audit
@@ -104,6 +105,10 @@ and return parseable XDR ready for wallet signing.
 `npm run live:signing:smoke` verifies the Freighter signing adapter with a mock
 signer, including address/network options, signer mismatch handling, wallet
 rejection normalization, and signed XDR parsing.
+
+`npm run live:submission:smoke` verifies the signed transaction submission and
+finality polling adapter with a mock RPC server, including rejection, failure,
+and timeout paths.
 
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live

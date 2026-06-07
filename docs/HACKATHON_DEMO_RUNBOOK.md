@@ -104,6 +104,7 @@ npm run live:args:smoke
 npm run live:persistence:smoke
 npm run live:preflight:smoke
 npm run live:signing:smoke
+npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run contracts:test
 npm run contracts:build
@@ -125,6 +126,8 @@ The live preflight smoke verifies signer sequence lookup and RPC
 prepare/simulation orchestration with a mock RPC server, without signing.
 The live signing smoke verifies the Freighter signing adapter with a mock
 signer, without opening Freighter or requesting a real wallet signature.
+The live submission smoke verifies signed transaction submission and finality
+polling with a mock RPC server, without submitting to testnet.
 
 ## Live Testnet Boundary
 
