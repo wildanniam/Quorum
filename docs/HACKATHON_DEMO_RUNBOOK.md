@@ -100,6 +100,7 @@ npm run build
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
+npm run live:args:smoke
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor

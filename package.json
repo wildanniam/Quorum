@@ -13,6 +13,7 @@
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "browser:qa": "node scripts/browser-qa.mjs",
+    "live:args:smoke": "tsx scripts/live-args-smoke.ts",
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
     "contracts:test": "cargo test",
@@ -44,6 +45,7 @@
     "eslint-config-next": "16.2.7",
     "playwright": "^1.60.0",
     "tailwindcss": "^4",
+    "tsx": "^4.22.4",
     "typescript": "^5"
   }
 }

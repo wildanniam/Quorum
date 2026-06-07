@@ -76,7 +76,8 @@ and admin address in the final evidence packet.
 The app should replace each `local_proof` mutation with a two-step live flow:
 
 1. Server prepares an unsigned Soroban transaction from validated DB/session
-   state.
+   state. Use `src/lib/stellar/live-encoding.ts` for deterministic event IDs,
+   USDC atomic units, split bps, metadata hashes, and action argument DTOs.
 2. Browser asks Freighter to sign the prepared transaction.
 3. Server or browser submits the signed transaction to RPC.
 4. Server verifies the result, then stores the real transaction hash, token ID,
@@ -94,6 +95,9 @@ The current action policy is the switch point:
 Keep the fail-safe behavior until every row above has a real transaction path.
 Partial live mode must not mix live IDs with local proof writes for these
 actions.
+
+Run `npm run live:args:smoke` before wiring Freighter signing to verify the
+non-signing argument encoding boundary.
 
 ## Contract Call Inputs
 

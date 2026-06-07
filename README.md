@@ -69,6 +69,7 @@ npm audit --audit-level=moderate
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
+npm run live:args:smoke
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -82,6 +83,9 @@ npm run contracts:doctor
 
 `npm run browser:qa` runs a headless browser across desktop/mobile viewport
 checks and regenerates `docs/BROWSER_QA.md`.
+
+`npm run live:args:smoke` verifies deterministic contract argument encoding for
+future Freighter-signed publish, checkout, check-in, and withdraw flows.
 
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 

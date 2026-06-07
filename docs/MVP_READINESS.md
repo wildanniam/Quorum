@@ -19,8 +19,8 @@ Quorum is considered locally demo-ready when these criteria pass:
 7. Organizer, attendee, collaborator, and proof readiness dashboard surfaces are
    visible in the app.
 8. Local DB, lint, build, audit, demo smoke, live policy smoke, browser QA,
-   contract tests, contract build, and deployment doctor checks pass with live
-   signing exceptions documented.
+   live args smoke, contract tests, contract build, and deployment doctor checks
+   pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
 The live hackathon acceptance criteria add two gated requirements:
@@ -54,7 +54,8 @@ The live hackathon acceptance criteria add two gated requirements:
 | Organizer can check in pass | Verified local, contract-ready | `npm run demo:smoke` covers organizer check-in and duplicate guard; `QuorumCore` tests cover organizer-only, unknown token, cross-event mismatch, and idempotent duplicate check-in. |
 | Collaborator can see balance and withdraw | Verified local, contract-ready | `npm run demo:smoke` covers collaborator withdraw and duplicate empty-balance guard; `QuorumCore` tests cover collaborator balance, token transfer out of escrow, platform fee withdrawal, and zero-balance rejection. |
 | Dashboards show proof surfaces | Verified local | `npm run demo:smoke` covers `dashboard-proof`; `npm run browser:qa` verifies dashboard proof mode and readiness panels. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, contract tests, contract build, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
+| Live contract argument encoding is deterministic | Verified local | `npm run live:args:smoke` covers USDC atomic conversion, event ID derivation, split bps, metadata hashes, and publish/checkout/check-in/withdraw argument DTOs without signing. |
+| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, contract tests, contract build, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`. |
 
 ## Live Testnet Gate
