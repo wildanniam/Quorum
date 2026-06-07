@@ -37,6 +37,7 @@ const requiredPackageScripts = [
   "lint",
   "live:args:smoke",
   "live:persistence:smoke",
+  "live:preflight:smoke",
   "live:xdr:smoke",
   "readiness:audit",
 ];
@@ -53,6 +54,7 @@ const requiredEvidenceChecks = [
   "Browser QA",
   "Live args smoke",
   "Live persistence smoke",
+  "Live preflight smoke",
   "Live XDR smoke",
   "Contract tests",
   "Contract build",

@@ -105,14 +105,16 @@ Partial live mode must not mix live IDs with local proof writes for these
 actions.
 
 Run `npm run live:args:smoke`, `npm run live:xdr:smoke`,
-`npm run live:persistence:smoke`, and `npm run demo:live-policy` before wiring
-Freighter signing to verify the non-signing argument encoding, XDR template,
+`npm run live:preflight:smoke`, `npm run live:persistence:smoke`, and
+`npm run demo:live-policy` before wiring Freighter signing to verify the
+non-signing argument encoding, XDR template, pre-signing RPC preflight,
 post-success persistence, and preparation boundaries.
 
 Before asking Freighter to sign, the live implementation must fetch the
 signer's current account sequence from testnet, simulate the Soroban transaction
 through RPC, assemble the simulated transaction data, and only then request the
-wallet signature.
+wallet signature. `src/lib/stellar/live-preflight.ts` implements that
+pre-signing orchestration behind a mockable RPC boundary.
 
 ## Contract Call Inputs
 

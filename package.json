@@ -15,6 +15,7 @@
     "browser:qa": "node scripts/browser-qa.mjs",
     "live:args:smoke": "tsx scripts/live-args-smoke.ts",
     "live:persistence:smoke": "tsx scripts/live-persistence-smoke.ts",
+    "live:preflight:smoke": "tsx scripts/live-preflight-smoke.ts",
     "live:xdr:smoke": "tsx scripts/live-xdr-smoke.ts",
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
