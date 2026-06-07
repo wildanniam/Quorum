@@ -1,4 +1,9 @@
-import { StrKey, TransactionBuilder } from "@stellar/stellar-sdk";
+import {
+  StrKey,
+  Transaction,
+  TransactionBuilder,
+  type FeeBumpTransaction,
+} from "@stellar/stellar-sdk";
 import type { LiveTransactionForSigning } from "@/lib/stellar/live-preflight";
 
 export type FreighterLiveSigner = {
@@ -41,9 +46,73 @@ export class FreighterLiveSigningError extends Error {
 
 function assertParseableTransactionXdr(xdr: string, networkPassphrase: string) {
   try {
-    TransactionBuilder.fromXDR(xdr, networkPassphrase);
+    return TransactionBuilder.fromXDR(xdr, networkPassphrase);
   } catch (error) {
     throw new FreighterLiveSigningError(normalizeError(error));
+  }
+}
+
+function getSubmittedTransaction(transaction: Transaction | FeeBumpTransaction) {
+  return transaction instanceof Transaction
+    ? transaction
+    : transaction.innerTransaction;
+}
+
+function assertTransactionMatchesPrepared({
+  label,
+  preparedTransaction,
+  transaction,
+}: {
+  label: string;
+  preparedTransaction: LiveTransactionForSigning;
+  transaction: Transaction | FeeBumpTransaction;
+}) {
+  const submittedTransaction = getSubmittedTransaction(transaction);
+  const [operation] = submittedTransaction.operations;
+
+  if (submittedTransaction.source !== preparedTransaction.source) {
+    throw new FreighterLiveSigningError(
+      `${label} source does not match the prepared transaction source.`,
+    );
+  }
+
+  if (submittedTransaction.operations.length !== 1 || !operation) {
+    throw new FreighterLiveSigningError(
+      `${label} must contain exactly one live contract invocation.`,
+    );
+  }
+
+  if (
+    operation.type !== "invokeHostFunction" ||
+    operation.func.switch().name !== "hostFunctionTypeInvokeContract"
+  ) {
+    throw new FreighterLiveSigningError(
+      `${label} is not a live contract invocation.`,
+    );
+  }
+
+  const invocation = operation.func.invokeContract();
+  const contractAddress = invocation.contractAddress();
+
+  if (contractAddress.switch().name !== "scAddressTypeContract") {
+    throw new FreighterLiveSigningError(
+      `${label} does not target a contract address.`,
+    );
+  }
+
+  const contractId = StrKey.encodeContract(contractAddress.contractId());
+  const functionName = invocation.functionName().toString();
+
+  if (contractId !== preparedTransaction.contractId) {
+    throw new FreighterLiveSigningError(
+      `${label} contract ID does not match the prepared transaction.`,
+    );
+  }
+
+  if (functionName !== preparedTransaction.functionName) {
+    throw new FreighterLiveSigningError(
+      `${label} function does not match the prepared transaction.`,
+    );
   }
 }
 
@@ -66,10 +135,15 @@ export async function signPreparedLiveTransaction({
     );
   }
 
-  assertParseableTransactionXdr(
+  const parsedPreparedTransaction = assertParseableTransactionXdr(
     preparedTransaction.preparedTransactionXdr,
     preparedTransaction.networkPassphrase,
   );
+  assertTransactionMatchesPrepared({
+    label: "Prepared transaction XDR",
+    preparedTransaction,
+    transaction: parsedPreparedTransaction,
+  });
 
   const signed = await liveSigner.signTransaction(
     preparedTransaction.preparedTransactionXdr,
@@ -93,10 +167,15 @@ export async function signPreparedLiveTransaction({
     throw new FreighterLiveSigningError("Freighter did not return signed XDR.");
   }
 
-  assertParseableTransactionXdr(
+  const parsedSignedTransaction = assertParseableTransactionXdr(
     signed.signedTxXdr,
     preparedTransaction.networkPassphrase,
   );
+  assertTransactionMatchesPrepared({
+    label: "Freighter signed XDR",
+    preparedTransaction,
+    transaction: parsedSignedTransaction,
+  });
 
   return {
     action: preparedTransaction.action,

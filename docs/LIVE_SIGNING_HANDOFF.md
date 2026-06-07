@@ -129,7 +129,8 @@ wallet signature. `src/lib/stellar/live-preflight.ts` implements that
 pre-signing orchestration behind a mockable RPC boundary.
 `src/lib/stellar/freighter-live-signing.ts` implements the browser-side
 Freighter `signTransaction` boundary and validates signer address, wallet
-errors, and returned XDR before submission.
+errors, prepared XDR source/contract/function metadata before opening the wallet
+prompt, and returned XDR before submission.
 `src/lib/stellar/live-submission.ts` implements the RPC `sendTransaction` and
 `getTransaction` finality polling boundary for signed XDR, including Soroban
 return value decoding for purchase token IDs and withdraw amounts. Before any

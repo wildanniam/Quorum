@@ -141,7 +141,8 @@ real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC
 prepare/simulation orchestration with a mock RPC server, without signing.
 The live signing smoke verifies the Freighter signing adapter with a mock
-signer, without opening Freighter or requesting a real wallet signature.
+signer, including prepared XDR source/contract/function guards before wallet
+signing, without opening Freighter or requesting a real wallet signature.
 The live submission smoke verifies signed transaction submission and finality
 polling with a mock RPC server, including purchase token ID and withdraw amount
 return value decoding plus source wallet and contract/function mismatch

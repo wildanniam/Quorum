@@ -138,6 +138,12 @@ const requiredLivePolicyCoverage = [
   "check-in-short-live-token-required",
 ];
 
+const requiredLiveSigningCoverage = [
+  "reject-prepared-xdr-function-mismatch-before-wallet",
+  "reject-prepared-xdr-contract-mismatch-before-wallet",
+  "reject-signed-xdr-function-mismatch",
+];
+
 const requiredLiveSubmissionCoverage = [
   "reject-source-mismatch-before-rpc",
   "reject-function-mismatch-before-rpc",
@@ -329,6 +335,12 @@ function checkEvidence() {
   for (const coverage of requiredLivePolicyCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live policy coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveSigningCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live signing coverage: ${coverage}`);
     }
   }
 

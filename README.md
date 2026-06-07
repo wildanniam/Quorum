@@ -114,8 +114,9 @@ mock server: fetch signer sequence, prepare/simulate the Soroban transaction,
 and return parseable XDR ready for wallet signing.
 
 `npm run live:signing:smoke` verifies the Freighter signing adapter with a mock
-signer, including address/network options, signer mismatch handling, wallet
-rejection normalization, and signed XDR parsing.
+signer, including address/network options, prepared XDR source/contract/function
+guards before wallet signing, signer mismatch handling, wallet rejection
+normalization, and returned signed XDR validation.
 
 `npm run live:submission:smoke` verifies the signed transaction submission and
 finality polling adapter with a mock RPC server, including source wallet,

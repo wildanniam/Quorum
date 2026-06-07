@@ -63,6 +63,25 @@ async function main() {
     preparedAction,
     rpcServer: mockRpc,
   });
+  const withdrawPreparedTransaction = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      action: "withdraw_balance",
+      args: {
+        collaborator: attendeeWallet,
+        eventIdHex,
+      },
+      functionName: "withdraw",
+    },
+    rpcServer: mockRpc,
+  });
+  const otherContractPreparedTransaction = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      contractId: fakePassContractId,
+    },
+    rpcServer: mockRpc,
+  });
   let signCalls = 0;
 
   const signer: FreighterLiveSigner = {
@@ -146,6 +165,89 @@ async function main() {
     },
   );
 
+  let preparedMismatchSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction: {
+          ...preparedTransaction,
+          preparedTransactionXdr:
+            withdrawPreparedTransaction.preparedTransactionXdr,
+        },
+        signer: {
+          async signTransaction(transactionXdr) {
+            preparedMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /function/);
+      return true;
+    },
+  );
+  assert.equal(preparedMismatchSignCalls, 0);
+
+  let preparedContractMismatchSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction: {
+          ...preparedTransaction,
+          preparedTransactionXdr:
+            otherContractPreparedTransaction.preparedTransactionXdr,
+        },
+        signer: {
+          async signTransaction(transactionXdr) {
+            preparedContractMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /contract ID/);
+      return true;
+    },
+  );
+  assert.equal(preparedContractMismatchSignCalls, 0);
+
+  let signedMismatchSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction,
+        signer: {
+          async signTransaction() {
+            signedMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: withdrawPreparedTransaction.preparedTransactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /function/);
+      return true;
+    },
+  );
+  assert.equal(signedMismatchSignCalls, 1);
+
   console.log(
     JSON.stringify(
       {
@@ -156,6 +258,9 @@ async function main() {
           "reject-signer-mismatch",
           "normalize-wallet-rejection",
           "reject-invalid-prepared-xdr",
+          "reject-prepared-xdr-function-mismatch-before-wallet",
+          "reject-prepared-xdr-contract-mismatch-before-wallet",
+          "reject-signed-xdr-function-mismatch",
         ],
         signedXdrLength: signed.signedTransactionXdr.length,
         signerAddress: signed.signerAddress,
