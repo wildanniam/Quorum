@@ -69,6 +69,7 @@ npm audit --audit-level=moderate
 npm run demo:smoke
 npm run demo:live-policy
 npm run evidence:local
+npm run readiness:audit
 cargo test
 stellar contract build
 npm run contracts:doctor
@@ -81,6 +82,10 @@ npm run contracts:doctor
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 
 `npm run evidence:local` runs the local verification suite and writes `docs/DEMO_EVIDENCE.md`.
+
+`npm run readiness:audit` is a non-signing final consistency check for the
+local evidence packet, readiness docs, live approval gates, and contract doctor
+output.
 
 Live testnet deployment signs transactions and is intentionally gated by funded
 wallet approval:

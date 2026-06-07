@@ -13,6 +13,7 @@
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "evidence:local": "node scripts/collect-evidence.mjs",
+    "readiness:audit": "node scripts/readiness-audit.mjs",
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
     "contracts:doctor": "node scripts/contracts/doctor.mjs",

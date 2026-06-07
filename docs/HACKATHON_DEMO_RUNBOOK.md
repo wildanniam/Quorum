@@ -103,6 +103,7 @@ npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
 npm run evidence:local
+npm run readiness:audit
 ```
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
