@@ -172,6 +172,8 @@ async function main() {
 
   const env = {
     DATABASE_URL: databaseUrl,
+    NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: "",
+    NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
   };
 
@@ -292,6 +294,10 @@ async function main() {
       publishBody?.event?.publishTxHash?.startsWith("stub:publish:"),
       "published event should record publish proof",
     );
+    assert(
+      publishBody?.executionMode === "local_proof",
+      "publish should declare local proof execution mode",
+    );
 
     const duplicatePublish = await fetch(
       `${baseUrl}/api/events/${draftEventId}/publish`,
@@ -321,6 +327,12 @@ async function main() {
       contractStatusBody?.configured === false,
       "contract status should remain unconfigured without contract IDs",
     );
+    assert(
+      contractStatusBody?.actions?.every(
+        (action) => action.executionMode === "local_proof",
+      ),
+      "contract status should declare local proof actions before deployment",
+    );
 
     const checkout = await fetch(
       `${baseUrl}/api/events/${eventId}/passes`,
@@ -336,6 +348,10 @@ async function main() {
     assert(
       checkoutBody?.purchase?.txHash?.startsWith("stub:purchase:"),
       "checkout should record purchase proof",
+    );
+    assert(
+      checkoutBody?.executionMode === "local_proof",
+      "checkout should declare local proof execution mode",
     );
 
     const duplicateCheckout = await fetch(
@@ -369,6 +385,10 @@ async function main() {
     assert(
       freeClaimBody?.purchase?.txHash?.startsWith("stub:free_claim:"),
       "free claim should record claim proof",
+    );
+    assert(
+      freeClaimBody?.executionMode === "local_proof",
+      "free claim should declare local proof execution mode",
     );
 
     const duplicateFreeClaim = await fetch(
@@ -425,6 +445,10 @@ async function main() {
     assert(
       checkInBody?.checkIn?.txHash?.startsWith("stub:check-in:"),
       "check-in should record proof hash",
+    );
+    assert(
+      checkInBody?.executionMode === "local_proof",
+      "check-in should declare local proof execution mode",
     );
 
     const duplicateCheckIn = await fetch(
@@ -487,6 +511,10 @@ async function main() {
       withdrawalBody?.withdrawal?.txHash?.startsWith("stub:withdraw:"),
       "withdrawal should record proof hash",
     );
+    assert(
+      withdrawalBody?.executionMode === "local_proof",
+      "withdrawal should declare local proof execution mode",
+    );
 
     const duplicateWithdrawal = await fetch(
       `${baseUrl}/api/events/${eventId}/withdrawals`,
@@ -529,6 +557,7 @@ async function main() {
             "draft-validation",
             "publish-lifecycle",
             "contract-status",
+            "contract-action-policy",
             "checkout",
             "duplicate-checkout-guard",
             "free-claim",

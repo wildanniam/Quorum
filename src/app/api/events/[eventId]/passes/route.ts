@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { createLocalPassProof } from "@/lib/events/repository";
+import {
+  assertLocalProofAction,
+  isLiveContractActionRequired,
+} from "@/lib/stellar/action-policy";
 
 type PassRouteContext = {
   params: Promise<{
@@ -29,11 +33,25 @@ export async function POST(request: NextRequest, context: PassRouteContext) {
   const { eventId } = await context.params;
 
   try {
+    const policy = assertLocalProofAction("checkout_pass");
+    const result = createLocalPassProof(eventId, session.walletAddress);
+
     return NextResponse.json(
-      createLocalPassProof(eventId, session.walletAddress),
+      { ...result, executionMode: policy.executionMode, proofMode: policy.proofMode },
       { status: 201 },
     );
   } catch (error) {
+    if (isLiveContractActionRequired(error)) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          executionMode: error.executionMode,
+          proofMode: error.proofMode,
+        },
+        { status: 501 },
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Could not create event pass.";
 

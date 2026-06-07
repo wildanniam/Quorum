@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { publishDraftEventStub } from "@/lib/events/repository";
+import {
+  assertLocalProofAction,
+  isLiveContractActionRequired,
+} from "@/lib/stellar/action-policy";
 
 type PublishRouteContext = {
   params: Promise<{
@@ -22,10 +26,26 @@ export async function POST(request: NextRequest, context: PublishRouteContext) {
   const { eventId } = await context.params;
 
   try {
-    return NextResponse.json(
-      publishDraftEventStub(eventId, session.walletAddress),
-    );
+    const policy = assertLocalProofAction("publish_event");
+    const result = publishDraftEventStub(eventId, session.walletAddress);
+
+    return NextResponse.json({
+      ...result,
+      executionMode: policy.executionMode,
+      proofMode: policy.proofMode,
+    });
   } catch (error) {
+    if (isLiveContractActionRequired(error)) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          executionMode: error.executionMode,
+          proofMode: error.proofMode,
+        },
+        { status: 501 },
+      );
+    }
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Could not publish event.",

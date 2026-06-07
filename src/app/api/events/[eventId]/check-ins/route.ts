@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { markLocalPassCheckedIn } from "@/lib/events/repository";
+import {
+  assertLocalProofAction,
+  isLiveContractActionRequired,
+} from "@/lib/stellar/action-policy";
 
 type CheckInRouteContext = {
   params: Promise<{
@@ -44,15 +48,29 @@ export async function POST(request: NextRequest, context: CheckInRouteContext) {
   const { eventId } = await context.params;
 
   try {
+    const policy = assertLocalProofAction("check_in_pass");
+    const result = markLocalPassCheckedIn({
+      checkedInByWallet: session.walletAddress,
+      eventId,
+      tokenId: parsed.data.tokenId,
+    });
+
     return NextResponse.json(
-      markLocalPassCheckedIn({
-        checkedInByWallet: session.walletAddress,
-        eventId,
-        tokenId: parsed.data.tokenId,
-      }),
+      { ...result, executionMode: policy.executionMode, proofMode: policy.proofMode },
       { status: 201 },
     );
   } catch (error) {
+    if (isLiveContractActionRequired(error)) {
+      return NextResponse.json(
+        {
+          error: error.message,
+          executionMode: error.executionMode,
+          proofMode: error.proofMode,
+        },
+        { status: 501 },
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : "Could not check in pass.";
 
