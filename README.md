@@ -6,7 +6,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 4 is complete. The app can create, update, publish, and publicly list local events with wallet-owned organizer identity, collaborator split validation, and gated resource setup.
+Phase 5 is complete. The app can create, update, publish, and publicly list local events, and the Soroban contracts cover event registry, NFT pass minting, split accounting, withdraw accounting, and check-in.
 
 Implemented in the app shell:
 
@@ -25,11 +25,12 @@ Implemented in the app shell:
 - publish-to-marketplace DB stub;
 - database-backed public marketplace and event detail pages;
 - collaborator percentage split setup;
-- gated resource setup.
+- gated resource setup;
+- `QuorumPassNFT` Soroban contract;
+- `QuorumCore` Soroban contract.
 
 Not implemented yet:
 
-- Soroban contracts;
 - real checkout;
 - real NFT minting;
 - real on-chain check-in.
