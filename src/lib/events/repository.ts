@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { getDatabase } from "@/lib/db/client";
 import { createId } from "@/lib/db/ids";
 import type {
+  CheckInRecord,
   CollaboratorRecord,
   EventRecord,
   LocationType,
@@ -88,6 +89,16 @@ type PurchaseRow = {
   token_id: string | null;
   tx_hash: string | null;
   status: "pending" | "succeeded" | "failed";
+  created_at: string;
+};
+
+type CheckInRow = {
+  id: string;
+  event_id: string;
+  token_id: string;
+  owner_wallet: string;
+  checked_in_by_wallet: string;
+  tx_hash: string | null;
   created_at: string;
 };
 
@@ -229,6 +240,18 @@ function toPurchaseRecord(row: PurchaseRow): PurchaseRecord {
     tokenId: row.token_id,
     txHash: row.tx_hash,
     status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+function toCheckInRecord(row: CheckInRow): CheckInRecord {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    tokenId: row.token_id,
+    ownerWallet: row.owner_wallet,
+    checkedInByWallet: row.checked_in_by_wallet,
+    txHash: row.tx_hash,
     createdAt: row.created_at,
   };
 }
@@ -744,6 +767,98 @@ export function getPassByTokenId(tokenId: string) {
     pass: toPassRecord(passRow),
     purchase: purchaseRow ? toPurchaseRecord(purchaseRow) : null,
   };
+}
+
+export function listCheckInsForEvent(eventId: string) {
+  return (
+    getDatabase()
+      .prepare(
+        "SELECT * FROM check_ins WHERE event_id = ? ORDER BY created_at DESC",
+      )
+      .all(eventId) as CheckInRow[]
+  ).map(toCheckInRecord);
+}
+
+export function markLocalPassCheckedIn({
+  checkedInByWallet,
+  eventId,
+  tokenId,
+}: {
+  checkedInByWallet: string;
+  eventId: string;
+  tokenId: string;
+}) {
+  assertWalletAddress(checkedInByWallet);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Only published events can be checked in.");
+    }
+
+    if (event.organizerWallet !== checkedInByWallet) {
+      throw new Error("Only the event organizer can check in passes.");
+    }
+
+    const passRow = db
+      .prepare("SELECT * FROM passes WHERE event_id = ? AND token_id = ?")
+      .get(eventId, tokenId) as PassRow | undefined;
+
+    if (!passRow) {
+      throw new Error("Pass not found for this event.");
+    }
+
+    if (passRow.checked_in === 1) {
+      throw new Error("Pass is already checked in.");
+    }
+
+    const checkInId = createId("chk");
+    const txHash = `stub:check-in:${eventId}:${checkInId}`;
+
+    db.prepare(
+      `
+      INSERT INTO check_ins (
+        id, event_id, token_id, owner_wallet, checked_in_by_wallet, tx_hash
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      checkInId,
+      eventId,
+      tokenId,
+      passRow.owner_wallet,
+      checkedInByWallet,
+      txHash,
+    );
+
+    db.prepare(
+      "UPDATE passes SET checked_in = 1 WHERE event_id = ? AND token_id = ?",
+    ).run(eventId, tokenId);
+
+    const checkIn = db
+      .prepare("SELECT * FROM check_ins WHERE id = ?")
+      .get(checkInId) as CheckInRow;
+    const pass = db
+      .prepare("SELECT * FROM passes WHERE id = ?")
+      .get(passRow.id) as PassRow;
+
+    return {
+      checkIn: toCheckInRecord(checkIn),
+      event,
+      pass: toPassRecord(pass),
+    };
+  })();
 }
 
 export function createLocalPassProof(eventId: string, ownerWallet: string) {
