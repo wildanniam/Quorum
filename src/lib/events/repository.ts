@@ -226,6 +226,26 @@ export function createDraftEvent(input: CreateDraftEventInput) {
   return getEventById(id);
 }
 
+export function createDraftEventWithCollaborators(
+  input: CreateDraftEventInput,
+  collaborators: UpsertCollaboratorInput[],
+) {
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const event = createDraftEvent(input);
+
+    for (const collaborator of collaborators) {
+      addCollaborator(event.id, collaborator);
+    }
+
+    return {
+      event,
+      collaborators: listCollaborators(event.id),
+    };
+  })();
+}
+
 export function getEventById(id: string) {
   const row = getDatabase().prepare("SELECT * FROM events WHERE id = ?").get(id) as
     | EventRow
@@ -293,7 +313,11 @@ export function addCollaborator(
       input.splitPercentage,
     );
 
-  return listCollaborators(eventId).find((collaborator) => collaborator.id === id);
+  const row = getDatabase()
+    .prepare("SELECT * FROM collaborators WHERE id = ?")
+    .get(id) as CollaboratorRow;
+
+  return toCollaboratorRecord(row);
 }
 
 export function listCollaborators(eventId: string) {

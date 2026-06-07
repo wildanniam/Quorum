@@ -1,7 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CalendarPlus, CheckCircle2, Loader2, WalletCards } from "lucide-react";
+import {
+  CalendarPlus,
+  CheckCircle2,
+  Loader2,
+  Percent,
+  Plus,
+  Trash2,
+  WalletCards,
+} from "lucide-react";
 import { useWallet } from "@/components/wallet-provider";
 
 type DraftResponse = {
@@ -11,13 +19,32 @@ type DraftResponse = {
     title: string;
     status: string;
   };
+  collaborators?: Array<{
+    id: string;
+    displayName: string;
+    role: string;
+    walletAddress: string;
+    splitPercentage: number;
+  }>;
   error?: string;
   issues?: Array<{ path: string; message: string }>;
+};
+
+type CollaboratorFormRow = {
+  displayName: string;
+  role: string;
+  walletAddress: string;
+  splitPercentage: string;
 };
 
 const inputClass =
   "min-h-11 w-full border border-line bg-background/60 px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent";
 const labelClass = "text-sm font-medium text-foreground";
+const sampleCollaboratorWallets = [
+  "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF",
+  "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH",
+  "GBUSN4MX7AE3RKAR4DEJEELBAQ4CZ3Q6PZ4QEU7RW3SQ7OX6ZFSIDGER",
+];
 
 function defaultDateTime(offsetHours: number) {
   const date = new Date(Date.now() + offsetHours * 60 * 60 * 1000);
@@ -33,6 +60,26 @@ export function CreateEventForm() {
   const [mode, setMode] = useState<"paid" | "free">("paid");
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<DraftResponse | null>(null);
+  const [collaborators, setCollaborators] = useState<CollaboratorFormRow[]>([
+    {
+      displayName: "Jakarta Stellar Guild",
+      role: "Organizer",
+      walletAddress: sampleCollaboratorWallets[0],
+      splitPercentage: "70",
+    },
+    {
+      displayName: "Soroban Mentor",
+      role: "Speaker",
+      walletAddress: sampleCollaboratorWallets[1],
+      splitPercentage: "20",
+    },
+    {
+      displayName: "SEA Builders",
+      role: "Community Partner",
+      walletAddress: sampleCollaboratorWallets[2],
+      splitPercentage: "10",
+    },
+  ]);
   const [form, setForm] = useState({
     title: "APAC Stellar Builder Meetup",
     eventType: "Web3 meetup",
@@ -50,7 +97,25 @@ export function CreateEventForm() {
     capacity: "80",
   });
 
-  const canSubmit = Boolean(sessionWalletAddress) && !submitting;
+  const collaboratorRows = useMemo(
+    () =>
+      collaborators.map((collaborator, index) =>
+        index === 0 && sessionWalletAddress
+          ? { ...collaborator, walletAddress: sessionWalletAddress }
+          : collaborator,
+      ),
+    [collaborators, sessionWalletAddress],
+  );
+  const splitTotal = useMemo(
+    () =>
+      collaboratorRows.reduce(
+        (total, collaborator) => total + Number(collaborator.splitPercentage || 0),
+        0,
+      ),
+    [collaboratorRows],
+  );
+  const splitReady = Math.abs(splitTotal - 100) < 0.001;
+  const canSubmit = Boolean(sessionWalletAddress) && !submitting && splitReady;
   const issueText = useMemo(() => {
     if (!result?.issues?.length) return null;
     return result.issues.map((issue) => issue.message).join(" ");
@@ -58,6 +123,40 @@ export function CreateEventForm() {
 
   function updateForm(name: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
+  }
+
+  function updateCollaborator(
+    index: number,
+    name: keyof CollaboratorFormRow,
+    value: string,
+  ) {
+    setCollaborators((current) =>
+      current.map((collaborator, collaboratorIndex) =>
+        collaboratorIndex === index
+          ? { ...collaborator, [name]: value }
+          : collaborator,
+      ),
+    );
+  }
+
+  function addCollaboratorRow() {
+    setCollaborators((current) => [
+      ...current,
+      {
+        displayName: "",
+        role: "",
+        walletAddress: "",
+        splitPercentage: "0",
+      },
+    ]);
+  }
+
+  function removeCollaboratorRow(index: number) {
+    setCollaborators((current) =>
+      current.length === 1
+        ? current
+        : current.filter((_, collaboratorIndex) => collaboratorIndex !== index),
+    );
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -75,6 +174,10 @@ export function CreateEventForm() {
         isFree: mode === "free",
         priceUsdc: mode === "free" ? "0" : form.priceUsdc,
         capacity: Number(form.capacity),
+        collaborators: collaboratorRows.map((collaborator) => ({
+          ...collaborator,
+          splitPercentage: Number(collaborator.splitPercentage),
+        })),
       }),
     });
     const payload = (await response.json()) as DraftResponse;
@@ -272,11 +375,125 @@ export function CreateEventForm() {
         </div>
       </div>
 
+      <div className="border border-line bg-panel p-5">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-mono text-xs uppercase tracking-normal text-muted">
+              Collaborators
+            </p>
+            <p className="mt-2 text-2xl font-semibold">Split {splitTotal}%</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <div
+              className={`inline-flex min-h-10 items-center gap-2 border px-3 text-sm font-medium ${
+                splitReady
+                  ? "border-accent text-accent"
+                  : "border-coral text-coral"
+              }`}
+            >
+              <Percent size={16} />
+              100% required
+            </div>
+            <button
+              className="inline-flex min-h-10 items-center gap-2 border border-line bg-background/40 px-3 text-sm font-medium transition hover:border-accent hover:text-accent"
+              onClick={addCollaboratorRow}
+              type="button"
+            >
+              <Plus size={16} />
+              Add
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {collaboratorRows.map((collaborator, index) => (
+            <div
+              className="grid gap-3 border border-line bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.5fr_0.45fr_auto]"
+              key={`${collaborator.role}-${index}`}
+            >
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Name
+                </span>
+                <input
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateCollaborator(index, "displayName", event.target.value)
+                  }
+                  required
+                  value={collaborator.displayName}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Role
+                </span>
+                <input
+                  className={inputClass}
+                  onChange={(event) =>
+                    updateCollaborator(index, "role", event.target.value)
+                  }
+                  required
+                  value={collaborator.role}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Wallet
+                </span>
+                <input
+                  className={`${inputClass} font-mono text-xs`}
+                  onChange={(event) =>
+                    updateCollaborator(index, "walletAddress", event.target.value)
+                  }
+                  readOnly={index === 0 && Boolean(sessionWalletAddress)}
+                  required
+                  value={collaborator.walletAddress}
+                />
+              </label>
+              <label className="grid gap-2">
+                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                  Split
+                </span>
+                <input
+                  className={inputClass}
+                  min="0"
+                  onChange={(event) =>
+                    updateCollaborator(
+                      index,
+                      "splitPercentage",
+                      event.target.value,
+                    )
+                  }
+                  required
+                  step="0.01"
+                  type="number"
+                  value={collaborator.splitPercentage}
+                />
+              </label>
+              <div className="flex items-end">
+                <button
+                  aria-label="Remove collaborator"
+                  className="grid min-h-11 w-full place-items-center border border-line bg-panel text-muted transition hover:border-coral hover:text-coral lg:w-11"
+                  onClick={() => removeCollaboratorRow(index)}
+                  type="button"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {result?.event ? (
         <div className="grid grid-cols-[auto_1fr] items-center gap-3 border border-accent/60 bg-accent/10 p-4 text-sm">
           <CheckCircle2 className="text-accent" size={20} />
           <span>
             Draft saved: <span className="font-medium">{result.event.title}</span>
+            {result.collaborators?.length
+              ? ` with ${result.collaborators.length} collaborators`
+              : ""}
           </span>
         </div>
       ) : null}

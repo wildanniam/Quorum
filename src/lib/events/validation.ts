@@ -13,6 +13,11 @@ const dateTime = z.string().trim().refine((value) => !Number.isNaN(Date.parse(va
   message: "Enter a valid date and time.",
 });
 
+const walletAddress = z
+  .string()
+  .trim()
+  .regex(/^G[A-Z2-7]{55}$/, "Enter a valid Stellar public wallet address.");
+
 export const createDraftEventRequestSchema = z
   .object({
     title: z.string().trim().min(3).max(120),
@@ -36,6 +41,17 @@ export const createDraftEventRequestSchema = z
       .trim()
       .regex(/^\d+(\.\d{1,2})?$/, "Use a USDC amount with up to 2 decimals."),
     capacity: z.coerce.number().int().min(1).max(10000),
+    collaborators: z
+      .array(
+        z.object({
+          displayName: z.string().trim().min(2).max(80),
+          role: z.string().trim().min(2).max(60),
+          walletAddress,
+          splitPercentage: z.coerce.number().min(0).max(100),
+        }),
+      )
+      .min(1)
+      .max(12),
   })
   .superRefine((value, context) => {
     if (Date.parse(value.endDateTime) <= Date.parse(value.startDateTime)) {
@@ -51,6 +67,19 @@ export const createDraftEventRequestSchema = z
         code: "custom",
         message: "Paid events must have a price above 0 USDC.",
         path: ["priceUsdc"],
+      });
+    }
+
+    const splitTotal = value.collaborators.reduce(
+      (total, collaborator) => total + collaborator.splitPercentage,
+      0,
+    );
+
+    if (Math.abs(splitTotal - 100) > 0.001) {
+      context.addIssue({
+        code: "custom",
+        message: "Collaborator split total must equal 100%.",
+        path: ["collaborators"],
       });
     }
   });
