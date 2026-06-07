@@ -25,7 +25,8 @@ Quorum is considered locally demo-ready when these criteria pass:
 The live hackathon acceptance criteria add two gated requirements:
 
 1. Contracts are deployed to Stellar testnet with recorded contract IDs.
-2. The hosted app submits real Freighter-signed publish, checkout, mint,
+2. The testnet USDC token contract ID is confirmed and configured.
+3. The hosted app submits real Freighter-signed publish, checkout, mint,
    check-in, and withdraw transactions.
 
 ## Status Legend
@@ -66,7 +67,8 @@ deployment and signing:
 4. Export the printed `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID` and
    `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`.
 5. Run `npm run contracts:init:testnet`.
-6. Configure the hosted app environment and verify Freighter signing on the
+6. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
+7. Configure the hosted app environment and verify Freighter signing on the
    deployed URL.
 
 Until those steps are intentionally approved and executed, Quorum is demo-ready

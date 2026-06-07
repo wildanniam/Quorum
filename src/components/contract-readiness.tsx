@@ -1,5 +1,6 @@
 import {
   Boxes,
+  Coins,
   FileKey2,
   ListChecks,
   RadioTower,
@@ -48,6 +49,18 @@ export function ContractReadiness() {
         !readiness.invalid.includes("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID"),
     },
     {
+      icon: Coins,
+      label: "USDC asset",
+      value: readiness.usdcContractId
+        ? readiness.invalid.includes("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID")
+          ? "Invalid"
+          : "Configured"
+        : "Missing",
+      active:
+        Boolean(readiness.usdcContractId) &&
+        !readiness.invalid.includes("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID"),
+    },
+    {
       icon: RadioTower,
       label: readiness.network,
       value: readiness.rpcUrl.replace(/^https?:\/\//, ""),
@@ -65,8 +78,8 @@ export function ContractReadiness() {
       </p>
       <p className="mt-3 text-sm leading-6 text-muted">
         {readiness.configured
-          ? "Live Stellar contract IDs are configured for proof surfaces."
-          : "Using local proof records until valid Stellar testnet contract IDs are configured."}
+          ? "Live Stellar contract and payment asset IDs are configured for proof surfaces."
+          : "Using local proof records until valid Stellar testnet contract and payment asset IDs are configured."}
       </p>
 
       <div className="mt-5 grid gap-3">

@@ -126,6 +126,7 @@ npm run contracts:doctor
 npm run contracts:deploy:testnet
 export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>
 export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID=<deployed-core-contract-id>
+export NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID=<confirmed-testnet-usdc-contract-id>
 npm run contracts:init:testnet
 ```
 

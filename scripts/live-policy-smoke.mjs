@@ -18,6 +18,9 @@ const fakeCoreContractId =
 const fakePassContractId =
   process.env.LIVE_POLICY_PASS_CONTRACT_ID ??
   StrKey.encodeContract(Buffer.alloc(32, 8));
+const fakeUsdcContractId =
+  process.env.LIVE_POLICY_USDC_CONTRACT_ID ??
+  StrKey.encodeContract(Buffer.alloc(32, 9));
 const eventId = "evt_apac_stellar_builder_meetup";
 const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
@@ -172,6 +175,7 @@ async function main() {
     DATABASE_URL: databaseUrl,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: fakeCoreContractId,
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: fakePassContractId,
+    NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: fakeUsdcContractId,
     NEXT_TELEMETRY_DISABLED: "1",
   };
 
@@ -198,8 +202,13 @@ async function main() {
     const contractStatus = await fetch(`${baseUrl}/api/contracts/status`);
     const contractStatusBody = await readJson(contractStatus);
     assert(contractStatus.status === 200, "contract status should render");
-    assert(contractStatusBody?.configured === true, "fake contract IDs should be valid");
+    assert(contractStatusBody?.configured === true, "fake live IDs should be valid");
     assert(contractStatusBody?.proofMode === "live", "status should expose live proof mode");
+    assert(
+      contractStatusBody?.paymentAssetConfigured === true &&
+        contractStatusBody?.usdcContractId === fakeUsdcContractId,
+      "status should expose configured live payment asset",
+    );
     assert(
       contractStatusBody?.actions?.length === 4 &&
         contractStatusBody.actions.every(
@@ -220,6 +229,10 @@ async function main() {
       dashboardHtml.includes("Live transaction submission is required.") &&
         dashboardHtml.includes("live required"),
       "dashboard should show live-required action policy",
+    );
+    assert(
+      dashboardHtml.includes("USDC asset") && dashboardHtml.includes("Configured"),
+      "dashboard should show configured USDC payment asset",
     );
 
     const attendeeCookie = `quorum_session=${createSession(attendeeWallet)}`;
@@ -272,9 +285,11 @@ async function main() {
           baseUrl,
           fakeCoreContractId,
           fakePassContractId,
+          fakeUsdcContractId,
           mutationCounts: counts,
           checks: [
             "live-contract-status",
+            "live-payment-asset-status",
             "dashboard-live-action-policy",
             "publish-live-required",
             "checkout-live-required",

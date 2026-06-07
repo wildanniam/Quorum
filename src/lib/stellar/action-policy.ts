@@ -63,7 +63,7 @@ export function getContractActionPolicy(
     action,
     executionMode: "local_proof",
     proofMode: "local",
-    message: `${actionLabels[action]} uses local proof records until valid Stellar contract IDs are configured.`,
+    message: `${actionLabels[action]} uses local proof records until valid Stellar contract and payment asset IDs are configured.`,
   };
 }
 

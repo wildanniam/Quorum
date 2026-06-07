@@ -17,9 +17,9 @@ transactions until the user explicitly approves that step.
 - Admin `admin_withdraw` can withdraw accumulated platform fee balance.
 - `QuorumPassNFT` mints one unique non-transferable token per owner/event pair
   and lets `QuorumCore` mark passes checked in.
-- The web app intentionally uses local proof records until both contract IDs are
-  valid. When live IDs are configured, mutation routes fail safe with `501`
-  instead of silently creating local proof records.
+- The web app intentionally uses local proof records until contract IDs and the
+  payment asset ID are valid. When live IDs are configured, mutation routes fail
+  safe with `501` instead of silently creating local proof records.
 
 ## Approval Gates
 

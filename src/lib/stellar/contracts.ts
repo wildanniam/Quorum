@@ -8,8 +8,11 @@ export type ContractReadiness = {
   networkPassphrase: string;
   coreContractId: string | null;
   passContractId: string | null;
+  usdcContractId: string | null;
   proofMode: "live" | "local";
   configured: boolean;
+  contractsConfigured: boolean;
+  paymentAssetConfigured: boolean;
   missing: string[];
   invalid: string[];
 };
@@ -25,6 +28,7 @@ function isValidContractId(value: string | null) {
 export function getContractReadiness(): ContractReadiness {
   const coreContractId = optionalEnv(process.env.NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID);
   const passContractId = optionalEnv(process.env.NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID);
+  const usdcContractId = optionalEnv(process.env.NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID);
   const rpcUrl =
     optionalEnv(process.env.NEXT_PUBLIC_STELLAR_RPC_URL) ?? DEFAULT_TESTNET_RPC_URL;
   const network = optionalEnv(process.env.NEXT_PUBLIC_STELLAR_NETWORK) ?? "TESTNET";
@@ -34,6 +38,7 @@ export function getContractReadiness(): ContractReadiness {
   const missing = [
     coreContractId ? null : "NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID",
     passContractId ? null : "NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID",
+    usdcContractId ? null : "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
   ].filter((item): item is string => Boolean(item));
   const invalid = [
     coreContractId && !isValidContractId(coreContractId)
@@ -42,8 +47,18 @@ export function getContractReadiness(): ContractReadiness {
     passContractId && !isValidContractId(passContractId)
       ? "NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID"
       : null,
+    usdcContractId && !isValidContractId(usdcContractId)
+      ? "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID"
+      : null,
   ].filter((item): item is string => Boolean(item));
-  const configured = missing.length === 0 && invalid.length === 0;
+  const contractsConfigured =
+    Boolean(coreContractId && passContractId) &&
+    !invalid.includes("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID") &&
+    !invalid.includes("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID");
+  const paymentAssetConfigured =
+    Boolean(usdcContractId) &&
+    !invalid.includes("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID");
+  const configured = contractsConfigured && paymentAssetConfigured;
 
   return {
     network,
@@ -51,8 +66,11 @@ export function getContractReadiness(): ContractReadiness {
     networkPassphrase,
     coreContractId,
     passContractId,
+    usdcContractId,
     proofMode: configured ? "live" : "local",
     configured,
+    contractsConfigured,
+    paymentAssetConfigured,
     missing,
     invalid,
   };
@@ -78,6 +96,15 @@ export function getPassContract() {
   }
 
   return new Contract(passContractId);
+}
+
+export function getUsdcContract() {
+  const { usdcContractId, invalid } = getContractReadiness();
+  if (!usdcContractId || invalid.includes("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID")) {
+    return null;
+  }
+
+  return new Contract(usdcContractId);
 }
 
 export function normalizeContractError(error: unknown) {

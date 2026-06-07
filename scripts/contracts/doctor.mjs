@@ -149,6 +149,7 @@ const appNetworkPassphrase =
   "Test SDF Network ; September 2015";
 const coreContractId = optionalEnv("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID");
 const passContractId = optionalEnv("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID");
+const usdcContractId = optionalEnv("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID");
 const platformFeeBps = optionalEnv("QUORUM_PLATFORM_FEE_BPS") ?? "0";
 const rpc = await checkRpc(appRpcUrl);
 const blockers = [];
@@ -202,6 +203,12 @@ if (!validContractId(passContractId)) {
   );
 }
 
+if (!validContractId(usdcContractId)) {
+  warnings.push(
+    "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID is missing or not a valid contract ID. This is expected before live app transaction signing.",
+  );
+}
+
 const report = {
   ok: blockers.length === 0,
   readyToDeploy: blockers.length === 0,
@@ -234,6 +241,9 @@ const report = {
     coreContractIdConfigured: validContractId(coreContractId),
     passContractIdConfigured: validContractId(passContractId),
     wasmArtifacts,
+  },
+  paymentAsset: {
+    usdcContractIdConfigured: validContractId(usdcContractId),
   },
   config: {
     platformFeeBps: /^\d+$/.test(platformFeeBps) ? Number(platformFeeBps) : null,

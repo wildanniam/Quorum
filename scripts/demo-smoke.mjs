@@ -174,6 +174,7 @@ async function main() {
     DATABASE_URL: databaseUrl,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: "",
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
+    NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
   };
 
@@ -325,7 +326,12 @@ async function main() {
     );
     assert(
       contractStatusBody?.configured === false,
-      "contract status should remain unconfigured without contract IDs",
+      "contract status should remain unconfigured without live IDs",
+    );
+    assert(
+      contractStatusBody?.paymentAssetConfigured === false &&
+        contractStatusBody?.missing?.includes("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID"),
+      "contract status should report missing payment asset before live signing",
     );
     assert(
       contractStatusBody?.actions?.every(
@@ -543,6 +549,10 @@ async function main() {
       "dashboard should show local proof mode before live contracts",
     );
     assert(
+      dashboardHtml.includes("USDC asset") && dashboardHtml.includes("Missing"),
+      "dashboard should show missing USDC payment asset before live signing",
+    );
+    assert(
       dashboardHtml.includes("Action execution"),
       "dashboard should show contract action execution policy",
     );
@@ -566,6 +576,7 @@ async function main() {
             "draft-validation",
             "publish-lifecycle",
             "contract-status",
+            "payment-asset-status",
             "contract-action-policy",
             "checkout",
             "duplicate-checkout-guard",
@@ -579,6 +590,7 @@ async function main() {
             "duplicate-withdraw-guard",
             "pass-page",
             "dashboard-proof",
+            "dashboard-payment-asset-readiness",
             "dashboard-action-policy",
           ],
         },
