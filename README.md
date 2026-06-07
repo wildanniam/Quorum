@@ -79,7 +79,9 @@ npm run contracts:doctor
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
-`npm run demo:live-policy` starts an isolated local Next.js dev server with fake valid contract IDs and verifies the API fails safe in live mode without creating local proof records.
+`npm run demo:live-policy` starts an isolated local Next.js dev server with fake
+valid contract IDs, verifies non-signing live action preparation, and confirms
+mutation routes fail safe without creating local proof records.
 
 `npm run browser:qa` runs a headless browser across desktop/mobile viewport
 checks and regenerates `docs/BROWSER_QA.md`.

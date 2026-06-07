@@ -111,7 +111,8 @@ npm run readiness:audit
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
 The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
 The live policy smoke verifies fake configured contract IDs require live
-transaction submission and do not create local proof records.
+transaction submission, exposes non-signing live action prepare responses, and
+does not create local proof records.
 
 ## Live Testnet Boundary
 

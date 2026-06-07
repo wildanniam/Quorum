@@ -26,8 +26,7 @@ const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet =
   "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
-const attendeeWallet =
-  "GDUMVTGZ5UWC6ATN5MEOK7S6XAJCC2B7HVS64TMKPQV5XHZDEH5YASYA";
+const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
 
 function resolveDatabasePath() {
   if (!databaseUrl.startsWith("file:")) {
@@ -150,6 +149,85 @@ async function assertLiveRequired(label, response) {
   return body;
 }
 
+async function assertPreparedAction(
+  label,
+  response,
+  { action, functionName, signer },
+) {
+  const body = await readJson(response);
+
+  assert(response.status === 200, `${label} should prepare successfully`);
+  assert(body?.action === action, `${label} should report ${action}`);
+  assert(
+    body?.executionMode === "live_required",
+    `${label} should report live_required execution mode`,
+  );
+  assert(body?.proofMode === "live", `${label} should report live proof mode`);
+  assert(body?.contractId === fakeCoreContractId, `${label} should target core`);
+  assert(
+    body?.coreContractId === fakeCoreContractId,
+    `${label} should include core contract ID`,
+  );
+  assert(
+    body?.passContractId === fakePassContractId,
+    `${label} should include pass contract ID`,
+  );
+  assert(
+    body?.usdcContractId === fakeUsdcContractId,
+    `${label} should include USDC contract ID`,
+  );
+  assert(
+    body?.functionName === functionName,
+    `${label} should prepare ${functionName}`,
+  );
+  assert(body?.signer === signer, `${label} should bind signer wallet`);
+
+  return body;
+}
+
+function createDraftPayload() {
+  return {
+    title: `Live Prepared Draft ${randomUUID().slice(0, 8)}`,
+    eventType: "workshop",
+    shortDescription:
+      "A live-policy smoke draft used to prepare unsigned contract action inputs.",
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1200&q=80",
+    startDateTime: "2026-07-01T10:00:00.000Z",
+    endDateTime: "2026-07-01T12:00:00.000Z",
+    timezone: "Asia/Jakarta",
+    locationType: "hybrid",
+    locationText: "Jakarta + livestream",
+    meetingUrl: "https://example.com/quorum-live-policy",
+    isFree: false,
+    priceUsdc: "7",
+    capacity: 42,
+    collaborators: [
+      {
+        displayName: "Live Policy Host",
+        role: "Host",
+        walletAddress: organizerWallet,
+        splitPercentage: 60,
+      },
+      {
+        displayName: "Live Policy Speaker",
+        role: "Speaker",
+        walletAddress: speakerWallet,
+        splitPercentage: 40,
+      },
+    ],
+    resources: [
+      {
+        title: "Live Policy Resource",
+        description: "Gated resource used by live-policy smoke.",
+        type: "link",
+        url: "https://example.com/quorum-live-policy-resource",
+        sortOrder: 1,
+      },
+    ],
+  };
+}
+
 function readMutationCounts(databasePath) {
   const db = new Database(databasePath, { readonly: true });
 
@@ -239,6 +317,95 @@ async function main() {
     const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
     const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
 
+    const draftResponse = await fetch(`${baseUrl}/api/events`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: organizerCookie,
+      },
+      body: JSON.stringify(createDraftPayload()),
+    });
+    const draftBody = await readJson(draftResponse);
+    assert(draftResponse.status === 201, "live policy draft should be created");
+    assert(draftBody?.event?.id, "live policy draft should return event ID");
+
+    const publishPrepare = await assertPreparedAction(
+      "prepare publish",
+      await fetch(
+        `${baseUrl}/api/events/${draftBody.event.id}/contract-action?action=publish_event`,
+        { headers: { cookie: organizerCookie } },
+      ),
+      {
+        action: "publish_event",
+        functionName: "create_event",
+        signer: organizerWallet,
+      },
+    );
+    assert(
+      publishPrepare.args?.priceAtomic === "70000000",
+      "prepared publish should encode 7 USDC atomically",
+    );
+    assert(
+      publishPrepare.args?.splits?.map((split) => split.percentBps).join(",") ===
+        "6000,4000",
+      "prepared publish should encode split bps",
+    );
+
+    const checkoutPrepare = await assertPreparedAction(
+      "prepare checkout",
+      await fetch(
+        `${baseUrl}/api/events/${eventId}/contract-action?action=checkout_pass`,
+        { headers: { cookie: attendeeCookie } },
+      ),
+      {
+        action: "checkout_pass",
+        functionName: "purchase",
+        signer: attendeeWallet,
+      },
+    );
+    assert(
+      checkoutPrepare.args?.amountAtomic === "50000000",
+      "prepared checkout should encode seeded 5 USDC price",
+    );
+    assert(
+      checkoutPrepare.args?.metadataUri?.includes(attendeeWallet),
+      "prepared checkout should bind pass metadata URI to buyer",
+    );
+
+    const checkInPrepare = await assertPreparedAction(
+      "prepare check-in",
+      await fetch(
+        `${baseUrl}/api/events/${eventId}/contract-action?action=check_in_pass&tokenId=42`,
+        { headers: { cookie: organizerCookie } },
+      ),
+      {
+        action: "check_in_pass",
+        functionName: "check_in",
+        signer: organizerWallet,
+      },
+    );
+    assert(
+      checkInPrepare.args?.tokenId === "42",
+      "prepared check-in should encode numeric token ID",
+    );
+
+    const withdrawPrepare = await assertPreparedAction(
+      "prepare withdraw",
+      await fetch(
+        `${baseUrl}/api/events/${eventId}/contract-action?action=withdraw_balance`,
+        { headers: { cookie: speakerCookie } },
+      ),
+      {
+        action: "withdraw_balance",
+        functionName: "withdraw",
+        signer: speakerWallet,
+      },
+    );
+    assert(
+      withdrawPrepare.args?.collaborator === speakerWallet,
+      "prepared withdraw should bind collaborator wallet",
+    );
+
     await assertLiveRequired(
       "publish",
       await fetch(`${baseUrl}/api/events/${eventId}/publish`, {
@@ -291,6 +458,10 @@ async function main() {
             "live-contract-status",
             "live-payment-asset-status",
             "dashboard-live-action-policy",
+            "prepare-publish-live-args",
+            "prepare-checkout-live-args",
+            "prepare-check-in-live-args",
+            "prepare-withdraw-live-args",
             "publish-live-required",
             "checkout-live-required",
             "check-in-live-required",
