@@ -264,6 +264,48 @@ fn organizer_can_check_in_pass() {
 }
 
 #[test]
+fn duplicate_check_in_is_idempotent() {
+    let s = setup();
+    let (uri, hash) = pass_metadata(&s.env);
+    let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    s.core.check_in(&s.organizer, &s.event_id, &token_id);
+    s.core.check_in(&s.organizer, &s.event_id, &token_id);
+
+    assert!(s.core.is_checked_in(&s.event_id, &token_id));
+    assert!(s.pass.pass(&token_id).checked_in);
+}
+
+#[test]
+#[should_panic]
+fn rejects_check_in_from_non_organizer() {
+    let s = setup();
+    let (uri, hash) = pass_metadata(&s.env);
+    let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    s.core.check_in(&s.speaker, &s.event_id, &token_id);
+}
+
+#[test]
+#[should_panic]
+fn rejects_check_in_for_unknown_token() {
+    let s = setup();
+
+    s.core.check_in(&s.organizer, &s.event_id, &999);
+}
+
+#[test]
+#[should_panic]
+fn rejects_check_in_for_token_from_another_event() {
+    let s = setup();
+    let other_event_id = create_free_event(&s, 9, 2);
+    let (uri, hash) = pass_metadata(&s.env);
+    let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    s.core.check_in(&s.organizer, &other_event_id, &token_id);
+}
+
+#[test]
 #[should_panic]
 fn rejects_invalid_split_total() {
     let s = setup();
