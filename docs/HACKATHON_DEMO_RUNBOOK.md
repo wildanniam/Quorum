@@ -133,6 +133,7 @@ mirror the contract flow.
 
 - `docs/DEMO_EVIDENCE.md`
 - `docs/BROWSER_QA.md`
+- `docs/MVP_READINESS.md`
 - contract WASM hashes from `npm run contracts:build`
 - screenshot or short clip of marketplace, checkout, pass page, resources,
   check-in, dashboard, and withdrawal proof
