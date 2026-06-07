@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:21:58.509Z`
+Generated at: `2026-06-07T18:24:18.481Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `5503421`
+- Commit: `d5f9fe1`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -33,7 +33,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-5130d2`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-6ff719`
 
 Covered checks:
 
@@ -129,8 +129,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_20b25ca1-1bb6-425f-91c2-f25dbca7a19e",
-    "slug": "smoke-20b25ca1",
+    "id": "evt_67b22558-6a32-4b44-9b76-24f579df684c",
+    "slug": "smoke-67b22558",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -161,15 +161,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 2.6s
+✓ Compiled successfully in 2.3s
   Running TypeScript ...
-  Finished TypeScript in 1921ms ...
+  Finished TypeScript in 1878ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 101ms
+✓ Generating static pages using 7 workers (10/10) in 172ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -219,9 +219,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-e4ede6f4-d9e4-4fba-93de-5c3133e33732.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-c35635e9-7acd-4aeb-a5ed-11447a985f4b.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-5130d2",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-6ff719",
   "checks": [
     "marketplace",
     "event-detail",
@@ -251,14 +251,17 @@ found 0 vulnerabilities
 ```text
 > quorum@0.1.0 contracts:test
 > cargo test
-running 6 tests
-test test::rejects_invalid_split_total - should panic ... ok
+running 9 tests
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
-test test::organizer_can_check_in_pass ... ok
 test test::rejects_duplicate_purchase - should panic ... ok
 test test::collaborator_can_withdraw_balance ... ok
-test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s
+test test::organizer_can_check_in_pass ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
+test test::free_event_claim_mints_pass_without_balances ... ok
+test test::rejects_invalid_split_total - should panic ... ok
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.20s
 running 4 tests
 test test::mints_unique_pass_for_owner_event ... ok
 test test::core_can_mark_pass_checked_in ... ok
@@ -300,7 +303,7 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.05s
+    Finished `release` profile [optimized] target(s) in 0.06s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5155 bytes)
     Wasm Hash: 3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1
