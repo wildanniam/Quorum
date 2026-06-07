@@ -412,6 +412,35 @@ async function main() {
       "prepared withdraw should bind collaborator wallet",
     );
 
+    const invalidLiveSubmit = await fetch(
+      `${baseUrl}/api/events/${eventId}/contract-action`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: attendeeCookie,
+        },
+        body: JSON.stringify({
+          action: "checkout_pass",
+          signedTransactionXdr: "not-a-signed-transaction-xdr",
+        }),
+      },
+    );
+    const invalidLiveSubmitBody = await readJson(invalidLiveSubmit);
+    assert(
+      invalidLiveSubmit.status === 400,
+      "invalid signed live XDR should be rejected before persistence",
+    );
+    assert(
+      invalidLiveSubmitBody?.executionMode === "live_required" &&
+        invalidLiveSubmitBody?.proofMode === "live",
+      "invalid signed live XDR should preserve live action policy metadata",
+    );
+    assert(
+      typeof invalidLiveSubmitBody?.error === "string",
+      "invalid signed live XDR should explain the submission failure",
+    );
+
     await assertLiveRequired(
       "publish",
       await fetch(`${baseUrl}/api/events/${eventId}/publish`, {
@@ -469,6 +498,7 @@ async function main() {
             "prepare-checkout-unsigned-xdr",
             "prepare-check-in-live-args",
             "prepare-withdraw-live-args",
+            "submit-invalid-signed-xdr-no-persistence",
             "publish-live-required",
             "checkout-live-required",
             "check-in-live-required",

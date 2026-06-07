@@ -28,6 +28,7 @@ const fakeCoreContractId = StrKey.encodeContract(Buffer.alloc(32, 7));
 const fakePassContractId = StrKey.encodeContract(Buffer.alloc(32, 8));
 const fakeUsdcContractId = StrKey.encodeContract(Buffer.alloc(32, 9));
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
+const otherWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 5));
 const eventIdHex = "a7e602bb740076b86ae7a7f4d23b6738bc9eddf6d600ca67db3b72fe8d20aa67";
 const metadataHashHex =
   "84aa0f60f0db1e95387b09ace00af75db46d7e7f2ea2ae0b499f7f94045fd7a8";
@@ -151,6 +152,41 @@ async function main() {
     kind: "token_id",
     value: "9001",
   });
+
+  let sourceMismatchSendCalls = 0;
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          rpcServer: {
+            async sendTransaction() {
+              sourceMismatchSendCalls += 1;
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return getMissing(hash);
+            },
+          },
+        },
+        signedTransaction: {
+          ...signedTransaction,
+          signerAddress: otherWallet,
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /source/);
+      assert.equal(error.txHash, undefined);
+      return true;
+    },
+  );
+  assert.equal(sourceMismatchSendCalls, 0);
 
   const withdrawResult = await submitSignedLiveTransaction({
     options: {
@@ -378,6 +414,7 @@ async function main() {
           "poll-until-success",
           "decode-purchase-token-id",
           "decode-withdraw-amount",
+          "reject-source-mismatch-before-rpc",
           "reject-submission-error",
           "reject-submission-retry-later",
           "reject-finality-failure",

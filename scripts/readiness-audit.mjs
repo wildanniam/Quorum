@@ -124,6 +124,14 @@ const requiredLiveFlowCoverage = [
   "reject-finality-failure-without-persistence",
 ];
 
+const requiredLivePolicyCoverage = [
+  "submit-invalid-signed-xdr-no-persistence",
+];
+
+const requiredLiveSubmissionCoverage = [
+  "reject-source-mismatch-before-rpc",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
@@ -283,6 +291,18 @@ function checkEvidence() {
   for (const coverage of requiredLiveFlowCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live flow coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLivePolicyCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live policy coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveSubmissionCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live submission coverage: ${coverage}`);
     }
   }
 

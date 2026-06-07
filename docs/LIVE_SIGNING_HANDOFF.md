@@ -85,7 +85,11 @@ The app should replace each `local_proof` mutation with a multi-step live flow:
    is supplied, the response also includes a pre-simulation unsigned transaction
    XDR template.
 2. Browser asks Freighter to sign the prepared transaction.
-3. Server or browser submits the signed transaction to RPC.
+3. Browser posts the signed XDR back to
+   `POST /api/events/[eventId]/contract-action`; the server reconstructs the
+   action from DB/session state, checks that the signed transaction source
+   matches the connected wallet, submits the signed XDR to RPC, and polls
+   finality.
 4. Server verifies the result, then stores the real transaction hash, token ID,
    and proof metadata in SQLite using the `recordLivePublishedEvent`,
    `recordLivePass`, `recordLiveCheckIn`, and `recordLiveWithdrawal`
@@ -125,7 +129,9 @@ Freighter `signTransaction` boundary and validates signer address, wallet
 errors, and returned XDR before submission.
 `src/lib/stellar/live-submission.ts` implements the RPC `sendTransaction` and
 `getTransaction` finality polling boundary for signed XDR, including Soroban
-return value decoding for purchase token IDs and withdraw amounts.
+return value decoding for purchase token IDs and withdraw amounts. The route
+submit path rejects invalid signed XDR before persistence and still requires a
+real RPC-confirmed finality result before writing live proof data.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
 signing, mockable submission, decoded return values, and post-success
 persistence inputs so publish, paid checkout, free claim, check-in, and withdraw

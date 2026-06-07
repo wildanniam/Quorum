@@ -1,9 +1,9 @@
 import {
+  Transaction,
   TransactionBuilder,
   scValToNative,
   rpc,
   type FeeBumpTransaction,
-  type Transaction,
 } from "@stellar/stellar-sdk";
 import { getRpcServer, normalizeContractError } from "@/lib/stellar/contracts";
 import type { SignedLiveTransaction } from "@/lib/stellar/freighter-live-signing";
@@ -76,6 +76,25 @@ function parseSignedTransaction(signedTransaction: SignedLiveTransaction) {
     );
   } catch (error) {
     throw new LiveTransactionSubmissionError(normalizeContractError(error));
+  }
+}
+
+function assertSignedTransactionSource({
+  signedTransaction,
+  transaction,
+}: {
+  signedTransaction: SignedLiveTransaction;
+  transaction: Transaction | FeeBumpTransaction;
+}) {
+  const source =
+    transaction instanceof Transaction
+      ? transaction.source
+      : transaction.innerTransaction.source;
+
+  if (source !== signedTransaction.signerAddress) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction source does not match the connected wallet.",
+    );
   }
 }
 
@@ -195,6 +214,8 @@ export async function submitSignedLiveTransaction({
   const pollIntervalMs = options.pollIntervalMs ?? 1_000;
   const timeoutMs = options.timeoutMs ?? 30_000;
   const transaction = parseSignedTransaction(signedTransaction);
+
+  assertSignedTransactionSource({ signedTransaction, transaction });
 
   let submitted: SendTransactionResponse;
 
