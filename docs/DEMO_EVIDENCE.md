@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:02:50.064Z`
+Generated at: `2026-06-07T18:09:08.717Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `8619d54`
+- Commit: `b57486e`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -33,7 +33,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-520455`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-36c77a`
 
 Covered checks:
 
@@ -46,6 +46,7 @@ Covered checks:
 - resource-gating
 - organizer-check-in
 - duplicate-check-in-guard
+- proof-labels
 - collaborator-withdraw
 - duplicate-withdraw-guard
 - pass-page
@@ -126,8 +127,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_0b16acce-a0e3-43d8-9a49-0e268755ca9d",
-    "slug": "smoke-0b16acce",
+    "id": "evt_5605fdb1-aceb-4373-b201-68ef9226d94a",
+    "slug": "smoke-5605fdb1",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -160,13 +161,13 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
   Creating an optimized production build ...
 ✓ Compiled successfully in 2.3s
   Running TypeScript ...
-  Finished TypeScript in 1882ms ...
+  Finished TypeScript in 1853ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 105ms
+✓ Generating static pages using 7 workers (10/10) in 139ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -216,9 +217,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-6ed248ec-e7be-404d-acbd-21c8cec46410.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-4fb87d9c-cad9-49a3-91c0-e06b2ee9d12d.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-520455",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-36c77a",
   "checks": [
     "marketplace",
     "event-detail",
@@ -229,6 +230,7 @@ found 0 vulnerabilities
     "resource-gating",
     "organizer-check-in",
     "duplicate-check-in-guard",
+    "proof-labels",
     "collaborator-withdraw",
     "duplicate-withdraw-guard",
     "pass-page",
@@ -248,18 +250,18 @@ found 0 vulnerabilities
 > cargo test
 running 5 tests
 test test::rejects_invalid_split_total - should panic ... ok
-test test::purchase_mints_pass_and_splits_balance ... ok
+test test::organizer_can_check_in_pass ... ok
 test test::collaborator_can_withdraw_balance ... ok
 test test::rejects_duplicate_purchase - should panic ... ok
-test test::organizer_can_check_in_pass ... ok
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+test test::purchase_mints_pass_and_splits_balance ... ok
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
 running 4 tests
 test test::mints_unique_pass_for_owner_event ... ok
 test test::core_can_mark_pass_checked_in ... ok
-test test::transfer_is_disabled - should panic ... ok
 test test::rejects_duplicate_owner_event_pass - should panic ... ok
-test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
-    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+test test::transfer_is_disabled - should panic ... ok
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.04s
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.30s
      Running unittests src/lib.rs (target/debug/deps/quorum_core-e5fec26514f24ffc)
      Running unittests src/lib.rs (target/debug/deps/quorum_pass_nft-67d0e95b6bfad8f1)
 ```
@@ -274,7 +276,7 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.11s
+    Finished `release` profile [optimized] target(s) in 0.10s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (13034 bytes)
     Wasm Hash: 44d110000addf017e819afadec7860628e854fa0964e2caba379ee46e2fcb4f6
@@ -294,7 +296,7 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.08s
+    Finished `release` profile [optimized] target(s) in 0.06s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5155 bytes)
     Wasm Hash: 3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1
