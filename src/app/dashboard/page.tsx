@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { ContractReadiness } from "@/components/contract-readiness";
 import { WalletReadiness } from "@/components/wallet-readiness";
 import { dashboardCards, demoEvent } from "@/lib/demo-data";
 
@@ -68,6 +69,7 @@ export default function DashboardPage() {
 
           <div className="grid gap-5">
             <WalletReadiness />
+            <ContractReadiness />
             <div className="border border-line bg-panel p-5">
               <p className="font-mono text-xs uppercase tracking-normal text-muted">
                 Proof queue
