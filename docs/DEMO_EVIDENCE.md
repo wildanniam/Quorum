@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T23:44:49.608Z`
+Generated at: `2026-06-07T23:51:12.126Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `eb54be7`
+- Commit: `26dc2d4`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -37,6 +37,7 @@ Generated at: `2026-06-07T23:44:49.608Z`
 | Live UI wiring smoke | `npm run live:ui-wiring:smoke` | PASS | 0 |
 | Contract tests | `npm run contracts:test` | PASS | 0 |
 | Contract build | `npm run contracts:build` | PASS | 0 |
+| Contract approval smoke | `npm run contracts:approval:smoke` | PASS | 0 |
 | Contract doctor | `npm run contracts:doctor` | PASS | 0 |
 
 Overall local verification: **PASS**
@@ -45,7 +46,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-75dc91`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-572afc`
 
 Covered checks:
 
@@ -101,6 +102,7 @@ the `npm run contracts:test` output:
 Blockers:
 
 - STELLAR_ACCOUNT is missing. Set a funded Stellar identity/secret before deploy.
+- Set QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING only after explicit approval for live testnet signing.
 
 Warnings:
 
@@ -157,8 +159,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_663ddaeb-605c-471b-8b36-e190d499e671",
-    "slug": "smoke-663ddaeb",
+    "id": "evt_ee04d727-581d-45db-b6fb-e1e35e52ee64",
+    "slug": "smoke-ee04d727",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -189,15 +191,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 10.6s
+✓ Compiled successfully in 3.6s
   Running TypeScript ...
-  Finished TypeScript in 6.0s ...
+  Finished TypeScript in 2.3s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 485ms
+✓ Generating static pages using 7 workers (10/10) in 200ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -249,9 +251,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-62dc8c4c-02f2-4757-97b5-afed4ff1f740.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-78c54940-800f-4f75-a941-1a305b47c90c.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-75dc91",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-572afc",
   "checks": [
     "marketplace",
     "event-detail",
@@ -332,7 +334,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-06-07T23:46:23.595Z",
+  "generatedAt": "2026-06-07T23:51:56.975Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -400,8 +402,8 @@ found 0 vulnerabilities
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-59b601d6-ad2c-4070-ba96-7512146bc020.db",
-  "persistedEventId": "evt_556e8447-bf91-4a3e-887d-6f95a1c6ca82",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-299bb19c-7e1d-4c89-af1a-441fe02adb86.db",
+  "persistedEventId": "evt_7b338d2c-8e04-493f-be85-3eb25bab63bd",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -426,7 +428,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-f63ee284-d370-457e-b973-35a6bd5b8478.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-20e2051f-0513-43b8-b226-372e073a4d61.db",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -651,24 +653,24 @@ found 0 vulnerabilities
 running 19 tests
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
-test test::duplicate_check_in_is_idempotent ... ok
-test test::admin_can_withdraw_platform_fee ... ok
-test test::collaborator_can_withdraw_balance ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
 test test::organizer_can_check_in_pass ... ok
+test test::duplicate_check_in_is_idempotent ... ok
 test test::emits_core_and_pass_proof_events ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::admin_can_withdraw_platform_fee ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.72s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
 running 7 tests
 test test::set_core_emits_even
 ... [truncated]
@@ -684,7 +686,7 @@ test test::set_core_emits_even
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.26s
+    Finished `release` profile [optimized] target(s) in 0.13s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (14247 bytes)
     Wasm Hash: 73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0
@@ -704,13 +706,35 @@ test test::set_core_emits_even
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.15s
+    Finished `release` profile [optimized] target(s) in 0.14s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5467 bytes)
     Wasm Hash: e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec
     Wasm Size: 5467 bytes
     Exported Func
 ... [truncated]
+```
+
+### Contract approval smoke
+
+- Command: `npm run contracts:approval:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 contracts:approval:smoke
+> node scripts/contracts/live-signing-approval-smoke.mjs
+{
+  "ok": true,
+  "checks": [
+    "approval-helper-default-deny",
+    "approval-helper-exact-phrase",
+    "deploy-script-denies-without-live-approval",
+    "init-script-denies-without-live-approval"
+  ],
+  "approvalEnv": "QUORUM_LIVE_SIGNING_APPROVED",
+  "approvalValue": "I_APPROVE_TESTNET_SIGNING"
+}
 ```
 
 ### Contract doctor
