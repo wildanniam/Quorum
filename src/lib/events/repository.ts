@@ -124,6 +124,20 @@ export type CreateResourceInput = {
   sortOrder: number;
 };
 
+export type EventDashboardMetrics = {
+  checkedInCount: number;
+  capacityRemaining: number;
+  passCount: number;
+  revenueUsdc: number;
+};
+
+export type CollaboratorEventRecord = {
+  collaborator: CollaboratorRecord;
+  event: EventRecord;
+  earnedUsdc: number;
+  withdrawnUsdc: number;
+};
+
 function assertWalletAddress(walletAddress: string) {
   if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
     throw new Error(`Invalid Stellar wallet address: ${walletAddress}`);
@@ -489,6 +503,36 @@ export function listOrganizerEvents(organizerWallet: string) {
   ).map(toEventRecord);
 }
 
+export function listCollaborationsByWallet(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  return (
+    getDatabase()
+      .prepare(
+        `
+        SELECT c.*
+        FROM collaborators c
+        JOIN events e ON e.id = c.event_id
+        WHERE c.wallet_address = ?
+        ORDER BY e.created_at DESC, c.created_at DESC
+        `,
+      )
+      .all(walletAddress) as CollaboratorRow[]
+  ).map((row) => {
+    const collaborator = toCollaboratorRecord(row);
+    const event = getEventById(collaborator.eventId);
+    const revenueUsdc = getEventRevenueUsdc(event.id);
+    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, walletAddress);
+
+    return {
+      collaborator,
+      event,
+      earnedUsdc: (revenueUsdc * collaborator.splitPercentage) / 100,
+      withdrawnUsdc,
+    };
+  });
+}
+
 export function addCollaborator(
   eventId: string,
   input: UpsertCollaboratorInput,
@@ -579,6 +623,16 @@ export function countPassesForEvent(eventId: string) {
   return Number(row.count);
 }
 
+export function countCheckedInPassesForEvent(eventId: string) {
+  const row = getDatabase()
+    .prepare(
+      "SELECT COUNT(*) as count FROM passes WHERE event_id = ? AND checked_in = 1",
+    )
+    .get(eventId) as { count: number };
+
+  return Number(row.count);
+}
+
 export function countMintedPasses() {
   const row = getDatabase()
     .prepare("SELECT COUNT(*) as count FROM passes")
@@ -599,6 +653,50 @@ export function getSucceededPurchaseTotalUsdc() {
     .get() as { total: number };
 
   return Number(row.total);
+}
+
+export function getEventRevenueUsdc(eventId: string) {
+  const row = getDatabase()
+    .prepare(
+      `
+      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
+      FROM purchases
+      WHERE event_id = ? AND status = 'succeeded'
+      `,
+    )
+    .get(eventId) as { total: number };
+
+  return Number(row.total);
+}
+
+export function getWithdrawnTotalUsdc(eventId: string, walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  const row = getDatabase()
+    .prepare(
+      `
+      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
+      FROM withdrawals
+      WHERE event_id = ? AND collaborator_wallet = ?
+      `,
+    )
+    .get(eventId, walletAddress) as { total: number };
+
+  return Number(row.total);
+}
+
+export function getEventDashboardMetrics(eventId: string) {
+  const event = getEventById(eventId);
+  const passCount = countPassesForEvent(event.id);
+  const checkedInCount = countCheckedInPassesForEvent(event.id);
+  const revenueUsdc = getEventRevenueUsdc(event.id);
+
+  return {
+    checkedInCount,
+    capacityRemaining: Math.max(event.capacity - passCount, 0),
+    passCount,
+    revenueUsdc,
+  };
 }
 
 export function getPassByEventAndOwner(eventId: string, ownerWallet: string) {
