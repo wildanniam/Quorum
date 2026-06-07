@@ -30,6 +30,11 @@ const checks = [
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },
 ];
 
+const contractCoverage = [
+  "emits_core_and_pass_proof_events",
+  "set_core_emits_event",
+];
+
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: projectRoot,
@@ -122,6 +127,9 @@ const wasmRows =
 const demoChecks = demoSmokeJson?.checks?.length
   ? demoSmokeJson.checks.map((check) => `- ${check}`).join("\n")
   : "- Demo smoke JSON was not available.";
+const contractCoverageLines = contractCoverage
+  .map((coverage) => `- ${coverage}`)
+  .join("\n");
 const detailSections = verificationResults
   .map(
     (result) => `### ${result.label}
@@ -164,6 +172,13 @@ Generated pass token ID: \`${demoSmokeJson?.tokenId ?? "n/a"}\`
 Covered checks:
 
 ${demoChecks}
+
+## Contract Coverage Evidence
+
+These targeted contract tests verify Soroban proof events and are expected in
+the \`npm run contracts:test\` output:
+
+${contractCoverageLines}
 
 ## Contract Artifacts
 
