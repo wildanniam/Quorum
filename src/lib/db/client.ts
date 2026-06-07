@@ -15,7 +15,10 @@ export function resolveDatabasePath(databaseUrl = process.env.DATABASE_URL) {
     throw new Error("Quorum local DB client expects DATABASE_URL to start with file:");
   }
 
-  return path.resolve(process.cwd(), url.replace(/^file:/, ""));
+  return path.resolve(
+    /*turbopackIgnore: true*/ process.cwd(),
+    url.replace(/^file:/, ""),
+  );
 }
 
 export function getDatabase() {
