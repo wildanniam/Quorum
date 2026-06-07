@@ -942,7 +942,7 @@ Must rehearse:
 ### Environment
 
 - Web app: Vercel or equivalent.
-- Database/storage: Supabase or equivalent.
+- Database/storage: local SQLite for autonomous MVP development; Supabase/Postgres or equivalent for hosted demo after credentials are available.
 - Contracts: Stellar testnet.
 - Wallet: Freighter testnet account.
 - Asset: USDC testnet.

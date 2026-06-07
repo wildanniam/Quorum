@@ -6,7 +6,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 1 scaffold is in progress.
+Phase 2 is complete and Phase 3 database work is underway.
 
 Implemented in the app shell:
 
@@ -17,12 +17,14 @@ Implemented in the app shell:
 - create event placeholder;
 - pass page placeholder;
 - gated resources placeholder;
-- check-in placeholder.
+- check-in placeholder;
+- Freighter-first wallet auth foundation;
+- signed wallet session API routes;
+- local SQLite migration foundation.
 
 Not implemented yet:
 
-- wallet auth;
-- database persistence;
+- event CRUD persistence;
 - Soroban contracts;
 - real checkout;
 - real NFT minting;
@@ -32,16 +34,21 @@ Not implemented yet:
 
 ```bash
 npm install
+npm run db:migrate
 npm run dev
 ```
 
 Open `http://localhost:3000`.
 
+Copy `.env.example` to `.env.local` when you need local secrets. The default database path is `file:./data/quorum.db`.
+
 ## Verification
 
 ```bash
+npm run db:migrate
 npm run lint
 npm run build
+npm audit --audit-level=moderate
 ```
 
 ## Planning Docs

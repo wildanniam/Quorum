@@ -363,7 +363,7 @@ Allow organizers to create draft events and configure collaborators/resources be
 
 Tasks:
 
-- Use Supabase Postgres or equivalent.
+- Use local SQLite for autonomous MVP development, with Supabase/Postgres or equivalent reserved for hosted deployment after credentials are available.
 - Add schema/migrations.
 - Add DB client utilities.
 - Add local env example.
