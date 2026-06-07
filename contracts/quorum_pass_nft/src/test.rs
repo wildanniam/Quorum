@@ -28,11 +28,17 @@ fn setup() -> (
     (env, client, admin, core, owner, event_id)
 }
 
+fn pass_metadata(env: &Env) -> (String, BytesN<32>) {
+    (
+        String::from_str(env, "ipfs://pass-1"),
+        BytesN::from_array(env, &[9; 32]),
+    )
+}
+
 #[test]
 fn mints_unique_pass_for_owner_event() {
     let (env, client, _admin, core, owner, event_id) = setup();
-    let uri = String::from_str(&env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&env);
 
     let token_id = client.mint(&core, &owner, &event_id, &uri, &hash);
 
@@ -51,18 +57,26 @@ fn mints_unique_pass_for_owner_event() {
 #[should_panic]
 fn rejects_duplicate_owner_event_pass() {
     let (env, client, _admin, core, owner, event_id) = setup();
-    let uri = String::from_str(&env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&env);
 
     client.mint(&core, &owner, &event_id, &uri, &hash);
     client.mint(&core, &owner, &event_id, &uri, &hash);
 }
 
 #[test]
+#[should_panic]
+fn rejects_unauthorized_mint() {
+    let (env, client, _admin, _core, owner, event_id) = setup();
+    let caller = Address::generate(&env);
+    let (uri, hash) = pass_metadata(&env);
+
+    client.mint(&caller, &owner, &event_id, &uri, &hash);
+}
+
+#[test]
 fn core_can_mark_pass_checked_in() {
     let (env, client, _admin, core, owner, event_id) = setup();
-    let uri = String::from_str(&env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&env);
     let token_id = client.mint(&core, &owner, &event_id, &uri, &hash);
 
     client.mark_checked_in(&core, &token_id);
@@ -72,11 +86,21 @@ fn core_can_mark_pass_checked_in() {
 
 #[test]
 #[should_panic]
+fn rejects_unauthorized_check_in_mark() {
+    let (env, client, _admin, core, owner, event_id) = setup();
+    let caller = Address::generate(&env);
+    let (uri, hash) = pass_metadata(&env);
+    let token_id = client.mint(&core, &owner, &event_id, &uri, &hash);
+
+    client.mark_checked_in(&caller, &token_id);
+}
+
+#[test]
+#[should_panic]
 fn transfer_is_disabled() {
     let (env, client, _admin, core, owner, event_id) = setup();
     let receiver = Address::generate(&env);
-    let uri = String::from_str(&env, "ipfs://pass-1");
-    let hash = BytesN::from_array(&env, &[9; 32]);
+    let (uri, hash) = pass_metadata(&env);
     let token_id = client.mint(&core, &owner, &event_id, &uri, &hash);
 
     client.transfer(&owner, &receiver, &token_id);
