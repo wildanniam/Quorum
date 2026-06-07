@@ -112,6 +112,26 @@ async function main() {
     signedTransactionXdr: preparedForSigning.preparedTransactionXdr,
     signerAddress: preparedForSigning.source,
   };
+  const withdrawPreparedAction: PreparedLiveContractAction = {
+    ...preparedAction,
+    action: "withdraw_balance",
+    args: {
+      collaborator: attendeeWallet,
+      eventIdHex,
+    },
+    functionName: "withdraw",
+  };
+  const withdrawPreparedForSigning = await prepareLiveTransactionForSigning({
+    preparedAction: withdrawPreparedAction,
+    rpcServer: mockPreflightRpc,
+  });
+  const otherContractPreparedForSigning = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      contractId: fakePassContractId,
+    },
+    rpcServer: mockPreflightRpc,
+  });
   let sendCalls = 0;
   let pollCalls = 0;
 
@@ -188,6 +208,77 @@ async function main() {
   );
   assert.equal(sourceMismatchSendCalls, 0);
 
+  let functionMismatchSendCalls = 0;
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          rpcServer: {
+            async sendTransaction() {
+              functionMismatchSendCalls += 1;
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return getMissing(hash);
+            },
+          },
+        },
+        signedTransaction: {
+          ...signedTransaction,
+          signedTransactionXdr: withdrawPreparedForSigning.preparedTransactionXdr,
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /function/);
+      assert.equal(error.txHash, undefined);
+      return true;
+    },
+  );
+  assert.equal(functionMismatchSendCalls, 0);
+
+  let contractMismatchSendCalls = 0;
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          rpcServer: {
+            async sendTransaction() {
+              contractMismatchSendCalls += 1;
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return getMissing(hash);
+            },
+          },
+        },
+        signedTransaction: {
+          ...signedTransaction,
+          signedTransactionXdr:
+            otherContractPreparedForSigning.preparedTransactionXdr,
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /contract ID/);
+      assert.equal(error.txHash, undefined);
+      return true;
+    },
+  );
+  assert.equal(contractMismatchSendCalls, 0);
+
   const withdrawResult = await submitSignedLiveTransaction({
     options: {
       pollIntervalMs: 1,
@@ -214,6 +305,7 @@ async function main() {
       ...signedTransaction,
       action: "withdraw_balance",
       functionName: "withdraw",
+      signedTransactionXdr: withdrawPreparedForSigning.preparedTransactionXdr,
     },
   });
 
@@ -415,6 +507,8 @@ async function main() {
           "decode-purchase-token-id",
           "decode-withdraw-amount",
           "reject-source-mismatch-before-rpc",
+          "reject-function-mismatch-before-rpc",
+          "reject-contract-mismatch-before-rpc",
           "reject-submission-error",
           "reject-submission-retry-later",
           "reject-finality-failure",

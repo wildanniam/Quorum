@@ -144,7 +144,8 @@ The live signing smoke verifies the Freighter signing adapter with a mock
 signer, without opening Freighter or requesting a real wallet signature.
 The live submission smoke verifies signed transaction submission and finality
 polling with a mock RPC server, including purchase token ID and withdraw amount
-return value decoding, without submitting to testnet.
+return value decoding plus source wallet and contract/function mismatch
+rejection before RPC, without submitting to testnet.
 The live browser flow smoke verifies the client-side preflight, Freighter
 signing, and signed-XDR submit sequence with mock fetch and signer boundaries.
 The live UI wiring smoke verifies publish, checkout, check-in, and withdraw

@@ -140,6 +140,8 @@ const requiredLivePolicyCoverage = [
 
 const requiredLiveSubmissionCoverage = [
   "reject-source-mismatch-before-rpc",
+  "reject-function-mismatch-before-rpc",
+  "reject-contract-mismatch-before-rpc",
 ];
 
 const requiredLiveBrowserCoverage = [

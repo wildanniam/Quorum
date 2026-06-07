@@ -118,9 +118,9 @@ signer, including address/network options, signer mismatch handling, wallet
 rejection normalization, and signed XDR parsing.
 
 `npm run live:submission:smoke` verifies the signed transaction submission and
-finality polling adapter with a mock RPC server, including rejection, failure,
-timeout paths, and Soroban return value decoding for purchase token IDs and
-withdraw amounts.
+finality polling adapter with a mock RPC server, including source wallet,
+contract/function mismatch rejection before RPC, failure, timeout paths, and
+Soroban return value decoding for purchase token IDs and withdraw amounts.
 
 `npm run live:browser-flow:smoke` verifies the browser-side preflight,
 Freighter signing, and signed-XDR submit sequence with mock fetch and signer

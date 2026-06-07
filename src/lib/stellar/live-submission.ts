@@ -1,4 +1,5 @@
 import {
+  StrKey,
   Transaction,
   TransactionBuilder,
   scValToNative,
@@ -94,6 +95,62 @@ function assertSignedTransactionSource({
   if (source !== signedTransaction.signerAddress) {
     throw new LiveTransactionSubmissionError(
       "Signed transaction source does not match the connected wallet.",
+    );
+  }
+}
+
+function getSubmittedTransaction(transaction: Transaction | FeeBumpTransaction) {
+  return transaction instanceof Transaction
+    ? transaction
+    : transaction.innerTransaction;
+}
+
+function assertSignedTransactionInvocation({
+  signedTransaction,
+  transaction,
+}: {
+  signedTransaction: SignedLiveTransaction;
+  transaction: Transaction | FeeBumpTransaction;
+}) {
+  const submittedTransaction = getSubmittedTransaction(transaction);
+  const [operation] = submittedTransaction.operations;
+
+  if (submittedTransaction.operations.length !== 1 || !operation) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction must contain exactly one live contract invocation.",
+    );
+  }
+
+  if (
+    operation.type !== "invokeHostFunction" ||
+    operation.func.switch().name !== "hostFunctionTypeInvokeContract"
+  ) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction is not a live contract invocation.",
+    );
+  }
+
+  const invocation = operation.func.invokeContract();
+  const contractAddress = invocation.contractAddress();
+
+  if (contractAddress.switch().name !== "scAddressTypeContract") {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction does not target a contract address.",
+    );
+  }
+
+  const contractId = StrKey.encodeContract(contractAddress.contractId());
+  const functionName = invocation.functionName().toString();
+
+  if (contractId !== signedTransaction.contractId) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction contract ID does not match the prepared action.",
+    );
+  }
+
+  if (functionName !== signedTransaction.functionName) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction function does not match the prepared action.",
     );
   }
 }
@@ -216,6 +273,7 @@ export async function submitSignedLiveTransaction({
   const transaction = parseSignedTransaction(signedTransaction);
 
   assertSignedTransactionSource({ signedTransaction, transaction });
+  assertSignedTransactionInvocation({ signedTransaction, transaction });
 
   let submitted: SendTransactionResponse;
 
