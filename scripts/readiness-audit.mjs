@@ -20,6 +20,7 @@ const requiredFiles = [
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
   "scripts/live-args-smoke.ts",
+  "scripts/live-browser-flow-smoke.ts",
   "scripts/live-evidence-audit.mjs",
   "scripts/live-flow-smoke.ts",
   "scripts/live-persistence-smoke.ts",
@@ -30,6 +31,7 @@ const requiredFiles = [
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
+  "src/lib/stellar/live-browser-flow.ts",
   "src/lib/stellar/live-flow.ts",
   "src/lib/stellar/live-result-persistence.ts",
   "src/lib/stellar/live-preflight.ts",
@@ -54,6 +56,7 @@ const requiredPackageScripts = [
   "evidence:local",
   "lint",
   "live:args:smoke",
+  "live:browser-flow:smoke",
   "live:evidence:audit",
   "live:evidence:template",
   "live:flow:smoke",
@@ -76,6 +79,7 @@ const requiredEvidenceChecks = [
   "Live policy smoke",
   "Browser QA",
   "Live args smoke",
+  "Live browser flow smoke",
   "Live evidence template",
   "Live flow smoke",
   "Live persistence smoke",
@@ -134,6 +138,14 @@ const requiredLiveSubmissionCoverage = [
   "reject-source-mismatch-before-rpc",
 ];
 
+const requiredLiveBrowserCoverage = [
+  "browser-live-preflight-sign-submit",
+  "browser-live-signer-options",
+  "browser-live-submit-signed-xdr",
+  "browser-live-preflight-error",
+  "browser-live-submit-error",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
@@ -156,6 +168,7 @@ const requiredLiveHandoffTerms = [
   "LIVE_TESTNET_EVIDENCE.example.json",
   "live:evidence:audit",
   "contract-action/preflight",
+  "live-browser-flow.ts",
 ];
 
 const failures = [];
@@ -306,6 +319,12 @@ function checkEvidence() {
   for (const coverage of requiredLiveSubmissionCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live submission coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveBrowserCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live browser flow coverage: ${coverage}`);
     }
   }
 

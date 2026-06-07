@@ -108,6 +108,7 @@ npm run live:signing:smoke
 npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run live:evidence:template
+npm run live:browser-flow:smoke
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
@@ -143,6 +144,8 @@ signer, without opening Freighter or requesting a real wallet signature.
 The live submission smoke verifies signed transaction submission and finality
 polling with a mock RPC server, including purchase token ID and withdraw amount
 return value decoding, without submitting to testnet.
+The live browser flow smoke verifies the client-side preflight, Freighter
+signing, and signed-XDR submit sequence with mock fetch and signer boundaries.
 
 ## Live Testnet Boundary
 

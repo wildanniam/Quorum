@@ -76,6 +76,7 @@ npm run live:preflight:smoke
 npm run live:signing:smoke
 npm run live:submission:smoke
 npm run live:xdr:smoke
+npm run live:browser-flow:smoke
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -119,6 +120,10 @@ rejection normalization, and signed XDR parsing.
 finality polling adapter with a mock RPC server, including rejection, failure,
 timeout paths, and Soroban return value decoding for purchase token IDs and
 withdraw amounts.
+
+`npm run live:browser-flow:smoke` verifies the browser-side preflight,
+Freighter signing, and signed-XDR submit sequence with mock fetch and signer
+boundaries. It does not open Freighter or submit to testnet.
 
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live

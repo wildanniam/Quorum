@@ -137,6 +137,9 @@ submit path rejects invalid signed XDR before persistence and still requires a
 real RPC-confirmed finality result before writing live proof data.
 `POST /api/events/[eventId]/contract-action/preflight` exposes the non-signing
 RPC preflight boundary over HTTP and fails invalid requests before touching RPC.
+`src/lib/stellar/live-browser-flow.ts` is the browser-side orchestration helper:
+it calls the preflight route, asks Freighter to sign, and posts signed XDR to
+the submit route.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
 signing, mockable submission, decoded return values, and post-success
 persistence inputs so publish, paid checkout, free claim, check-in, and withdraw
