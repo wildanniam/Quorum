@@ -162,7 +162,7 @@ function checkWorkingTree() {
   if (!status) return;
 
   if (allowDirtyEvidence && listOnlyEvidenceFile(status)) {
-    warn("Working tree has only docs/DEMO_EVIDENCE.md pending.");
+    warn("Working tree has only generated QA/evidence docs pending.");
     return;
   }
 
