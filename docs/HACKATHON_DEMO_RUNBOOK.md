@@ -99,6 +99,7 @@ npm run lint
 npm run build
 npm run demo:smoke
 npm run demo:live-policy
+npm run browser:qa
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor

@@ -14,6 +14,7 @@ const checks = [
   { label: "Audit", command: "npm", args: ["audit", "--audit-level=moderate"] },
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
   { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
+  { label: "Browser QA", command: "npm", args: ["run", "browser:qa"] },
   { label: "Contract tests", command: "npm", args: ["run", "contracts:test"] },
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },
@@ -75,6 +76,7 @@ const status = run("git", [
   "--",
   ".",
   ":(exclude)docs/DEMO_EVIDENCE.md",
+  ":(exclude)docs/BROWSER_QA.md",
 ]);
 const verificationResults = checks.map((check) => ({
   label: check.label,

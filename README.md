@@ -68,6 +68,7 @@ npm run build
 npm audit --audit-level=moderate
 npm run demo:smoke
 npm run demo:live-policy
+npm run browser:qa
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -78,6 +79,9 @@ npm run contracts:doctor
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
 `npm run demo:live-policy` starts an isolated local Next.js dev server with fake valid contract IDs and verifies the API fails safe in live mode without creating local proof records.
+
+`npm run browser:qa` runs a headless browser across desktop/mobile viewport
+checks and regenerates `docs/BROWSER_QA.md`.
 
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 
