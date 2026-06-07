@@ -19,9 +19,9 @@ Quorum is considered locally demo-ready when these criteria pass:
 7. Organizer, attendee, collaborator, and proof readiness dashboard surfaces are
    visible in the app.
 8. Local DB, lint, build, audit, demo smoke, live policy smoke, browser QA,
-   live args smoke, live persistence smoke, live preflight smoke, live XDR
-   smoke, contract tests, contract build, and deployment doctor checks pass
-   with live signing exceptions documented.
+   live args smoke, live persistence smoke, live preflight smoke, live signing
+   smoke, live XDR smoke, contract tests, contract build, and deployment doctor
+   checks pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
 The live hackathon acceptance criteria add two gated requirements:
@@ -58,9 +58,10 @@ The live hackathon acceptance criteria add two gated requirements:
 | Live contract argument encoding is deterministic | Verified local | `npm run live:args:smoke` covers USDC atomic conversion, event ID derivation, split bps, metadata hashes, and publish/checkout/check-in/withdraw argument DTOs without signing. |
 | Verified live transaction results can be recorded | Verified local | `npm run live:persistence:smoke` covers recording live publish/pass/check-in/withdrawal results with 64-hex transaction hashes while rejecting local `stub:` hashes. |
 | Live RPC preflight can prepare transaction XDR for signing | Verified local | `npm run live:preflight:smoke` covers signer sequence lookup, Soroban `prepareTransaction` orchestration through a mock RPC boundary, parseable prepared XDR, and preflight error normalization without signing. |
+| Freighter signing boundary validates signed transaction output | Verified local | `npm run live:signing:smoke` covers the browser signing adapter with a mock signer, including Freighter options, signer mismatch rejection, wallet rejection normalization, and parseable signed XDR without requesting a real signature. |
 | Unsigned Soroban XDR templates are parseable | Verified local | `npm run live:xdr:smoke` covers pre-simulation unsigned invokeHostFunction XDR templates for publish/checkout/check-in/withdraw, including typed split recipient maps. |
 | Live action preparation is non-signing and fail-safe | Verified local | `npm run demo:live-policy` covers `GET /api/events/[eventId]/contract-action` prepare responses for publish/checkout/check-in/withdraw with fake valid contract IDs, then verifies mutation routes still return live-required responses without local proof writes. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, live persistence smoke, live preflight smoke, live XDR smoke, contract tests, contract build, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
+| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, live persistence smoke, live preflight smoke, live signing smoke, live XDR smoke, contract tests, contract build, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`. |
 
 ## Live Testnet Gate

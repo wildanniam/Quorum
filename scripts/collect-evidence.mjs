@@ -18,6 +18,7 @@ const checks = [
   { label: "Live args smoke", command: "npm", args: ["run", "live:args:smoke"] },
   { label: "Live persistence smoke", command: "npm", args: ["run", "live:persistence:smoke"] },
   { label: "Live preflight smoke", command: "npm", args: ["run", "live:preflight:smoke"] },
+  { label: "Live signing smoke", command: "npm", args: ["run", "live:signing:smoke"] },
   { label: "Live XDR smoke", command: "npm", args: ["run", "live:xdr:smoke"] },
   { label: "Contract tests", command: "npm", args: ["run", "contracts:test"] },
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },

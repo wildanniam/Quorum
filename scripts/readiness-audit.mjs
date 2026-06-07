@@ -21,7 +21,9 @@ const requiredFiles = [
   "scripts/live-args-smoke.ts",
   "scripts/live-persistence-smoke.ts",
   "scripts/live-preflight-smoke.ts",
+  "scripts/live-signing-smoke.ts",
   "scripts/live-xdr-smoke.ts",
+  "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
   "src/lib/stellar/live-preflight.ts",
@@ -46,6 +48,7 @@ const requiredPackageScripts = [
   "live:args:smoke",
   "live:persistence:smoke",
   "live:preflight:smoke",
+  "live:signing:smoke",
   "live:xdr:smoke",
   "readiness:audit",
 ];
@@ -63,6 +66,7 @@ const requiredEvidenceChecks = [
   "Live args smoke",
   "Live persistence smoke",
   "Live preflight smoke",
+  "Live signing smoke",
   "Live XDR smoke",
   "Contract tests",
   "Contract build",
@@ -106,6 +110,7 @@ const requiredLiveHandoffTerms = [
   "recordLivePass",
   "recordLiveCheckIn",
   "recordLiveWithdrawal",
+  "freighter-live-signing.ts",
 ];
 
 const failures = [];
@@ -289,6 +294,7 @@ function checkLiveBoundaries() {
 
   for (const term of [
     "Live RPC preflight can prepare transaction XDR for signing",
+    "Freighter signing boundary validates signed transaction output",
     "Verified live transaction results can be recorded",
     "Unsigned Soroban XDR templates are parseable",
   ]) {
