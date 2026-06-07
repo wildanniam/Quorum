@@ -11,6 +11,7 @@
     "db:seed": "node scripts/db-seed.mjs",
     "db:smoke": "node scripts/db-smoke.mjs",
     "demo:smoke": "node scripts/demo-smoke.mjs",
+    "evidence:local": "node scripts/collect-evidence.mjs",
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
     "contracts:doctor": "node scripts/contracts/doctor.mjs",

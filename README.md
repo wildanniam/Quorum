@@ -67,6 +67,7 @@ npm run lint
 npm run build
 npm audit --audit-level=moderate
 npm run demo:smoke
+npm run evidence:local
 cargo test
 stellar contract build
 npm run contracts:doctor
@@ -77,8 +78,11 @@ npm run contracts:deploy:testnet
 
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 
+`npm run evidence:local` runs the local verification suite and writes `docs/DEMO_EVIDENCE.md`.
+
 ## Planning Docs
 
 - `TECHNICAL_SPEC.md`
 - `DEVELOPMENT_PLAN.md`
 - `docs/QUORUM_PM_GOAL_BRIEF.md`
+- `docs/DEMO_EVIDENCE.md`
