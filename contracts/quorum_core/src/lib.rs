@@ -1,8 +1,8 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, panic_with_error, symbol_short, vec,
-    Address, BytesN, Env, IntoVal, String, Symbol, Vec,
+    contract, contracterror, contractimpl, contracttype, panic_with_error, symbol_short, token,
+    vec, Address, BytesN, Env, IntoVal, MuxedAddress, String, Symbol, Vec,
 };
 
 const BPS_DENOMINATOR: u32 = 10_000;
@@ -118,6 +118,14 @@ fn add_balance(env: &Env, event_id: &BytesN<32>, wallet: &Address, amount: i128)
     env.storage()
         .persistent()
         .set(&DataKey::Balance(event_id.clone(), wallet.clone()), &next);
+}
+
+fn transfer_token(env: &Env, currency: &Address, from: &Address, to: &Address, amount: i128) {
+    if amount == 0 {
+        return;
+    }
+
+    token::TokenClient::new(env, currency).transfer(from, &MuxedAddress::from(to), &amount);
 }
 
 fn validate_splits(env: &Env, splits: &Vec<SplitRecipient>) {
@@ -276,6 +284,9 @@ impl QuorumCore {
             panic_with_error!(&env, CoreError::InvalidPayment);
         }
 
+        let contract_address = env.current_contract_address();
+        transfer_token(&env, &event.currency, &buyer, &contract_address, amount);
+
         let token_id = mint_pass(
             &env,
             &event.pass_contract,
@@ -348,6 +359,7 @@ impl QuorumCore {
     pub fn withdraw(env: Env, collaborator: Address, event_id: BytesN<32>) -> i128 {
         collaborator.require_auth();
 
+        let event = read_event(&env, &event_id);
         let amount = balance(&env, &event_id, &collaborator);
         if amount <= 0 {
             panic_with_error!(&env, CoreError::NoBalance);
@@ -355,7 +367,14 @@ impl QuorumCore {
 
         env.storage()
             .persistent()
-            .set(&DataKey::Balance(event_id, collaborator), &0_i128);
+            .set(&DataKey::Balance(event_id, collaborator.clone()), &0_i128);
+        transfer_token(
+            &env,
+            &event.currency,
+            &env.current_contract_address(),
+            &collaborator,
+            amount,
+        );
 
         amount
     }
@@ -404,7 +423,14 @@ impl QuorumCore {
         let amount = Self::platform_balance(env.clone(), currency.clone());
         env.storage()
             .persistent()
-            .set(&DataKey::PlatformBalance(currency), &0_i128);
+            .set(&DataKey::PlatformBalance(currency.clone()), &0_i128);
+        transfer_token(
+            &env,
+            &currency,
+            &env.current_contract_address(),
+            &caller,
+            amount,
+        );
         amount
     }
 }

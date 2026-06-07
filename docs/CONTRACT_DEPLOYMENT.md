@@ -58,3 +58,5 @@ The init script signs transactions and performs:
 ## Current Boundary
 
 The contracts are fully unit-tested locally. Live testnet deployment is intentionally gated by wallet/funding approval.
+After deployment, use `docs/LIVE_SIGNING_HANDOFF.md` for the app-side Freighter
+transaction work required to replace local proof records.

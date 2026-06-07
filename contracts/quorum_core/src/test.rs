@@ -3,12 +3,13 @@
 use super::*;
 use quorum_pass_nft::{QuorumPassNft, QuorumPassNftClient};
 use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{Address, BytesN, Env, String};
+use soroban_sdk::{token, Address, BytesN, Env, String};
 
 struct Setup {
     env: Env,
     core: QuorumCoreClient<'static>,
     pass: QuorumPassNftClient<'static>,
+    admin: Address,
     organizer: Address,
     speaker: Address,
     partner: Address,
@@ -40,6 +41,14 @@ fn splits(
     ]
 }
 
+fn token_client<'a>(env: &'a Env, currency: &Address) -> token::TokenClient<'a> {
+    token::TokenClient::new(env, currency)
+}
+
+fn mint_balance(env: &Env, currency: &Address, wallet: &Address, amount: i128) {
+    token::StellarAssetClient::new(env, currency).mint(wallet, &amount);
+}
+
 fn setup_with_platform_fee(platform_fee_bps: u32) -> Setup {
     let env = Env::default();
     env.mock_all_auths();
@@ -53,9 +62,12 @@ fn setup_with_platform_fee(platform_fee_bps: u32) -> Setup {
     let speaker = Address::generate(&env);
     let partner = Address::generate(&env);
     let buyer = Address::generate(&env);
-    let currency = Address::generate(&env);
+    let currency = env
+        .register_stellar_asset_contract_v2(admin.clone())
+        .address();
     let event_id = BytesN::from_array(&env, &[3; 32]);
 
+    mint_balance(&env, &currency, &buyer, 10_000);
     pass.init(&admin);
     pass.set_core(&admin, &core_id);
     core.init(&admin, &platform_fee_bps);
@@ -75,6 +87,7 @@ fn setup_with_platform_fee(platform_fee_bps: u32) -> Setup {
         env,
         core,
         pass,
+        admin,
         organizer,
         speaker,
         partner,
@@ -117,6 +130,7 @@ fn pass_metadata(env: &Env) -> (String, BytesN<32>) {
 fn purchase_mints_pass_and_splits_balance() {
     let s = setup();
     let (uri, hash) = pass_metadata(&s.env);
+    let token = token_client(&s.env, &s.currency);
 
     let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
@@ -128,6 +142,8 @@ fn purchase_mints_pass_and_splits_balance() {
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 190);
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.partner), 95);
     assert_eq!(s.core.platform_balance(&s.currency), 50);
+    assert_eq!(token.balance(&s.buyer), 9_000);
+    assert_eq!(token.balance(&s.core.address), 1_000);
 }
 
 #[test]
@@ -135,6 +151,7 @@ fn demo_zero_fee_routes_full_amount_to_collaborators() {
     let s = setup_with_platform_fee(0);
     let uri = String::from_str(&s.env, "ipfs://demo-pass-1");
     let hash = BytesN::from_array(&s.env, &[7; 32]);
+    let token = token_client(&s.env, &s.currency);
 
     let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
@@ -143,6 +160,8 @@ fn demo_zero_fee_routes_full_amount_to_collaborators() {
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 200);
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.partner), 100);
     assert_eq!(s.core.platform_balance(&s.currency), 0);
+    assert_eq!(token.balance(&s.buyer), 9_000);
+    assert_eq!(token.balance(&s.core.address), 1_000);
 }
 
 #[test]
@@ -186,7 +205,8 @@ fn rejects_free_claim_when_capacity_is_full() {
     let hash = BytesN::from_array(&s.env, &[5; 32]);
 
     s.core.purchase(&s.buyer, &free_event_id, &0, &uri, &hash);
-    s.core.purchase(&second_buyer, &free_event_id, &0, &uri, &hash);
+    s.core
+        .purchase(&second_buyer, &free_event_id, &0, &uri, &hash);
 }
 
 #[test]
@@ -226,20 +246,41 @@ fn rejects_paid_purchase_when_capacity_is_full() {
     let third_buyer = Address::generate(&s.env);
     let (uri, hash) = pass_metadata(&s.env);
 
+    mint_balance(&s.env, &s.currency, &second_buyer, 10_000);
+    mint_balance(&s.env, &s.currency, &third_buyer, 10_000);
     s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
-    s.core.purchase(&second_buyer, &s.event_id, &1_000, &uri, &hash);
-    s.core.purchase(&third_buyer, &s.event_id, &1_000, &uri, &hash);
+    s.core
+        .purchase(&second_buyer, &s.event_id, &1_000, &uri, &hash);
+    s.core
+        .purchase(&third_buyer, &s.event_id, &1_000, &uri, &hash);
 }
 
 #[test]
 fn collaborator_can_withdraw_balance() {
     let s = setup();
     let (uri, hash) = pass_metadata(&s.env);
+    let token = token_client(&s.env, &s.currency);
 
     s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
 
     assert_eq!(s.core.withdraw(&s.speaker, &s.event_id), 190);
     assert_eq!(s.core.collaborator_balance(&s.event_id, &s.speaker), 0);
+    assert_eq!(token.balance(&s.speaker), 190);
+    assert_eq!(token.balance(&s.core.address), 810);
+}
+
+#[test]
+fn admin_can_withdraw_platform_fee() {
+    let s = setup();
+    let (uri, hash) = pass_metadata(&s.env);
+    let token = token_client(&s.env, &s.currency);
+
+    s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    assert_eq!(s.core.admin_withdraw(&s.admin, &s.currency), 50);
+    assert_eq!(s.core.platform_balance(&s.currency), 0);
+    assert_eq!(token.balance(&s.admin), 50);
+    assert_eq!(token.balance(&s.core.address), 950);
 }
 
 #[test]

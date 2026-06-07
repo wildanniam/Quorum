@@ -45,12 +45,12 @@ The live hackathon acceptance criteria add two gated requirements:
 | Contracts are deployed on Stellar testnet | Gated | `docs/DEMO_EVIDENCE.md` reports `STELLAR_ACCOUNT` missing; `contracts:doctor` is otherwise ready. |
 | Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
 | Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `docs/BROWSER_QA.md` verifies desktop/mobile marketplace rendering. |
-| Attendee can buy paid pass | Verified local, contract-ready | `npm run demo:smoke` covers `checkout`; `QuorumCore` tests cover paid purchase, capacity, duplicate guard, invalid amount, split accounting, and zero-fee demo accounting. |
+| Attendee can buy paid pass | Verified local, contract-ready | `npm run demo:smoke` covers `checkout`; `QuorumCore` tests cover paid purchase, payment token transfer into escrow, capacity, duplicate guard, invalid amount, split accounting, and zero-fee demo accounting. |
 | Attendee can claim free pass | Verified local, contract-ready | `npm run demo:smoke` covers `free-claim` and duplicate free claim; `QuorumCore` tests cover free claim, duplicate guard, capacity, and invalid non-zero amount. |
 | Each purchase/claim mints unique non-transferable NFT pass | Verified local, contract-ready | `npm run demo:smoke` covers pass creation; `QuorumPassNFT` tests cover unique owner/event pass, core-only mint, duplicate prevention, and disabled transfer. |
 | Resources are gated by NFT/pass ownership | Verified local | `npm run demo:smoke` covers locked anonymous resources and unlocked pass-owner resources. |
 | Organizer can check in pass | Verified local, contract-ready | `npm run demo:smoke` covers organizer check-in and duplicate guard; `QuorumCore` tests cover organizer-only, unknown token, cross-event mismatch, and idempotent duplicate check-in. |
-| Collaborator can see balance and withdraw | Verified local, contract-ready | `npm run demo:smoke` covers collaborator withdraw and duplicate empty-balance guard; `QuorumCore` tests cover collaborator balance, withdraw, and zero-balance rejection. |
+| Collaborator can see balance and withdraw | Verified local, contract-ready | `npm run demo:smoke` covers collaborator withdraw and duplicate empty-balance guard; `QuorumCore` tests cover collaborator balance, token transfer out of escrow, platform fee withdrawal, and zero-balance rejection. |
 | Dashboards show proof surfaces | Verified local | `npm run demo:smoke` covers `dashboard-proof`; `docs/BROWSER_QA.md` verifies dashboard proof mode and readiness panels. |
 | Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, contract tests, contract build, and contract doctor. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`. |
@@ -71,6 +71,8 @@ deployment and signing:
 
 Until those steps are intentionally approved and executed, Quorum is demo-ready
 in local proof mode and contract-ready for live testnet deployment.
+Use `docs/LIVE_SIGNING_HANDOFF.md` for the endpoint-by-endpoint live signing
+handoff and required transaction evidence.
 
 ## Current Submission State
 

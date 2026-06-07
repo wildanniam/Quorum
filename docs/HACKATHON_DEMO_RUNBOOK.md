@@ -138,6 +138,7 @@ mirror the contract flow.
 - `docs/BROWSER_QA.md`
 - `docs/MVP_READINESS.md`
 - contract WASM hashes from `npm run contracts:build`
+- `docs/LIVE_SIGNING_HANDOFF.md` for the remaining live transaction handoff
 - screenshot or short clip of marketplace, checkout, pass page, resources,
   check-in, dashboard, and withdrawal proof
 - deployed URL and contract IDs once funded deployment is approved
