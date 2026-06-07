@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:35:40.184Z`
+Generated at: `2026-06-07T18:45:36.188Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `64dacfe`
+- Commit: `2deeb92`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -33,7 +33,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-492983`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-0d290a`
 
 Covered checks:
 
@@ -42,6 +42,7 @@ Covered checks:
 - draft-validation
 - publish-lifecycle
 - contract-status
+- contract-action-policy
 - checkout
 - duplicate-checkout-guard
 - free-claim
@@ -131,8 +132,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_67e6dcb6-271b-478e-b2bf-59fe9d2cff3e",
-    "slug": "smoke-67e6dcb6",
+    "id": "evt_b95de1d5-c3fb-4051-971b-0593800db28a",
+    "slug": "smoke-b95de1d5",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -163,15 +164,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 2.8s
+✓ Compiled successfully in 3.1s
   Running TypeScript ...
-  Finished TypeScript in 1917ms ...
+  Finished TypeScript in 1865ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 91ms
+✓ Generating static pages using 7 workers (10/10) in 98ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -221,15 +222,16 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-a7aece9c-4729-4323-b7d6-10d9fe6f70ef.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-941798a2-0008-49b2-bf65-43c1f648c092.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-492983",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-0d290a",
   "checks": [
     "marketplace",
     "event-detail",
     "draft-validation",
     "publish-lifecycle",
     "contract-status",
+    "contract-action-policy",
     "checkout",
     "duplicate-checkout-guard",
     "free-claim",
@@ -257,23 +259,23 @@ found 0 vulnerabilities
 > cargo test
 running 17 tests
 test test::rejects_check_in_for_unknown_token - should panic ... ok
-test test::collaborator_can_withdraw_balance ... ok
-test test::purchase_mints_pass_and_splits_balance ... ok
-test test::duplicate_check_in_is_idempotent ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::organizer_can_check_in_pass ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::collaborator_can_withdraw_balance ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::duplicate_check_in_is_idempotent ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
-test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
 running 6 tests
 test test::rejects_unauthorized_mint - should panic ... ok
 test test::mints_unique_pass_for_owner_event ... ok
