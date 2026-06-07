@@ -59,6 +59,7 @@ npm run build
 npm audit --audit-level=moderate
 cargo test
 stellar contract build
+npm run contracts:deploy:testnet
 ```
 
 ## Planning Docs

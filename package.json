@@ -9,7 +9,10 @@
     "lint": "eslint",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:seed": "node scripts/db-seed.mjs",
-    "db:smoke": "node scripts/db-smoke.mjs"
+    "db:smoke": "node scripts/db-smoke.mjs",
+    "contracts:test": "cargo test",
+    "contracts:build": "stellar contract build",
+    "contracts:deploy:testnet": "node scripts/contracts/deploy-testnet.mjs"
   },
   "dependencies": {
     "@stellar/freighter-api": "^6.0.1",
