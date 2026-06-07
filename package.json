@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "db:seed": "node scripts/db-seed.mjs",
     "db:smoke": "node scripts/db-smoke.mjs"
   },
   "dependencies": {
