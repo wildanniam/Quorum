@@ -107,6 +107,7 @@ npm run live:preflight:smoke
 npm run live:signing:smoke
 npm run live:submission:smoke
 npm run live:xdr:smoke
+npm run live:evidence:template
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
@@ -116,6 +117,10 @@ npm run readiness:audit
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
 The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
+After an explicitly approved live testnet run, record public-only deployment
+and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
+`npm run live:evidence:audit`. The committed
+`docs/LIVE_TESTNET_EVIDENCE.example.json` is the required shape for that packet.
 The live policy smoke verifies fake configured contract IDs require live
 transaction submission, exposes non-signing live action prepare responses, and
 does not create local proof records.

@@ -186,6 +186,9 @@ Live mode is not complete until the evidence packet includes:
 - `npm run contracts:doctor`, `npm run contracts:test`, `npm run
   contracts:build`, `npm run lint`, `npm run build`, and a browser smoke pass
   on the deployed URL.
+- a filled `docs/LIVE_TESTNET_EVIDENCE.json` based on
+  `docs/LIVE_TESTNET_EVIDENCE.example.json` that passes
+  `npm run live:evidence:audit`.
 
 Until this evidence exists, Quorum should be described as locally demo-ready and
 contract-ready, not fully live-testnet complete.

@@ -81,6 +81,8 @@ deployment and signing:
 6. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
 7. Configure the hosted app environment and verify Freighter signing on the
    deployed URL.
+8. Record the approved live run in `docs/LIVE_TESTNET_EVIDENCE.json` and run
+   `npm run live:evidence:audit`.
 
 Until those steps are intentionally approved and executed, Quorum is demo-ready
 in local proof mode and contract-ready for live testnet deployment.
@@ -92,4 +94,6 @@ handoff and required transaction evidence.
 The current repository is suitable for a local hackathon demo and technical
 review. It is not yet a complete live testnet submission because funded signing
 credentials, deployed contract IDs, hosted environment variables, and real
-transaction hashes are intentionally outside the local repo state.
+transaction hashes are intentionally outside the local repo state. The
+machine-readable template for that future live proof is
+`docs/LIVE_TESTNET_EVIDENCE.example.json`.

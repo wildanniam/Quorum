@@ -20,6 +20,8 @@
     "live:signing:smoke": "tsx scripts/live-signing-smoke.ts",
     "live:submission:smoke": "tsx scripts/live-submission-smoke.ts",
     "live:xdr:smoke": "tsx scripts/live-xdr-smoke.ts",
+    "live:evidence:template": "node scripts/live-evidence-audit.mjs",
+    "live:evidence:audit": "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled",
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
     "contracts:test": "cargo test",

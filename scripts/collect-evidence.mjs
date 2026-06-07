@@ -22,6 +22,7 @@ const checks = [
   { label: "Live signing smoke", command: "npm", args: ["run", "live:signing:smoke"] },
   { label: "Live submission smoke", command: "npm", args: ["run", "live:submission:smoke"] },
   { label: "Live XDR smoke", command: "npm", args: ["run", "live:xdr:smoke"] },
+  { label: "Live evidence template", command: "npm", args: ["run", "live:evidence:template"] },
   { label: "Contract tests", command: "npm", args: ["run", "contracts:test"] },
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },

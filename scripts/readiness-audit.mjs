@@ -15,10 +15,12 @@ const requiredFiles = [
   "docs/DEMO_EVIDENCE.md",
   "docs/HACKATHON_DEMO_RUNBOOK.md",
   "docs/LIVE_SIGNING_HANDOFF.md",
+  "docs/LIVE_TESTNET_EVIDENCE.example.json",
   "docs/MVP_READINESS.md",
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
   "scripts/live-args-smoke.ts",
+  "scripts/live-evidence-audit.mjs",
   "scripts/live-flow-smoke.ts",
   "scripts/live-persistence-smoke.ts",
   "scripts/live-preflight-smoke.ts",
@@ -51,6 +53,8 @@ const requiredPackageScripts = [
   "evidence:local",
   "lint",
   "live:args:smoke",
+  "live:evidence:audit",
+  "live:evidence:template",
   "live:flow:smoke",
   "live:persistence:smoke",
   "live:preflight:smoke",
@@ -71,6 +75,7 @@ const requiredEvidenceChecks = [
   "Live policy smoke",
   "Browser QA",
   "Live args smoke",
+  "Live evidence template",
   "Live flow smoke",
   "Live persistence smoke",
   "Live preflight smoke",
@@ -138,6 +143,8 @@ const requiredLiveHandoffTerms = [
   "live-submission.ts",
   "return value decoding",
   "atomic-to-decimal",
+  "LIVE_TESTNET_EVIDENCE.example.json",
+  "live:evidence:audit",
 ];
 
 const failures = [];
@@ -314,6 +321,7 @@ function checkEvidence() {
 function checkLiveBoundaries() {
   const handoff = readFile("docs/LIVE_SIGNING_HANDOFF.md");
   const readiness = readFile("docs/MVP_READINESS.md");
+  const templateAudit = runJson("node", ["scripts/live-evidence-audit.mjs"]);
 
   for (const term of requiredLiveHandoffTerms) {
     if (!handoff.includes(term)) {
@@ -340,6 +348,14 @@ function checkLiveBoundaries() {
 
   if (!readiness.includes("not yet a complete live testnet submission")) {
     fail("MVP_READINESS does not preserve the live submission boundary.");
+  }
+
+  if (!templateAudit.ok || templateAudit.mode !== "template") {
+    fail("Live testnet evidence template audit does not pass in template mode.");
+  }
+
+  if (templateAudit.liveEvidenceComplete) {
+    fail("Live testnet evidence template must not claim complete live evidence.");
   }
 }
 

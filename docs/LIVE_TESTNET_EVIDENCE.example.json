@@ -1,0 +1,96 @@
+{
+  "generatedAt": "<ISO timestamp after approved live run>",
+  "network": "TESTNET",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "hostedAppUrl": "<deployed app URL>",
+  "wallets": {
+    "admin": "<G... admin account>",
+    "organizer": "<G... organizer account>",
+    "paidAttendee": "<G... paid attendee account>",
+    "freeAttendee": "<G... free attendee account>",
+    "collaborator": "<G... collaborator account>"
+  },
+  "contracts": {
+    "coreContractId": "<C... QuorumCore contract ID>",
+    "passContractId": "<C... QuorumPassNFT contract ID>",
+    "usdcContractId": "<C... testnet USDC token contract ID>",
+    "coreWasmHash": "f67c4483f74bdfce3931a7d30577fabc5b4b6d1bdb7bdb1cec4696818c917761",
+    "passWasmHash": "3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1",
+    "platformFeeBps": "<configured platform fee bps>"
+  },
+  "deploymentTransactions": {
+    "passDeployTxHash": "<64 hex transaction hash>",
+    "coreDeployTxHash": "<64 hex transaction hash>",
+    "coreInitTxHash": "<64 hex transaction hash>"
+  },
+  "liveFlows": {
+    "publishPaidEvent": {
+      "txHash": "<64 hex transaction hash>",
+      "eventUrl": "<hosted paid event URL>"
+    },
+    "paidCheckout": {
+      "txHash": "<64 hex transaction hash>",
+      "tokenId": "<minted paid pass token ID>",
+      "paymentAsset": "USDC"
+    },
+    "freeClaim": {
+      "txHash": "<64 hex transaction hash>",
+      "tokenId": "<minted free pass token ID>"
+    },
+    "checkIn": {
+      "txHash": "<64 hex transaction hash>",
+      "tokenId": "<checked-in pass token ID>"
+    },
+    "collaboratorWithdraw": {
+      "txHash": "<64 hex transaction hash>",
+      "withdrawAmountUsdc": "<withdraw amount in USDC>"
+    }
+  },
+  "browserProof": {
+    "contractStatusUrl": "<hosted /api/contracts/status URL>",
+    "contractStatusProofMode": "live",
+    "contractStatusActionsLive": "<true after all policies are live>",
+    "paidResourceUnlockedUrl": "<hosted resource URL unlocked by paid attendee>",
+    "browserQaDeployed": "<deployed browser QA notes or artifact URL>"
+  },
+  "verification": {
+    "commands": {
+      "contractsDoctor": {
+        "command": "npm run contracts:doctor",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      },
+      "contractsTest": {
+        "command": "npm run contracts:test",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      },
+      "contractsBuild": {
+        "command": "npm run contracts:build",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      },
+      "lint": {
+        "command": "npm run lint",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      },
+      "build": {
+        "command": "npm run build",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      },
+      "readinessAudit": {
+        "command": "npm run readiness:audit",
+        "status": "<PASS>",
+        "exitCode": "<0>"
+      }
+    }
+  },
+  "approval": {
+    "explicitApprovalRecorded": "<true after user approval>",
+    "approvedBy": "<approver name or handle>",
+    "approvedAt": "<ISO timestamp>",
+    "notes": "<approval scope notes>"
+  }
+}
