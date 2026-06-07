@@ -123,6 +123,47 @@ function assert(condition, message) {
   }
 }
 
+function createDraftPayload({
+  title,
+  collaboratorSplits = [70, 30],
+  includeResource = true,
+}) {
+  return {
+    title,
+    eventType: "workshop",
+    shortDescription:
+      "A smoke-test event that verifies Quorum draft validation and publish lifecycle.",
+    coverImageUrl:
+      "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1200&q=80",
+    startDateTime: "2026-07-01T10:00:00.000Z",
+    endDateTime: "2026-07-01T12:00:00.000Z",
+    timezone: "Asia/Jakarta",
+    locationType: "hybrid",
+    locationText: "Jakarta + livestream",
+    meetingUrl: "https://example.com/quorum-smoke",
+    isFree: false,
+    priceUsdc: "7",
+    capacity: 42,
+    collaborators: collaboratorSplits.map((splitPercentage, index) => ({
+      displayName: index === 0 ? "Smoke Host" : "Smoke Speaker",
+      role: index === 0 ? "Host" : "Speaker",
+      walletAddress: index === 0 ? organizerWallet : speakerWallet,
+      splitPercentage,
+    })),
+    resources: includeResource
+      ? [
+          {
+            title: "Smoke Resource",
+            description: "Gated resource used by the demo smoke test.",
+            type: "link",
+            url: "https://example.com/quorum-smoke-resource",
+            sortOrder: 1,
+          },
+        ]
+      : [],
+  };
+}
+
 async function main() {
   const databasePath = resolveDatabasePath();
   fs.rmSync(databasePath, { force: true });
@@ -180,6 +221,94 @@ async function main() {
     const freeEventHtml = await freeEventPage.text();
     assert(freeEventPage.status === 200, "free event detail should render");
     assert(freeEventHtml.includes("Claim pass"), "free event should show claim CTA");
+
+    const draftTitle = `Smoke Publish ${randomUUID().slice(0, 8)}`;
+    const invalidDraft = await fetch(`${baseUrl}/api/events`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: organizerCookie,
+      },
+      body: JSON.stringify(
+        createDraftPayload({
+          title: `${draftTitle} Invalid Split`,
+          collaboratorSplits: [70, 20],
+        }),
+      ),
+    });
+    const invalidDraftBody = await readJson(invalidDraft);
+    assert(invalidDraft.status === 400, "invalid split draft should fail");
+    assert(
+      invalidDraftBody?.issues?.some(
+        (issue) =>
+          issue.path === "collaborators" &&
+          issue.message.includes("split total"),
+      ),
+      "invalid split draft should report split total issue",
+    );
+
+    const draft = await fetch(`${baseUrl}/api/events`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: organizerCookie,
+      },
+      body: JSON.stringify(createDraftPayload({ title: draftTitle })),
+    });
+    const draftBody = await readJson(draft);
+    const draftEventId = draftBody?.event?.id;
+    const draftSlug = draftBody?.event?.slug;
+    assert(draft.status === 201, "valid draft should be created");
+    assert(typeof draftEventId === "string", "draft should return event ID");
+    assert(draftBody?.event?.status === "draft", "created event should be draft");
+    assert(
+      Array.isArray(draftBody?.resources) && draftBody.resources.length === 1,
+      "draft should include gated resource setup",
+    );
+
+    const unauthorizedPublish = await fetch(
+      `${baseUrl}/api/events/${draftEventId}/publish`,
+      {
+        method: "POST",
+        headers: { cookie: attendeeCookie },
+      },
+    );
+    assert(
+      unauthorizedPublish.status === 400,
+      "non-organizer should not publish draft",
+    );
+
+    const publish = await fetch(`${baseUrl}/api/events/${draftEventId}/publish`, {
+      method: "POST",
+      headers: { cookie: organizerCookie },
+    });
+    const publishBody = await readJson(publish);
+    assert(publish.status === 200, "organizer should publish valid draft");
+    assert(
+      publishBody?.event?.status === "published",
+      "published event should update status",
+    );
+    assert(
+      publishBody?.event?.publishTxHash?.startsWith("stub:publish:"),
+      "published event should record publish proof",
+    );
+
+    const duplicatePublish = await fetch(
+      `${baseUrl}/api/events/${draftEventId}/publish`,
+      {
+        method: "POST",
+        headers: { cookie: organizerCookie },
+      },
+    );
+    assert(duplicatePublish.status === 400, "published event should not republish");
+
+    const publishedDraftPage = await fetch(`${baseUrl}/events/${draftSlug}`);
+    const publishedDraftHtml = await publishedDraftPage.text();
+    assert(publishedDraftPage.status === 200, "published draft page should render");
+    assert(
+      publishedDraftHtml.includes(draftTitle),
+      "published draft should be publicly visible",
+    );
 
     const contractStatus = await fetch(`${baseUrl}/api/contracts/status`);
     const contractStatusBody = await readJson(contractStatus);
@@ -397,6 +526,8 @@ async function main() {
           checks: [
             "marketplace",
             "event-detail",
+            "draft-validation",
+            "publish-lifecycle",
             "contract-status",
             "checkout",
             "duplicate-checkout-guard",
