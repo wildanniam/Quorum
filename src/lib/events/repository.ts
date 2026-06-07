@@ -6,6 +6,9 @@ import type {
   CollaboratorRecord,
   EventRecord,
   LocationType,
+  PassRecord,
+  PassSource,
+  PurchaseRecord,
   ResourceRecord,
   ResourceType,
   UserRecord,
@@ -61,6 +64,30 @@ type ResourceRow = {
   type: ResourceType;
   url: string | null;
   sort_order: number;
+  created_at: string;
+};
+
+type PassRow = {
+  id: string;
+  event_id: string;
+  owner_wallet: string;
+  token_id: string | null;
+  metadata_uri: string | null;
+  metadata_hash: string | null;
+  mint_tx_hash: string | null;
+  source: PassSource;
+  checked_in: 0 | 1;
+  created_at: string;
+};
+
+type PurchaseRow = {
+  id: string;
+  event_id: string;
+  buyer_wallet: string;
+  amount_usdc: string;
+  token_id: string | null;
+  tx_hash: string | null;
+  status: "pending" | "succeeded" | "failed";
   created_at: string;
 };
 
@@ -160,6 +187,34 @@ function toResourceRecord(row: ResourceRow): ResourceRecord {
     type: row.type,
     url: row.url,
     sortOrder: row.sort_order,
+    createdAt: row.created_at,
+  };
+}
+
+function toPassRecord(row: PassRow): PassRecord {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    ownerWallet: row.owner_wallet,
+    tokenId: row.token_id,
+    metadataUri: row.metadata_uri,
+    metadataHash: row.metadata_hash,
+    mintTxHash: row.mint_tx_hash,
+    source: row.source,
+    checkedIn: row.checked_in === 1,
+    createdAt: row.created_at,
+  };
+}
+
+function toPurchaseRecord(row: PurchaseRow): PurchaseRecord {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    buyerWallet: row.buyer_wallet,
+    amountUsdc: row.amount_usdc,
+    tokenId: row.token_id,
+    txHash: row.tx_hash,
+    status: row.status,
     createdAt: row.created_at,
   };
 }
@@ -514,4 +569,176 @@ export function listResources(eventId: string) {
       )
       .all(eventId) as ResourceRow[]
   ).map(toResourceRecord);
+}
+
+export function countPassesForEvent(eventId: string) {
+  const row = getDatabase()
+    .prepare("SELECT COUNT(*) as count FROM passes WHERE event_id = ?")
+    .get(eventId) as { count: number };
+
+  return Number(row.count);
+}
+
+export function countMintedPasses() {
+  const row = getDatabase()
+    .prepare("SELECT COUNT(*) as count FROM passes")
+    .get() as { count: number };
+
+  return Number(row.count);
+}
+
+export function getSucceededPurchaseTotalUsdc() {
+  const row = getDatabase()
+    .prepare(
+      `
+      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
+      FROM purchases
+      WHERE status = 'succeeded'
+      `,
+    )
+    .get() as { total: number };
+
+  return Number(row.total);
+}
+
+export function getPassByEventAndOwner(eventId: string, ownerWallet: string) {
+  assertWalletAddress(ownerWallet);
+
+  const row = getDatabase()
+    .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
+    .get(eventId, ownerWallet) as PassRow | undefined;
+
+  return row ? toPassRecord(row) : null;
+}
+
+export function listPassesByOwner(ownerWallet: string) {
+  assertWalletAddress(ownerWallet);
+
+  return (
+    getDatabase()
+      .prepare("SELECT * FROM passes WHERE owner_wallet = ? ORDER BY created_at DESC")
+      .all(ownerWallet) as PassRow[]
+  ).map(toPassRecord);
+}
+
+export function getPassByTokenId(tokenId: string) {
+  const passRow = getDatabase()
+    .prepare("SELECT * FROM passes WHERE token_id = ?")
+    .get(tokenId) as PassRow | undefined;
+
+  if (!passRow) {
+    return null;
+  }
+
+  const purchaseRow = getDatabase()
+    .prepare(
+      `
+      SELECT * FROM purchases
+      WHERE token_id = ?
+      ORDER BY created_at DESC
+      LIMIT 1
+      `,
+    )
+    .get(tokenId) as PurchaseRow | undefined;
+
+  return {
+    event: getEventById(passRow.event_id),
+    pass: toPassRecord(passRow),
+    purchase: purchaseRow ? toPurchaseRecord(purchaseRow) : null,
+  };
+}
+
+export function createLocalPassProof(eventId: string, ownerWallet: string) {
+  assertWalletAddress(ownerWallet);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Passes can only be claimed for published events.");
+    }
+
+    const existingPass = db
+      .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
+      .get(eventId, ownerWallet) as PassRow | undefined;
+
+    if (existingPass) {
+      throw new Error("Connected wallet already owns a pass for this event.");
+    }
+
+    const mintedCount = countPassesForEvent(eventId);
+
+    if (mintedCount >= event.capacity) {
+      throw new Error("Event capacity is sold out.");
+    }
+
+    const passId = createId("pas");
+    const purchaseId = createId("pur");
+    const source: PassSource = event.isFree ? "free_claim" : "purchase";
+    const passNumber = String(mintedCount + 1).padStart(4, "0");
+    const tokenId = `qpass-${event.slug}-${passNumber}-${passId.slice(-6)}`;
+    const metadataUri = `quorum://events/${event.slug}/passes/${tokenId}`;
+    const metadataHash = createHash("sha256")
+      .update(`${event.id}:${ownerWallet}:${tokenId}:${event.metadataHash ?? ""}`)
+      .digest("hex");
+    const localTxHash = `stub:${source}:${event.id}:${passId}`;
+
+    db.prepare(
+      `
+      INSERT INTO passes (
+        id, event_id, owner_wallet, token_id, metadata_uri, metadata_hash,
+        mint_tx_hash, source
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      passId,
+      event.id,
+      ownerWallet,
+      tokenId,
+      metadataUri,
+      `sha256:${metadataHash}`,
+      `stub:mint:${event.id}:${passId}`,
+      source,
+    );
+
+    db.prepare(
+      `
+      INSERT INTO purchases (
+        id, event_id, buyer_wallet, amount_usdc, token_id, tx_hash, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, 'succeeded')
+      `,
+    ).run(
+      purchaseId,
+      event.id,
+      ownerWallet,
+      event.isFree ? "0" : event.priceUsdc,
+      tokenId,
+      localTxHash,
+    );
+
+    const pass = db
+      .prepare("SELECT * FROM passes WHERE id = ?")
+      .get(passId) as PassRow;
+    const purchase = db
+      .prepare("SELECT * FROM purchases WHERE id = ?")
+      .get(purchaseId) as PurchaseRow;
+
+    return {
+      event,
+      pass: toPassRecord(pass),
+      purchase: toPurchaseRecord(purchase),
+    };
+  })();
 }

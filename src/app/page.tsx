@@ -3,9 +3,11 @@ import { ArrowUpRight, ChevronRight } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { proofRail } from "@/lib/demo-data";
 import {
+  countMintedPasses,
   listCollaborators,
   listPublishedEvents,
   listResources,
+  getSucceededPurchaseTotalUsdc,
 } from "@/lib/events/repository";
 import type { EventRecord } from "@/lib/db/models";
 
@@ -44,6 +46,8 @@ export default function Home() {
   const publishedEvents = listPublishedEvents();
   const featuredEvent = publishedEvents[0] ?? null;
   const featuredResources = featuredEvent ? listResources(featuredEvent.id) : [];
+  const mintedPasses = countMintedPasses();
+  const routedUsdc = getSucceededPurchaseTotalUsdc();
   const stats = [
     { label: "Published events", value: String(publishedEvents.length), tone: "accent" },
     {
@@ -56,8 +60,12 @@ export default function Home() {
       ),
       tone: "cyan",
     },
-    { label: "Passes minted", value: "0", tone: "amber" },
-    { label: "USDC routed", value: "0", tone: "coral" },
+    { label: "Passes minted", value: String(mintedPasses), tone: "amber" },
+    {
+      label: "USDC routed",
+      value: routedUsdc > 0 ? routedUsdc.toLocaleString("en-US") : "0",
+      tone: "coral",
+    },
   ];
 
   return (

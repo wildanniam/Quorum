@@ -134,7 +134,7 @@ export default async function EventPage({ params }: EventPageProps) {
               ))}
             </div>
             <Link
-              href={`/passes?event=${event.slug}`}
+              href={`/events/${event.slug}/checkout`}
               className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
             >
               {event.isFree ? "Claim pass" : "Buy pass"} <ArrowUpRight size={16} />
@@ -152,7 +152,7 @@ export default async function EventPage({ params }: EventPageProps) {
               {event.capacity} capacity · one non-transferable pass per wallet
             </p>
             <Link
-              href={`/passes?event=${event.slug}`}
+              href={`/events/${event.slug}/checkout`}
               className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 border border-accent bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-transparent hover:text-accent"
             >
               {event.isFree ? "Claim pass" : "Buy pass"} <ArrowUpRight size={16} />

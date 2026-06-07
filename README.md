@@ -6,17 +6,20 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 5 is complete. The app can create, update, publish, and publicly list local events, and the Soroban contracts cover event registry, NFT pass minting, split accounting, withdraw accounting, and check-in.
+Phase 7 local proof flow is in progress. The app can create, update, publish, publicly list local events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, and gate event resources from the connected wallet session.
+
+The Soroban contracts cover event registry, NFT pass minting, split accounting, withdraw accounting, and check-in. Live on-chain publish/checkout still needs deployed testnet contract IDs and wallet signing approval.
 
 Implemented in the app shell:
 
 - public marketplace surface;
 - featured demo event;
-- event detail placeholder;
+- event detail pages;
 - dashboard placeholder;
 - create event placeholder;
-- pass page placeholder;
-- gated resources placeholder;
+- checkout and claim page;
+- attendee pass index and pass detail pages;
+- session-gated resources page;
 - check-in placeholder;
 - Freighter-first wallet auth foundation;
 - signed wallet session API routes;
@@ -28,11 +31,14 @@ Implemented in the app shell:
 - gated resource setup;
 - `QuorumPassNFT` Soroban contract;
 - `QuorumCore` Soroban contract.
+- local checkout/claim API route;
+- local pass proof and purchase recording;
+- marketplace metrics for minted passes and routed USDC.
 
 Not implemented yet:
 
-- real checkout;
-- real NFT minting;
+- live on-chain checkout transaction signing;
+- live NFT mint transaction submission from the app;
 - real on-chain check-in.
 
 ## Local Development
