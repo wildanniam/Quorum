@@ -15,6 +15,7 @@ const db = new Database(resolveDatabasePath());
 db.pragma("foreign_keys = ON");
 
 const demoEventId = "evt_apac_stellar_builder_meetup";
+const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const partnerWallet = "GBUSN4MX7AE3RKAR4DEJEELBAQ4CZ3Q6PZ4QEU7RW3SQ7OX6ZFSIDGER";
@@ -27,7 +28,7 @@ const seed = db.transaction(() => {
   userInsert.run("usr_demo_speaker", speakerWallet);
   userInsert.run("usr_demo_partner", partnerWallet);
 
-  db.prepare(
+  const eventUpsert = db.prepare(
     `
     INSERT INTO events (
       id, slug, title, event_type, short_description, cover_image_url,
@@ -56,7 +57,9 @@ const seed = db.transaction(() => {
       metadata_hash = excluded.metadata_hash,
       publish_tx_hash = excluded.publish_tx_hash
     `,
-  ).run(
+  );
+
+  eventUpsert.run(
     demoEventId,
     "apac-stellar-builder-meetup",
     "APAC Stellar Builder Meetup",
@@ -78,8 +81,32 @@ const seed = db.transaction(() => {
     "testnet:demo-publish-stub",
   );
 
+  eventUpsert.run(
+    freeEventId,
+    "stellar-open-office-hours",
+    "Stellar Open Office Hours",
+    "Free Web3 Builder Session",
+    "A free community session for builders to discuss Stellar payments, Soroban contracts, and event access ideas.",
+    "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1600&q=80",
+    "2026-06-28T09:00:00.000Z",
+    "2026-06-28T10:30:00.000Z",
+    "Asia/Jakarta",
+    "virtual",
+    "Livestream",
+    "https://example.com/office-hours",
+    "0",
+    1,
+    50,
+    "published",
+    organizerWallet,
+    "sha256:free-demo-metadata-hash",
+    "testnet:free-demo-publish-stub",
+  );
+
   db.prepare("DELETE FROM collaborators WHERE event_id = ?").run(demoEventId);
   db.prepare("DELETE FROM resources WHERE event_id = ?").run(demoEventId);
+  db.prepare("DELETE FROM collaborators WHERE event_id = ?").run(freeEventId);
+  db.prepare("DELETE FROM resources WHERE event_id = ?").run(freeEventId);
 
   const collaboratorInsert = db.prepare(
     `
@@ -112,6 +139,14 @@ const seed = db.transaction(() => {
     "Community Partner",
     partnerWallet,
     10,
+  );
+  collaboratorInsert.run(
+    "col_free_organizer",
+    freeEventId,
+    "Jakarta Stellar Guild",
+    "Organizer",
+    organizerWallet,
+    100,
   );
 
   const resourceInsert = db.prepare(
@@ -147,6 +182,15 @@ const seed = db.transaction(() => {
     null,
     3,
   );
+  resourceInsert.run(
+    "res_free_recap",
+    freeEventId,
+    "Office Hours Recap",
+    "Notes and links shared during the free builder session.",
+    "text",
+    null,
+    1,
+  );
 });
 
 seed();
@@ -159,6 +203,7 @@ console.log(
   JSON.stringify(
     {
       seededEventId: demoEventId,
+      seededFreeEventId: freeEventId,
       publishedCount,
     },
     null,

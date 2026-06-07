@@ -13,6 +13,8 @@ const databaseUrl =
   `file:./data/quorum-demo-smoke-${randomUUID()}.db`;
 const eventId = "evt_apac_stellar_builder_meetup";
 const eventSlug = "apac-stellar-builder-meetup";
+const freeEventId = "evt_stellar_open_office_hours";
+const freeEventSlug = "stellar-open-office-hours";
 const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet =
@@ -164,11 +166,20 @@ async function main() {
       marketplaceHtml.includes("APAC Stellar Builder Meetup"),
       "marketplace should include seeded event",
     );
+    assert(
+      marketplaceHtml.includes("Stellar Open Office Hours"),
+      "marketplace should include seeded free event",
+    );
 
     const eventPage = await fetch(`${baseUrl}/events/${eventSlug}`);
     const eventHtml = await eventPage.text();
     assert(eventPage.status === 200, "event detail should render");
     assert(eventHtml.includes("/checkout"), "event page should link checkout");
+
+    const freeEventPage = await fetch(`${baseUrl}/events/${freeEventSlug}`);
+    const freeEventHtml = await freeEventPage.text();
+    assert(freeEventPage.status === 200, "free event detail should render");
+    assert(freeEventHtml.includes("Claim pass"), "free event should show claim CTA");
 
     const checkout = await fetch(
       `${baseUrl}/api/events/${eventId}/passes`,
@@ -194,6 +205,39 @@ async function main() {
       },
     );
     assert(duplicateCheckout.status === 409, "duplicate checkout should fail");
+
+    const freeAttendeeWallet = Keypair.random().publicKey();
+    const freeAttendeeCookie = `quorum_session=${createSession(freeAttendeeWallet)}`;
+    const freeClaim = await fetch(
+      `${baseUrl}/api/events/${freeEventId}/passes`,
+      {
+        method: "POST",
+        headers: { cookie: freeAttendeeCookie },
+      },
+    );
+    const freeClaimBody = await readJson(freeClaim);
+    assert(freeClaim.status === 201, "free event claim should create a pass");
+    assert(
+      freeClaimBody?.pass?.source === "free_claim",
+      "free event pass should use free_claim source",
+    );
+    assert(
+      freeClaimBody?.purchase?.amountUsdc === "0",
+      "free event claim should record zero USDC",
+    );
+    assert(
+      freeClaimBody?.purchase?.txHash?.startsWith("stub:free_claim:"),
+      "free claim should record claim proof",
+    );
+
+    const duplicateFreeClaim = await fetch(
+      `${baseUrl}/api/events/${freeEventId}/passes`,
+      {
+        method: "POST",
+        headers: { cookie: freeAttendeeCookie },
+      },
+    );
+    assert(duplicateFreeClaim.status === 409, "duplicate free claim should fail");
 
     const lockedResources = await fetch(
       `${baseUrl}/events/${eventSlug}/resources`,
@@ -317,6 +361,8 @@ async function main() {
             "event-detail",
             "checkout",
             "duplicate-checkout-guard",
+            "free-claim",
+            "duplicate-free-claim-guard",
             "resource-gating",
             "organizer-check-in",
             "duplicate-check-in-guard",
