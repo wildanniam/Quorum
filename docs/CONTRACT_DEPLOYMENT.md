@@ -38,11 +38,12 @@ Copy those values into `.env.local` for app integration.
 
 After deployment, initialize both contracts and link the pass contract to the
 core contract. `ADMIN_ADDRESS` must be the public key that authorizes admin
-setup. `QUORUM_PLATFORM_FEE_BPS` defaults to `500` (5%) when omitted.
+setup. `QUORUM_PLATFORM_FEE_BPS` defaults to `0` for the hackathon demo when
+omitted. The contract supports non-zero fees, but the locked demo fee is 0%.
 
 ```bash
 export ADMIN_ADDRESS=<admin-public-key>
-export QUORUM_PLATFORM_FEE_BPS=500
+export QUORUM_PLATFORM_FEE_BPS=0
 export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>
 export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID=<deployed-core-contract-id>
 npm run contracts:init:testnet

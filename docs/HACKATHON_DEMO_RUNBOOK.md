@@ -117,6 +117,7 @@ Before live deployment:
 export STELLAR_NETWORK=testnet
 export STELLAR_ACCOUNT=<funded-identity-or-secret>
 export ADMIN_ADDRESS=<admin-public-key>
+export QUORUM_PLATFORM_FEE_BPS=0
 npm run contracts:doctor
 npm run contracts:deploy:testnet
 export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>

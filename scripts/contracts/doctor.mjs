@@ -149,6 +149,7 @@ const appNetworkPassphrase =
   "Test SDF Network ; September 2015";
 const coreContractId = optionalEnv("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID");
 const passContractId = optionalEnv("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID");
+const platformFeeBps = optionalEnv("QUORUM_PLATFORM_FEE_BPS") ?? "0";
 const rpc = await checkRpc(appRpcUrl);
 const blockers = [];
 const warnings = [];
@@ -177,6 +178,16 @@ if (!rpc.ok) {
 
 if (!stellarAccount) {
   blockers.push("STELLAR_ACCOUNT is missing. Set a funded Stellar identity/secret before deploy.");
+}
+
+if (!/^\d+$/.test(platformFeeBps) || Number(platformFeeBps) > 10_000) {
+  blockers.push("QUORUM_PLATFORM_FEE_BPS must be an integer from 0 to 10000.");
+}
+
+if (/^\d+$/.test(platformFeeBps) && Number(platformFeeBps) > 0) {
+  warnings.push(
+    "QUORUM_PLATFORM_FEE_BPS is non-zero. The locked hackathon demo default is 0 bps; use a non-zero fee only intentionally.",
+  );
 }
 
 if (!validContractId(coreContractId)) {
@@ -223,6 +234,9 @@ const report = {
     coreContractIdConfigured: validContractId(coreContractId),
     passContractIdConfigured: validContractId(passContractId),
     wasmArtifacts,
+  },
+  config: {
+    platformFeeBps: /^\d+$/.test(platformFeeBps) ? Number(platformFeeBps) : null,
   },
   signing: {
     stellarAccountConfigured: Boolean(stellarAccount),

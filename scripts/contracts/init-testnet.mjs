@@ -6,7 +6,7 @@ const network = process.env.STELLAR_NETWORK || "testnet";
 const adminAddress = process.env.ADMIN_ADDRESS;
 const passContractId = process.env.NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID;
 const coreContractId = process.env.NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID;
-const platformFeeBps = process.env.QUORUM_PLATFORM_FEE_BPS || "500";
+const platformFeeBps = process.env.QUORUM_PLATFORM_FEE_BPS || "0";
 
 const missing = [
   account ? null : "STELLAR_ACCOUNT",

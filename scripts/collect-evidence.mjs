@@ -164,6 +164,7 @@ ${wasmRows}
 - RPC reachable: \`${doctorJson?.network?.rpcReachable ?? "unknown"}\`
 - Deploy network: \`${doctorJson?.network?.deployNetwork ?? "unknown"}\`
 - App RPC: \`${doctorJson?.network?.appRpcUrl ?? "unknown"}\`
+- Platform fee bps: \`${doctorJson?.config?.platformFeeBps ?? "unknown"}\`
 - Stellar CLI: \`${doctorJson?.tools?.stellar?.version ?? "unknown"}\`
 - Rust: \`${doctorJson?.tools?.rust?.version ?? "unknown"}\`
 - Cargo: \`${doctorJson?.tools?.cargo?.version ?? "unknown"}\`
