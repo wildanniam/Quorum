@@ -585,6 +585,13 @@ Suggested correction commit if needed:
 docs: update contract plan after Soroban spike
 ```
 
+Spike result locked:
+
+- Use `stellar contract init` workspace layout under `contracts/*`.
+- Keep generated `soroban-sdk = "25"` while local CLI 26 tests/builds pass.
+- Implement a custom minimal `QuorumPassNFT` for the MVP.
+- Treat OpenZeppelin Stellar NFT modules as post-MVP hardening/reference unless custom implementation fails tests or grows too complex.
+
 ### Sub-phases
 
 #### 5.1 Scaffold Contract Workspace
