@@ -8,8 +8,31 @@ type SessionPayload = {
   issuedAt: number;
 };
 
-function getSessionSecret() {
-  return process.env.QUORUM_SESSION_SECRET ?? "quorum-local-dev-session-secret";
+const LOCAL_SESSION_SECRET = "quorum-local-dev-session-secret";
+const SESSION_SECRET_PLACEHOLDERS = new Set([
+  "replace-with-a-long-random-secret",
+  LOCAL_SESSION_SECRET,
+]);
+
+type SessionSecretEnv = {
+  NODE_ENV?: string;
+  QUORUM_SESSION_SECRET?: string;
+};
+
+export function resolveSessionSecret(env: SessionSecretEnv = process.env) {
+  const secret = env.QUORUM_SESSION_SECRET?.trim();
+
+  if (env.NODE_ENV !== "production") {
+    return secret || LOCAL_SESSION_SECRET;
+  }
+
+  if (!secret || SESSION_SECRET_PLACEHOLDERS.has(secret) || secret.length < 32) {
+    throw new Error(
+      "QUORUM_SESSION_SECRET must be set to a non-placeholder value with at least 32 characters in production.",
+    );
+  }
+
+  return secret;
 }
 
 function encodeBase64Url(value: string | Buffer) {
@@ -27,7 +50,7 @@ function decodeBase64Url(value: string) {
 
 function sign(value: string) {
   return encodeBase64Url(
-    createHmac("sha256", getSessionSecret()).update(value).digest(),
+    createHmac("sha256", resolveSessionSecret()).update(value).digest(),
   );
 }
 

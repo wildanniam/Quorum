@@ -56,6 +56,9 @@ npm run dev
 Open `http://localhost:3000`.
 
 Copy `.env.example` to `.env.local` when you need local secrets. The default database path is `file:./data/quorum.db`.
+Hosted or production deployments must set `QUORUM_SESSION_SECRET` to a
+non-placeholder value of at least 32 characters; local development can use the
+fallback secret.
 
 ## Verification
 
@@ -69,6 +72,7 @@ npm audit --audit-level=moderate
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
+npm run deploy:env:smoke
 npm run live:args:smoke
 npm run live:flow:smoke
 npm run live:persistence:smoke
@@ -145,6 +149,10 @@ reports live deployment blockers such as missing `STELLAR_ACCOUNT` or missing
 `npm run readiness:audit` is a non-signing final consistency check for the
 local evidence packet, readiness docs, live approval gates, and contract doctor
 output.
+
+`npm run deploy:env:smoke` verifies hosted-session guardrails without using
+cloud credentials: production rejects missing, placeholder, local fallback, and
+short `QUORUM_SESSION_SECRET` values.
 
 Live testnet deployment signs transactions and is intentionally gated by funded
 wallet approval:

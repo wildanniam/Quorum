@@ -7,6 +7,7 @@ const allowDirtyEvidence = process.argv.includes("--allow-dirty-evidence");
 const generatedDocs = ["docs/BROWSER_QA.md", "docs/DEMO_EVIDENCE.md"];
 
 const requiredFiles = [
+  ".env.example",
   "TECHNICAL_SPEC.md",
   "DEVELOPMENT_PLAN.md",
   "README.md",
@@ -31,6 +32,7 @@ const requiredFiles = [
   "scripts/live-xdr-smoke.ts",
   "scripts/contracts/live-signing-approval.mjs",
   "scripts/contracts/live-signing-approval-smoke.mjs",
+  "scripts/deploy-env-smoke.ts",
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
@@ -56,6 +58,7 @@ const requiredPackageScripts = [
   "db:smoke",
   "demo:live-policy",
   "demo:smoke",
+  "deploy:env:smoke",
   "browser:qa",
   "evidence:local",
   "lint",
@@ -83,6 +86,7 @@ const requiredEvidenceChecks = [
   "Demo smoke",
   "Live policy smoke",
   "Browser QA",
+  "Deploy env smoke",
   "Live args smoke",
   "Live browser flow smoke",
   "Live evidence template",
@@ -187,9 +191,18 @@ const requiredContractApprovalCoverage = [
   "init-script-denies-without-live-approval",
 ];
 
+const requiredDeployEnvCoverage = [
+  "reject-missing-production-session-secret",
+  "reject-placeholder-production-session-secret",
+  "reject-local-fallback-production-session-secret",
+  "reject-short-production-session-secret",
+  "accept-valid-production-session-secret",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
+  "QUORUM_SESSION_SECRET",
   "QUORUM_LIVE_SIGNING_APPROVED",
   "I_APPROVE_TESTNET_SIGNING",
   "Freighter",
@@ -308,6 +321,34 @@ function checkRequiredFiles() {
   }
 }
 
+function checkEnvExample() {
+  const envExample = readFile(".env.example");
+  const requiredEnvExampleTerms = [
+    "DATABASE_URL",
+    "QUORUM_SESSION_SECRET",
+    "NEXT_PUBLIC_STELLAR_NETWORK",
+    "NEXT_PUBLIC_STELLAR_RPC_URL",
+    "NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE",
+    "NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID",
+    "NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID",
+    "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
+    "STELLAR_NETWORK",
+    "STELLAR_ACCOUNT",
+    "ADMIN_ADDRESS",
+    "QUORUM_PLATFORM_FEE_BPS",
+  ];
+
+  for (const term of requiredEnvExampleTerms) {
+    if (!envExample.includes(term)) {
+      fail(`.env.example is missing ${term}.`);
+    }
+  }
+
+  if (!envExample.includes("non-placeholder value of at least 32 characters")) {
+    fail(".env.example does not document the hosted session secret requirement.");
+  }
+}
+
 function checkPackageScripts() {
   const packageJson = JSON.parse(readFile("package.json"));
   const scripts = packageJson.scripts ?? {};
@@ -395,6 +436,12 @@ function checkEvidence() {
   for (const coverage of requiredContractApprovalCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing contract approval coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredDeployEnvCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing deploy env coverage: ${coverage}`);
     }
   }
 
@@ -509,6 +556,7 @@ function checkDoctor() {
 
 checkWorkingTree();
 checkRequiredFiles();
+checkEnvExample();
 checkPackageScripts();
 checkEvidence();
 checkLiveBoundaries();

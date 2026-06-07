@@ -15,6 +15,7 @@ const checks = [
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
   { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
   { label: "Browser QA", command: "npm", args: ["run", "browser:qa"] },
+  { label: "Deploy env smoke", command: "npm", args: ["run", "deploy:env:smoke"] },
   { label: "Live args smoke", command: "npm", args: ["run", "live:args:smoke"] },
   { label: "Live flow smoke", command: "npm", args: ["run", "live:flow:smoke"] },
   { label: "Live persistence smoke", command: "npm", args: ["run", "live:persistence:smoke"] },

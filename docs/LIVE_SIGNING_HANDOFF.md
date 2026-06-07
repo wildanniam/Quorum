@@ -48,6 +48,7 @@ QUORUM_PLATFORM_FEE_BPS="0"
 App/runtime:
 
 ```bash
+QUORUM_SESSION_SECRET="<hosted session secret, 32+ chars>"
 NEXT_PUBLIC_STELLAR_NETWORK="TESTNET"
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
 NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
@@ -59,6 +60,8 @@ NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID="<confirmed testnet USDC token contract id>
 `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID` must be confirmed at live setup time from
 the current Stellar testnet asset/token source. Do not use the dummy local
 currency address from tests for deployment.
+`QUORUM_SESSION_SECRET` must also be replaced for hosted production; the app
+rejects missing, placeholder, local fallback, or short production secrets.
 
 ## Contract Deployment Sequence
 

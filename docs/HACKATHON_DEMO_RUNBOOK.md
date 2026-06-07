@@ -100,6 +100,7 @@ npm run build
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
+npm run deploy:env:smoke
 npm run live:args:smoke
 npm run live:flow:smoke
 npm run live:persistence:smoke
@@ -164,6 +165,7 @@ Before live deployment:
 
 ```bash
 export STELLAR_NETWORK=testnet
+export QUORUM_SESSION_SECRET=<hosted-session-secret-32-plus-chars>
 export STELLAR_ACCOUNT=<funded-identity-or-secret>
 export QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING
 export ADMIN_ADDRESS=<admin-public-key>
@@ -178,6 +180,9 @@ npm run contracts:init:testnet
 
 Until those values are configured, the web app uses local proof records that
 mirror the contract flow.
+The hosted app must use a non-placeholder `QUORUM_SESSION_SECRET` of at least
+32 characters; `npm run deploy:env:smoke` verifies this guard without cloud
+credentials.
 The deploy/init scripts refuse to sign unless
 `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is set after explicit
 approval.

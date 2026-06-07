@@ -19,10 +19,10 @@ Quorum is considered locally demo-ready when these criteria pass:
 7. Organizer, attendee, collaborator, and proof readiness dashboard surfaces are
    visible in the app.
 8. Local DB, lint, build, audit, demo smoke, live policy smoke, browser QA,
-   live args smoke, live flow smoke, live persistence smoke, live preflight
-   smoke, live signing smoke, live submission smoke, live XDR smoke, contract
-   tests, contract build, contract approval smoke, and deployment doctor checks
-   pass with live signing exceptions documented.
+   deploy env smoke, live args smoke, live flow smoke, live persistence smoke,
+   live preflight smoke, live signing smoke, live submission smoke, live XDR
+   smoke, contract tests, contract build, contract approval smoke, and
+   deployment doctor checks pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
 The live hackathon acceptance criteria add two gated requirements:
@@ -68,7 +68,8 @@ The live hackathon acceptance criteria add two gated requirements:
 | UI actions are wired to live browser flow fallback | Verified local | `npm run live:ui-wiring:smoke` verifies publish, checkout, check-in, and withdraw UI actions call `executeLiveBrowserContractAction` when the server returns `live_required`. |
 | Unsigned Soroban XDR templates are parseable | Verified local | `npm run live:xdr:smoke` covers pre-simulation unsigned invokeHostFunction XDR templates for publish/checkout/check-in/withdraw, including typed split recipient maps. |
 | Live action preparation and submit boundaries are fail-safe | Verified local | `npm run demo:live-policy` covers `GET /api/events/[eventId]/contract-action` prepare responses for publish/checkout/check-in/withdraw with fake valid contract IDs, verifies short numeric live check-in token IDs reach `live_required`, verifies `POST /api/events/[eventId]/contract-action` rejects invalid signed XDR before persistence, then verifies mutation routes still return live-required responses without local proof writes. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
+| Hosted session configuration is fail-safe | Verified local | `npm run deploy:env:smoke` verifies production rejects missing, placeholder, local fallback, and short `QUORUM_SESSION_SECRET` values, then accepts a valid 32+ character secret. |
+| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, deploy env smoke, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`. |
 
 ## Live Testnet Gate
@@ -85,8 +86,9 @@ deployment and signing:
    `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`.
 6. Run `npm run contracts:init:testnet`.
 7. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
-8. Configure the hosted app environment and verify Freighter signing on the
-   deployed URL.
+8. Configure the hosted app environment, including a non-placeholder
+   `QUORUM_SESSION_SECRET` of at least 32 characters, and verify Freighter
+   signing on the deployed URL.
 9. Record pass deploy, core deploy, pass init, core init, pass `set_core`, and
    app flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
    `npm run live:evidence:audit`.
