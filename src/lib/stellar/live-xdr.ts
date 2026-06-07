@@ -27,6 +27,7 @@ export type UnsignedLiveTransaction = {
   action: PreparedLiveContractAction["action"];
   contractId: string;
   functionName: PreparedLiveContractAction["functionName"];
+  invocationArgsXdr: string[];
   networkPassphrase: string;
   simulationRequired: true;
   source: string;
@@ -39,6 +40,16 @@ function assertHex32(value: string, label: string) {
   if (!/^[a-f0-9]{64}$/i.test(value)) {
     throw new Error(`${label} must be a 32-byte hex string.`);
   }
+}
+
+function hexToBytes(value: string) {
+  const bytes = new Uint8Array(value.length / 2);
+
+  for (let index = 0; index < bytes.length; index += 1) {
+    bytes[index] = Number.parseInt(value.slice(index * 2, index * 2 + 2), 16);
+  }
+
+  return bytes;
 }
 
 function assertUnsignedInteger(value: string, label: string) {
@@ -67,7 +78,7 @@ function addressScVal(value: string, label: string) {
 function bytesN32ScVal(value: string, label: string) {
   assertHex32(value, label);
 
-  return nativeToScVal(Buffer.from(value, "hex"), { type: "bytes" });
+  return nativeToScVal(hexToBytes(value), { type: "bytes" });
 }
 
 function i128ScVal(value: string, label: string) {
@@ -144,6 +155,10 @@ function withdrawScVals(args: WithdrawContractArgs) {
   ];
 }
 
+function scValToBase64Xdr(value: xdr.ScVal) {
+  return value.toXDR("base64");
+}
+
 export function buildLiveContractInvocationScVals(
   preparedAction: PreparedLiveContractAction,
 ) {
@@ -166,6 +181,12 @@ export function buildLiveContractInvocationScVals(
   throw new Error("Unsupported live contract function.");
 }
 
+export function buildLiveContractInvocationArgsXdr(
+  preparedAction: PreparedLiveContractAction,
+) {
+  return buildLiveContractInvocationScVals(preparedAction).map(scValToBase64Xdr);
+}
+
 export function buildUnsignedLiveTransaction({
   options,
   preparedAction,
@@ -180,9 +201,10 @@ export function buildUnsignedLiveTransaction({
   assertUnsignedInteger(options.sourceSequence, "Source sequence");
 
   const timeoutSeconds = options.timeoutSeconds ?? 300;
+  const invocationArgs = buildLiveContractInvocationScVals(preparedAction);
   const operation = new Contract(preparedAction.contractId).call(
     preparedAction.functionName,
-    ...buildLiveContractInvocationScVals(preparedAction),
+    ...invocationArgs,
   );
   const transaction = new TransactionBuilder(
     new Account(preparedAction.signer, options.sourceSequence),
@@ -199,6 +221,7 @@ export function buildUnsignedLiveTransaction({
     action: preparedAction.action,
     contractId: preparedAction.contractId,
     functionName: preparedAction.functionName,
+    invocationArgsXdr: invocationArgs.map(scValToBase64Xdr),
     networkPassphrase: preparedAction.networkPassphrase,
     simulationRequired: true,
     source: preparedAction.signer,

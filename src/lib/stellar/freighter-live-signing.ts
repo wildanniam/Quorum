@@ -24,6 +24,7 @@ export type SignedLiveTransaction = {
   action: LiveTransactionForSigning["action"];
   contractId: string;
   functionName: LiveTransactionForSigning["functionName"];
+  invocationArgsXdr: LiveTransactionForSigning["invocationArgsXdr"];
   networkPassphrase: string;
   signedTransactionXdr: string;
   signerAddress: string;
@@ -114,6 +115,21 @@ function assertTransactionMatchesPrepared({
       `${label} function does not match the prepared transaction.`,
     );
   }
+
+  const invocationArgsXdr = invocation
+    .args()
+    .map((arg) => arg.toXDR("base64"));
+
+  if (
+    invocationArgsXdr.length !== preparedTransaction.invocationArgsXdr.length ||
+    invocationArgsXdr.some(
+      (argXdr, index) => argXdr !== preparedTransaction.invocationArgsXdr[index],
+    )
+  ) {
+    throw new FreighterLiveSigningError(
+      `${label} arguments do not match the prepared transaction.`,
+    );
+  }
 }
 
 export async function loadFreighterLiveSigner(): Promise<FreighterLiveSigner> {
@@ -181,6 +197,7 @@ export async function signPreparedLiveTransaction({
     action: preparedTransaction.action,
     contractId: preparedTransaction.contractId,
     functionName: preparedTransaction.functionName,
+    invocationArgsXdr: preparedTransaction.invocationArgsXdr,
     networkPassphrase: preparedTransaction.networkPassphrase,
     signedTransactionXdr: signed.signedTxXdr,
     signerAddress: signed.signerAddress,

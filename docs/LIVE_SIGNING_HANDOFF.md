@@ -129,22 +129,23 @@ wallet signature. `src/lib/stellar/live-preflight.ts` implements that
 pre-signing orchestration behind a mockable RPC boundary.
 `src/lib/stellar/freighter-live-signing.ts` implements the browser-side
 Freighter `signTransaction` boundary and validates signer address, wallet
-errors, prepared XDR source/contract/function metadata before opening the wallet
-prompt, and returned XDR before submission.
+errors, prepared XDR source/contract/function/argument metadata before opening
+the wallet prompt, and returned XDR before submission.
 `src/lib/stellar/live-submission.ts` implements the RPC `sendTransaction` and
 `getTransaction` finality polling boundary for signed XDR, including Soroban
 return value decoding for purchase token IDs and withdraw amounts. Before any
-RPC submit, it checks the signed transaction source plus the invoked contract ID
-and function name against the prepared action. The route submit path rejects
-invalid signed XDR before persistence and still requires a real RPC-confirmed
-finality result before writing live proof data.
+RPC submit, it checks the signed transaction source plus the invoked contract
+ID, function name, and argument XDR against the prepared action. The route
+submit path rejects invalid signed XDR before persistence and still requires a
+real RPC-confirmed finality result before writing live proof data.
 `POST /api/events/[eventId]/contract-action/preflight` exposes the non-signing
 RPC preflight boundary over HTTP and fails invalid requests before touching RPC.
 `src/lib/stellar/live-browser-flow.ts` is the browser-side orchestration helper:
 `executeLiveBrowserContractAction` calls the preflight route, asks Freighter to
 sign, and posts signed XDR to the submit route. Before signing, the helper
 checks that the returned preflight metadata still matches the requested action,
-contract, function, network passphrase, and source wallet. The publish,
+contract, function, network passphrase, source wallet, and encoded arguments.
+The publish,
 checkout, check-in, and withdraw UI actions call this helper when the local
 mutation route reports `live_required`.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter

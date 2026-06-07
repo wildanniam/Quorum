@@ -108,6 +108,7 @@ async function main() {
     action: preparedForSigning.action,
     contractId: preparedForSigning.contractId,
     functionName: preparedForSigning.functionName,
+    invocationArgsXdr: preparedForSigning.invocationArgsXdr,
     networkPassphrase: preparedForSigning.networkPassphrase,
     signedTransactionXdr: preparedForSigning.preparedTransactionXdr,
     signerAddress: preparedForSigning.source,
@@ -129,6 +130,16 @@ async function main() {
     preparedAction: {
       ...preparedAction,
       contractId: fakePassContractId,
+    },
+    rpcServer: mockPreflightRpc,
+  });
+  const otherArgsPreparedForSigning = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      args: {
+        ...preparedAction.args,
+        amountAtomic: "60000000",
+      },
     },
     rpcServer: mockPreflightRpc,
   });
@@ -279,6 +290,42 @@ async function main() {
   );
   assert.equal(contractMismatchSendCalls, 0);
 
+  let argumentMismatchSendCalls = 0;
+
+  await assert.rejects(
+    () =>
+      submitSignedLiveTransaction({
+        options: {
+          rpcServer: {
+            async sendTransaction() {
+              argumentMismatchSendCalls += 1;
+              return {
+                hash: txHash,
+                latestLedger: 1,
+                latestLedgerCloseTime: Date.now(),
+                status: "PENDING",
+              };
+            },
+            async getTransaction(hash) {
+              return getMissing(hash);
+            },
+          },
+        },
+        signedTransaction: {
+          ...signedTransaction,
+          signedTransactionXdr:
+            otherArgsPreparedForSigning.preparedTransactionXdr,
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveTransactionSubmissionError);
+      assert.match(error.message, /arguments/);
+      assert.equal(error.txHash, undefined);
+      return true;
+    },
+  );
+  assert.equal(argumentMismatchSendCalls, 0);
+
   const withdrawResult = await submitSignedLiveTransaction({
     options: {
       pollIntervalMs: 1,
@@ -305,6 +352,7 @@ async function main() {
       ...signedTransaction,
       action: "withdraw_balance",
       functionName: "withdraw",
+      invocationArgsXdr: withdrawPreparedForSigning.invocationArgsXdr,
       signedTransactionXdr: withdrawPreparedForSigning.preparedTransactionXdr,
     },
   });
@@ -509,6 +557,7 @@ async function main() {
           "reject-source-mismatch-before-rpc",
           "reject-function-mismatch-before-rpc",
           "reject-contract-mismatch-before-rpc",
+          "reject-argument-mismatch-before-rpc",
           "reject-submission-error",
           "reject-submission-retry-later",
           "reject-finality-failure",

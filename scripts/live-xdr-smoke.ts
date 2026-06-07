@@ -17,6 +17,7 @@ import type {
   PreparedLiveContractAction,
 } from "../src/lib/stellar/live-action";
 import {
+  buildLiveContractInvocationArgsXdr,
   buildUnsignedLiveTransaction,
   parseLiveTransactionFunctionName,
 } from "../src/lib/stellar/live-xdr";
@@ -184,11 +185,17 @@ const results = cases.map((item) => {
     unsignedTransactionXdr: transaction.unsignedTransactionXdr,
   });
   const args = parseInvokeArgs(transaction.unsignedTransactionXdr);
+  const parsedArgsXdr = args.map((arg) => arg.toXDR("base64"));
+  const expectedArgsXdr = buildLiveContractInvocationArgsXdr(
+    item.preparedAction,
+  );
 
   assert.equal(functionName, item.expectedFunctionName);
   assert.equal(transaction.simulationRequired, true);
   assert.equal(transaction.source, item.preparedAction.signer);
   assert.equal(args.length, item.expectedArgCount);
+  assert.deepEqual(transaction.invocationArgsXdr, expectedArgsXdr);
+  assert.deepEqual(transaction.invocationArgsXdr, parsedArgsXdr);
   item.expectedSwitches.forEach((switchName, index) => {
     assertScValSwitch(args[index], switchName);
   });
@@ -234,6 +241,7 @@ console.log(
         "purchase-xdr",
         "check-in-xdr",
         "withdraw-xdr",
+        "invocation-args-xdr",
         "split-recipient-symbol-map",
         "invalid-source-sequence",
       ],

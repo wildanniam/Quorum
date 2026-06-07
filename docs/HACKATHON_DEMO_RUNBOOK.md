@@ -141,14 +141,15 @@ real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC
 prepare/simulation orchestration with a mock RPC server, without signing.
 The live signing smoke verifies the Freighter signing adapter with a mock
-signer, including prepared XDR source/contract/function guards before wallet
-signing, without opening Freighter or requesting a real wallet signature.
+signer, including prepared XDR source/contract/function/argument guards before
+wallet signing, without opening Freighter or requesting a real wallet signature.
 The live submission smoke verifies signed transaction submission and finality
 polling with a mock RPC server, including purchase token ID and withdraw amount
-return value decoding plus source wallet and contract/function mismatch
+return value decoding plus source wallet and contract/function/argument mismatch
 rejection before RPC, without submitting to testnet.
 The live browser flow smoke verifies the client-side preflight, Freighter
-signing, and signed-XDR submit sequence with mock fetch and signer boundaries.
+signing, and signed-XDR submit sequence with mock fetch and signer boundaries,
+including encoded argument mismatch rejection before signing.
 The live UI wiring smoke verifies publish, checkout, check-in, and withdraw
 buttons call that helper when the server reports `live_required`.
 

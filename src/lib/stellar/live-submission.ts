@@ -153,6 +153,21 @@ function assertSignedTransactionInvocation({
       "Signed transaction function does not match the prepared action.",
     );
   }
+
+  const invocationArgsXdr = invocation
+    .args()
+    .map((arg) => arg.toXDR("base64"));
+
+  if (
+    invocationArgsXdr.length !== signedTransaction.invocationArgsXdr.length ||
+    invocationArgsXdr.some(
+      (argXdr, index) => argXdr !== signedTransaction.invocationArgsXdr[index],
+    )
+  ) {
+    throw new LiveTransactionSubmissionError(
+      "Signed transaction arguments do not match the prepared action.",
+    );
+  }
 }
 
 function assertTransactionHash(txHash: string) {

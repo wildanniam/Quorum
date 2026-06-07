@@ -115,18 +115,18 @@ and return parseable XDR ready for wallet signing.
 
 `npm run live:signing:smoke` verifies the Freighter signing adapter with a mock
 signer, including address/network options, prepared XDR source/contract/function
-guards before wallet signing, signer mismatch handling, wallet rejection
-normalization, and returned signed XDR validation.
+and argument guards before wallet signing, signer mismatch handling, wallet
+rejection normalization, and returned signed XDR validation.
 
 `npm run live:submission:smoke` verifies the signed transaction submission and
 finality polling adapter with a mock RPC server, including source wallet,
-contract/function mismatch rejection before RPC, failure, timeout paths, and
-Soroban return value decoding for purchase token IDs and withdraw amounts.
+contract/function/argument mismatch rejection before RPC, failure, timeout paths,
+and Soroban return value decoding for purchase token IDs and withdraw amounts.
 
 `npm run live:browser-flow:smoke` verifies the browser-side preflight,
 Freighter signing, and signed-XDR submit sequence with mock fetch and signer
-boundaries, including rejection of mismatched preflight metadata before signing.
-It does not open Freighter or submit to testnet.
+boundaries, including rejection of mismatched preflight metadata and argument
+XDR before signing. It does not open Freighter or submit to testnet.
 
 `npm run live:ui-wiring:smoke` verifies the publish, checkout, check-in, and
 withdraw UI actions are wired to the browser live flow helper when

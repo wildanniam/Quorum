@@ -141,13 +141,16 @@ const requiredLivePolicyCoverage = [
 const requiredLiveSigningCoverage = [
   "reject-prepared-xdr-function-mismatch-before-wallet",
   "reject-prepared-xdr-contract-mismatch-before-wallet",
+  "reject-prepared-xdr-argument-mismatch-before-wallet",
   "reject-signed-xdr-function-mismatch",
+  "reject-signed-xdr-argument-mismatch",
 ];
 
 const requiredLiveSubmissionCoverage = [
   "reject-source-mismatch-before-rpc",
   "reject-function-mismatch-before-rpc",
   "reject-contract-mismatch-before-rpc",
+  "reject-argument-mismatch-before-rpc",
 ];
 
 const requiredLiveBrowserCoverage = [
@@ -157,6 +160,7 @@ const requiredLiveBrowserCoverage = [
   "browser-live-preflight-error",
   "browser-live-submit-error",
   "browser-live-reject-mismatched-preflight",
+  "browser-live-reject-mismatched-preflight-args",
 ];
 
 const requiredLiveUiCoverage = [

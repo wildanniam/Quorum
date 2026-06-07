@@ -8,6 +8,7 @@ import {
 import type { ContractAction } from "@/lib/stellar/action-policy";
 import type { PreparedLiveContractAction } from "@/lib/stellar/live-action";
 import type { LiveTransactionForSigning } from "@/lib/stellar/live-preflight";
+import { buildLiveContractInvocationArgsXdr } from "@/lib/stellar/live-xdr";
 
 type LiveBrowserFlowFetcher = Pick<typeof globalThis, "fetch">["fetch"];
 
@@ -75,6 +76,8 @@ function assertPreparedTransaction(payload: unknown) {
     !preparedTransaction ||
     preparedTransaction.preparedForSigning !== true ||
     preparedTransaction.simulationRequired !== false ||
+    !Array.isArray(preparedTransaction.invocationArgsXdr) ||
+    preparedTransaction.invocationArgsXdr.some((argXdr) => typeof argXdr !== "string") ||
     typeof preparedTransaction.preparedTransactionXdr !== "string" ||
     typeof preparedTransaction.networkPassphrase !== "string" ||
     typeof preparedTransaction.source !== "string"
@@ -118,13 +121,18 @@ function assertPreflightMatchesRequest({
   preparedAction: PreparedLiveContractAction;
   preparedTransaction: LiveTransactionForSigning;
 }) {
+  const expectedArgsXdr = buildLiveContractInvocationArgsXdr(preparedAction);
   const mismatch =
     preparedAction.action !== action ||
     preparedTransaction.action !== action ||
     preparedAction.contractId !== preparedTransaction.contractId ||
     preparedAction.functionName !== preparedTransaction.functionName ||
     preparedAction.networkPassphrase !== preparedTransaction.networkPassphrase ||
-    preparedAction.signer !== preparedTransaction.source;
+    preparedAction.signer !== preparedTransaction.source ||
+    preparedTransaction.invocationArgsXdr.length !== expectedArgsXdr.length ||
+    preparedTransaction.invocationArgsXdr.some(
+      (argXdr, index) => argXdr !== expectedArgsXdr[index],
+    );
 
   if (mismatch) {
     throw new LiveBrowserFlowError({

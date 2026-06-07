@@ -15,7 +15,10 @@ import {
   LiveTransactionSubmissionError,
   submitSignedLiveTransaction,
 } from "@/lib/stellar/live-submission";
-import { buildUnsignedLiveTransaction } from "@/lib/stellar/live-xdr";
+import {
+  buildLiveContractInvocationArgsXdr,
+  buildUnsignedLiveTransaction,
+} from "@/lib/stellar/live-xdr";
 
 type ContractActionRouteContext = {
   params: Promise<{
@@ -168,6 +171,7 @@ export async function POST(
         action: preparedAction.action,
         contractId: preparedAction.contractId,
         functionName: preparedAction.functionName,
+        invocationArgsXdr: buildLiveContractInvocationArgsXdr(preparedAction),
         networkPassphrase: preparedAction.networkPassphrase,
         signedTransactionXdr: parsed.data.signedTransactionXdr,
         signerAddress: session.walletAddress,

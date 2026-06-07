@@ -71,6 +71,16 @@ async function main() {
     preparedAction,
     rpcServer: mockPreflightRpc,
   });
+  const otherArgsPreparedTransaction = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      args: {
+        ...preparedAction.args,
+        amountAtomic: "60000000",
+      },
+    },
+    rpcServer: mockPreflightRpc,
+  });
   const calls: string[] = [];
   let signedXdrSeen: string | null = null;
 
@@ -236,6 +246,54 @@ async function main() {
   assert.equal(mismatchSignCalls, 0);
   assert.equal(mismatchSubmitCalls, 0);
 
+  let argsMismatchSignCalls = 0;
+  let argsMismatchSubmitCalls = 0;
+  await assert.rejects(
+    () =>
+      executeLiveBrowserContractAction({
+        action: "checkout_pass",
+        eventId,
+        fetcher: async (url) => {
+          const path = String(url);
+
+          if (path.endsWith("/preflight")) {
+            return jsonResponse({
+              preparedAction,
+              preparedTransaction: {
+                ...preparedTransaction,
+                invocationArgsXdr: otherArgsPreparedTransaction.invocationArgsXdr,
+              },
+            });
+          }
+
+          argsMismatchSubmitCalls += 1;
+          return jsonResponse({ error: "unexpected submit" }, 500);
+        },
+        signer: {
+          async signTransaction(transactionXdr) {
+            argsMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveBrowserFlowError);
+      assert.equal(error.step, "preflight");
+      assert.equal(error.status, 502);
+      assert.equal(
+        error.message,
+        "Live preflight metadata did not match the requested action.",
+      );
+      return true;
+    },
+  );
+  assert.equal(argsMismatchSignCalls, 0);
+  assert.equal(argsMismatchSubmitCalls, 0);
+
   console.log(
     JSON.stringify(
       {
@@ -247,6 +305,7 @@ async function main() {
           "browser-live-preflight-error",
           "browser-live-submit-error",
           "browser-live-reject-mismatched-preflight",
+          "browser-live-reject-mismatched-preflight-args",
         ],
         txHash,
       },

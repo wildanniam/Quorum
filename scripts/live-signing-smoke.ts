@@ -82,6 +82,16 @@ async function main() {
     },
     rpcServer: mockRpc,
   });
+  const otherArgsPreparedTransaction = await prepareLiveTransactionForSigning({
+    preparedAction: {
+      ...preparedAction,
+      args: {
+        ...preparedAction.args,
+        amountAtomic: "60000000",
+      },
+    },
+    rpcServer: mockRpc,
+  });
   let signCalls = 0;
 
   const signer: FreighterLiveSigner = {
@@ -223,6 +233,35 @@ async function main() {
   );
   assert.equal(preparedContractMismatchSignCalls, 0);
 
+  let preparedArgsMismatchSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction: {
+          ...preparedTransaction,
+          preparedTransactionXdr:
+            otherArgsPreparedTransaction.preparedTransactionXdr,
+        },
+        signer: {
+          async signTransaction(transactionXdr) {
+            preparedArgsMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /arguments/);
+      return true;
+    },
+  );
+  assert.equal(preparedArgsMismatchSignCalls, 0);
+
   let signedMismatchSignCalls = 0;
 
   await assert.rejects(
@@ -248,6 +287,31 @@ async function main() {
   );
   assert.equal(signedMismatchSignCalls, 1);
 
+  let signedArgsMismatchSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction,
+        signer: {
+          async signTransaction() {
+            signedArgsMismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: otherArgsPreparedTransaction.preparedTransactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /arguments/);
+      return true;
+    },
+  );
+  assert.equal(signedArgsMismatchSignCalls, 1);
+
   console.log(
     JSON.stringify(
       {
@@ -260,7 +324,9 @@ async function main() {
           "reject-invalid-prepared-xdr",
           "reject-prepared-xdr-function-mismatch-before-wallet",
           "reject-prepared-xdr-contract-mismatch-before-wallet",
+          "reject-prepared-xdr-argument-mismatch-before-wallet",
           "reject-signed-xdr-function-mismatch",
+          "reject-signed-xdr-argument-mismatch",
         ],
         signedXdrLength: signed.signedTransactionXdr.length,
         signerAddress: signed.signerAddress,
