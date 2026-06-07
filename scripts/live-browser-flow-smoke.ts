@@ -21,6 +21,7 @@ const fakeCoreContractId = StrKey.encodeContract(Buffer.alloc(32, 7));
 const fakePassContractId = StrKey.encodeContract(Buffer.alloc(32, 8));
 const fakeUsdcContractId = StrKey.encodeContract(Buffer.alloc(32, 9));
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
+const otherWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 5));
 const eventId = "evt_apac_stellar_builder_meetup";
 const eventIdHex = "a7e602bb740076b86ae7a7f4d23b6738bc9eddf6d600ca67db3b72fe8d20aa67";
 const metadataHashHex =
@@ -187,6 +188,54 @@ async function main() {
     },
   );
 
+  let mismatchSignCalls = 0;
+  let mismatchSubmitCalls = 0;
+  await assert.rejects(
+    () =>
+      executeLiveBrowserContractAction({
+        action: "checkout_pass",
+        eventId,
+        fetcher: async (url) => {
+          const path = String(url);
+
+          if (path.endsWith("/preflight")) {
+            return jsonResponse({
+              preparedAction,
+              preparedTransaction: {
+                ...preparedTransaction,
+                source: otherWallet,
+              },
+            });
+          }
+
+          mismatchSubmitCalls += 1;
+          return jsonResponse({ error: "unexpected submit" }, 500);
+        },
+        signer: {
+          async signTransaction(transactionXdr) {
+            mismatchSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof LiveBrowserFlowError);
+      assert.equal(error.step, "preflight");
+      assert.equal(error.status, 502);
+      assert.equal(
+        error.message,
+        "Live preflight metadata did not match the requested action.",
+      );
+      return true;
+    },
+  );
+  assert.equal(mismatchSignCalls, 0);
+  assert.equal(mismatchSubmitCalls, 0);
+
   console.log(
     JSON.stringify(
       {
@@ -197,6 +246,7 @@ async function main() {
           "browser-live-submit-signed-xdr",
           "browser-live-preflight-error",
           "browser-live-submit-error",
+          "browser-live-reject-mismatched-preflight",
         ],
         txHash,
       },

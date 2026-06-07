@@ -124,7 +124,8 @@ withdraw amounts.
 
 `npm run live:browser-flow:smoke` verifies the browser-side preflight,
 Freighter signing, and signed-XDR submit sequence with mock fetch and signer
-boundaries. It does not open Freighter or submit to testnet.
+boundaries, including rejection of mismatched preflight metadata before signing.
+It does not open Freighter or submit to testnet.
 
 `npm run live:ui-wiring:smoke` verifies the publish, checkout, check-in, and
 withdraw UI actions are wired to the browser live flow helper when

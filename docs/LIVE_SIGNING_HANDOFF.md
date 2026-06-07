@@ -139,9 +139,11 @@ real RPC-confirmed finality result before writing live proof data.
 RPC preflight boundary over HTTP and fails invalid requests before touching RPC.
 `src/lib/stellar/live-browser-flow.ts` is the browser-side orchestration helper:
 `executeLiveBrowserContractAction` calls the preflight route, asks Freighter to
-sign, and posts signed XDR to the submit route. The publish, checkout, check-in,
-and withdraw UI actions call this helper when the local mutation route reports
-`live_required`.
+sign, and posts signed XDR to the submit route. Before signing, the helper
+checks that the returned preflight metadata still matches the requested action,
+contract, function, network passphrase, and source wallet. The publish,
+checkout, check-in, and withdraw UI actions call this helper when the local
+mutation route reports `live_required`.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
 signing, mockable submission, decoded return values, and post-success
 persistence inputs so publish, paid checkout, free claim, check-in, and withdraw

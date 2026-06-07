@@ -148,6 +148,7 @@ const requiredLiveBrowserCoverage = [
   "browser-live-submit-signed-xdr",
   "browser-live-preflight-error",
   "browser-live-submit-error",
+  "browser-live-reject-mismatched-preflight",
 ];
 
 const requiredLiveUiCoverage = [

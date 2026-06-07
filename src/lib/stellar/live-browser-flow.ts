@@ -107,6 +107,35 @@ function assertPreparedAction(payload: unknown) {
   return preparedAction;
 }
 
+function assertPreflightMatchesRequest({
+  action,
+  payload,
+  preparedAction,
+  preparedTransaction,
+}: {
+  action: ContractAction;
+  payload: unknown;
+  preparedAction: PreparedLiveContractAction;
+  preparedTransaction: LiveTransactionForSigning;
+}) {
+  const mismatch =
+    preparedAction.action !== action ||
+    preparedTransaction.action !== action ||
+    preparedAction.contractId !== preparedTransaction.contractId ||
+    preparedAction.functionName !== preparedTransaction.functionName ||
+    preparedAction.networkPassphrase !== preparedTransaction.networkPassphrase ||
+    preparedAction.signer !== preparedTransaction.source;
+
+  if (mismatch) {
+    throw new LiveBrowserFlowError({
+      message: "Live preflight metadata did not match the requested action.",
+      payload,
+      status: 502,
+      step: "preflight",
+    });
+  }
+}
+
 export async function executeLiveBrowserContractAction({
   action,
   baseFee,
@@ -147,6 +176,12 @@ export async function executeLiveBrowserContractAction({
 
   const preparedAction = assertPreparedAction(preflightPayload);
   const preparedTransaction = assertPreparedTransaction(preflightPayload);
+  assertPreflightMatchesRequest({
+    action,
+    payload: preflightPayload,
+    preparedAction,
+    preparedTransaction,
+  });
   const signedTransaction = await signPreparedLiveTransaction({
     preparedTransaction,
     signer,
