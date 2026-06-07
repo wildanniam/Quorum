@@ -123,10 +123,10 @@ The live args smoke verifies deterministic contract arguments plus USDC
 decimal-to-atomic and atomic-to-decimal conversion for live proof storage.
 The live XDR smoke verifies pre-simulation unsigned Soroban transaction
 templates without signing or submission.
-The live flow smoke verifies mock full live publish, checkout, check-in, and
-withdraw chains from prepared DB action to preflight, mock Freighter signing,
-mock RPC finality, decoded return values, and post-success persistence without
-submitting to testnet.
+The live flow smoke verifies mock full live publish, paid checkout, free claim,
+check-in, and withdraw chains from prepared DB action to preflight, mock
+Freighter signing, mock RPC finality, decoded return values, and post-success
+persistence without submitting to testnet.
 The live persistence smoke verifies the post-RPC-success DB recording path for
 real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC

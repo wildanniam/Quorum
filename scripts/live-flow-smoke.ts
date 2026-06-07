@@ -29,9 +29,11 @@ type GetTransactionResponse = Awaited<
 
 const projectRoot = process.cwd();
 const databaseUrl = `file:./data/quorum-live-flow-smoke-${randomUUID()}.db`;
+const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
+const freeAttendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 6));
 const failureWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 5));
 const fakeCoreContractId = StrKey.encodeContract(Buffer.alloc(32, 7));
 const fakePassContractId = StrKey.encodeContract(Buffer.alloc(32, 8));
@@ -283,6 +285,37 @@ async function main() {
   assert.equal(passResult.pass.mintTxHash, txHash(22));
   assert.equal(passResult.purchase.txHash, txHash(22));
 
+  const freeClaimAction = prepareLiveContractAction({
+    action: "checkout_pass",
+    eventId: freeEventId,
+    signerWallet: freeAttendeeWallet,
+  });
+  const freeClaimArgs = freeClaimAction.args as PurchaseContractArgs;
+  assert.equal(freeClaimArgs.amountAtomic, "0");
+  const freeClaimFlow = await runLiveFlow({
+    expectedSigner: freeAttendeeWallet,
+    preparedAction: freeClaimAction,
+    returnValue: nativeToScVal(BigInt("9002"), { type: "u64" }),
+    transactionHash: txHash(26),
+  });
+  if (freeClaimFlow.submission.returnValue.kind !== "token_id") {
+    throw new Error("Expected live free claim finality to return a token ID.");
+  }
+  const freeTokenId = freeClaimFlow.submission.returnValue.value;
+  assert.equal(freeTokenId, "9002");
+  const freePassResult = repository.recordLivePass({
+    eventId: freeEventId,
+    metadataHash: freeClaimArgs.metadataHashHex,
+    metadataUri: freeClaimArgs.metadataUri,
+    ownerWallet: freeAttendeeWallet,
+    tokenId: freeTokenId,
+    txHash: freeClaimFlow.submission.txHash,
+  });
+  assert.equal(freePassResult.pass.source, "free_claim");
+  assert.equal(freePassResult.pass.mintTxHash, txHash(26));
+  assert.equal(freePassResult.purchase.amountUsdc, "0");
+  assert.equal(freePassResult.purchase.txHash, txHash(26));
+
   const checkInAction = prepareLiveContractAction({
     action: "check_in_pass",
     eventId: published.event.id,
@@ -327,11 +360,11 @@ async function main() {
   assert.equal(withdrawalResult.withdrawal.amountUsdc, "2.8");
   assert.equal(withdrawalResult.withdrawal.txHash, txHash(24));
 
-  assert.equal(preflightAccountCalls, 4);
-  assert.equal(preflightPrepareCalls, 4);
-  assert.equal(signCalls, 4);
-  assert.equal(sendCalls, 4);
-  assert.equal(pollCalls, 4);
+  assert.equal(preflightAccountCalls, 5);
+  assert.equal(preflightPrepareCalls, 5);
+  assert.equal(signCalls, 5);
+  assert.equal(sendCalls, 5);
+  assert.equal(pollCalls, 5);
 
   const failedAction = prepareLiveContractAction({
     action: "checkout_pass",
@@ -404,6 +437,12 @@ async function main() {
     ...db
       .prepare("SELECT tx_hash FROM withdrawals WHERE event_id = ?")
       .all(published.event.id),
+    ...db
+      .prepare("SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = ?")
+      .all(freeEventId),
+    ...db
+      .prepare("SELECT tx_hash FROM purchases WHERE event_id = ?")
+      .all(freeEventId),
   ] as Array<{ tx_hash: string | null }>;
 
   assert(
@@ -422,6 +461,7 @@ async function main() {
           "submit-and-poll-finality",
           "publish-live-flow",
           "checkout-live-flow",
+          "free-claim-live-flow",
           "check-in-live-flow",
           "withdraw-live-flow",
           "decode-token-id-from-finality",
@@ -432,10 +472,12 @@ async function main() {
         databasePath: databasePath(),
         persistedEventId: published.event.id,
         persistedTokenId: passResult.pass.tokenId,
+        persistedFreeTokenId: freePassResult.pass.tokenId,
         persistedWithdrawUsdc: withdrawalResult.withdrawal.amountUsdc,
         txHashes: [
           publishFlow.submission.txHash,
           checkoutFlow.submission.txHash,
+          freeClaimFlow.submission.txHash,
           checkInFlow.submission.txHash,
           withdrawFlow.submission.txHash,
         ],

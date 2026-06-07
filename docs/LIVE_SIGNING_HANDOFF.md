@@ -128,8 +128,8 @@ errors, and returned XDR before submission.
 return value decoding for purchase token IDs and withdraw amounts.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
 signing, mockable submission, decoded return values, and post-success
-persistence inputs so publish, checkout, check-in, and withdraw chains can be
-tested without a real wallet signature.
+persistence inputs so publish, paid checkout, free claim, check-in, and withdraw
+chains can be tested without a real wallet signature.
 
 ## Contract Call Inputs
 

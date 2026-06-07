@@ -108,6 +108,7 @@ const requiredSmokeCoverage = [
 const requiredLiveFlowCoverage = [
   "publish-live-flow",
   "checkout-live-flow",
+  "free-claim-live-flow",
   "check-in-live-flow",
   "withdraw-live-flow",
   "decode-token-id-from-finality",

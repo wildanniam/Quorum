@@ -96,10 +96,10 @@ checks and regenerates `docs/BROWSER_QA.md`.
 future Freighter-signed publish, checkout, check-in, and withdraw flows,
 including USDC decimal-to-atomic and atomic-to-decimal conversion.
 
-`npm run live:flow:smoke` verifies the mock full live publish, checkout,
-check-in, and withdraw chain from prepared DB action to preflight, mock
-Freighter signing, mock RPC finality, decoded return values, and post-success
-persistence, without submitting to testnet.
+`npm run live:flow:smoke` verifies the mock full live publish, paid checkout,
+free claim, check-in, and withdraw chain from prepared DB action to preflight,
+mock Freighter signing, mock RPC finality, decoded return values, and
+post-success persistence, without submitting to testnet.
 
 `npm run live:persistence:smoke` verifies the DB path for recording verified
 live publish, pass, check-in, and withdrawal transaction results while rejecting
