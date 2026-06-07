@@ -378,6 +378,30 @@ async function main() {
       "prepared checkout should include optional pre-simulation unsigned XDR",
     );
 
+    const invalidPreflight = await fetch(
+      `${baseUrl}/api/events/${eventId}/contract-action/preflight`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: attendeeCookie,
+        },
+        body: JSON.stringify({
+          action: "checkout_pass",
+          timeoutSeconds: 0,
+        }),
+      },
+    );
+    const invalidPreflightBody = await readJson(invalidPreflight);
+    assert(
+      invalidPreflight.status === 400,
+      "invalid live preflight should fail before RPC",
+    );
+    assert(
+      invalidPreflightBody?.error === "Invalid live transaction preflight request.",
+      "invalid live preflight should report schema failure",
+    );
+
     const checkInPrepare = await assertPreparedAction(
       "prepare check-in",
       await fetch(
@@ -496,6 +520,7 @@ async function main() {
             "prepare-publish-live-args",
             "prepare-checkout-live-args",
             "prepare-checkout-unsigned-xdr",
+            "preflight-route-invalid-request",
             "prepare-check-in-live-args",
             "prepare-withdraw-live-args",
             "submit-invalid-signed-xdr-no-persistence",

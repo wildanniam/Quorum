@@ -35,6 +35,7 @@ const requiredFiles = [
   "src/lib/stellar/live-preflight.ts",
   "src/lib/stellar/live-submission.ts",
   "src/lib/stellar/live-xdr.ts",
+  "src/app/api/events/[eventId]/contract-action/preflight/route.ts",
 ];
 
 const requiredPackageScripts = [
@@ -125,6 +126,7 @@ const requiredLiveFlowCoverage = [
 ];
 
 const requiredLivePolicyCoverage = [
+  "preflight-route-invalid-request",
   "submit-invalid-signed-xdr-no-persistence",
 ];
 
@@ -153,6 +155,7 @@ const requiredLiveHandoffTerms = [
   "atomic-to-decimal",
   "LIVE_TESTNET_EVIDENCE.example.json",
   "live:evidence:audit",
+  "contract-action/preflight",
 ];
 
 const failures = [];

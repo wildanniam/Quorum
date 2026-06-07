@@ -83,7 +83,10 @@ The app should replace each `local_proof` mutation with a multi-step live flow:
    the target contract ID, network metadata, contract function name, signer, and
    encoded args without signing or submitting a transaction. If `sourceSequence`
    is supplied, the response also includes a pre-simulation unsigned transaction
-   XDR template.
+   XDR template. The signing path should call
+   `POST /api/events/[eventId]/contract-action/preflight` to fetch the signer
+   sequence from RPC, run `prepareTransaction`, and return a prepared
+   transaction XDR that is ready for Freighter signing.
 2. Browser asks Freighter to sign the prepared transaction.
 3. Browser posts the signed XDR back to
    `POST /api/events/[eventId]/contract-action`; the server reconstructs the
@@ -132,6 +135,8 @@ errors, and returned XDR before submission.
 return value decoding for purchase token IDs and withdraw amounts. The route
 submit path rejects invalid signed XDR before persistence and still requires a
 real RPC-confirmed finality result before writing live proof data.
+`POST /api/events/[eventId]/contract-action/preflight` exposes the non-signing
+RPC preflight boundary over HTTP and fails invalid requests before touching RPC.
 `src/lib/stellar/live-flow.ts` composes prepare, preflight, mockable Freighter
 signing, mockable submission, decoded return values, and post-success
 persistence inputs so publish, paid checkout, free claim, check-in, and withdraw

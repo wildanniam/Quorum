@@ -124,7 +124,8 @@ and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
 The live policy smoke verifies fake configured contract IDs require live
 transaction submission, exposes non-signing live action prepare responses, and
 rejects invalid signed XDR before persistence without creating local proof
-records.
+records. It also verifies the preflight route rejects invalid requests before
+touching RPC.
 The live args smoke verifies deterministic contract arguments plus USDC
 decimal-to-atomic and atomic-to-decimal conversion for live proof storage.
 The live XDR smoke verifies pre-simulation unsigned Soroban transaction
