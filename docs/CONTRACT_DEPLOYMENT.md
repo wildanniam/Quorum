@@ -34,34 +34,25 @@ The deploy script prints:
 
 Copy those values into `.env.local` for app integration.
 
-## Initialization Commands
+## Initialization
 
-After deployment, initialize both contracts. Use the organizer/admin public address for `ADMIN_ADDRESS`.
+After deployment, initialize both contracts and link the pass contract to the
+core contract. `ADMIN_ADDRESS` must be the public key that authorizes admin
+setup. `QUORUM_PLATFORM_FEE_BPS` defaults to `500` (5%) when omitted.
 
 ```bash
-stellar contract invoke \
-  --id "$NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID" \
-  --source-account "$STELLAR_ACCOUNT" \
-  --network "$STELLAR_NETWORK" \
-  -- init \
-  --admin "$ADMIN_ADDRESS"
-
-stellar contract invoke \
-  --id "$NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID" \
-  --source-account "$STELLAR_ACCOUNT" \
-  --network "$STELLAR_NETWORK" \
-  -- init \
-  --admin "$ADMIN_ADDRESS" \
-  --platform_fee_bps 500
-
-stellar contract invoke \
-  --id "$NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID" \
-  --source-account "$STELLAR_ACCOUNT" \
-  --network "$STELLAR_NETWORK" \
-  -- set_core \
-  --caller "$ADMIN_ADDRESS" \
-  --core "$NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID"
+export ADMIN_ADDRESS=<admin-public-key>
+export QUORUM_PLATFORM_FEE_BPS=500
+export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>
+export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID=<deployed-core-contract-id>
+npm run contracts:init:testnet
 ```
+
+The init script signs transactions and performs:
+
+1. `QuorumPassNFT.init(admin)`;
+2. `QuorumCore.init(admin, platform_fee_bps)`;
+3. `QuorumPassNFT.set_core(admin, core_contract_id)`.
 
 ## Current Boundary
 

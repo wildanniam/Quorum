@@ -71,7 +71,6 @@ npm run evidence:local
 cargo test
 stellar contract build
 npm run contracts:doctor
-npm run contracts:deploy:testnet
 ```
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
@@ -79,6 +78,14 @@ npm run contracts:deploy:testnet
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 
 `npm run evidence:local` runs the local verification suite and writes `docs/DEMO_EVIDENCE.md`.
+
+Live testnet deployment signs transactions and is intentionally gated by funded
+wallet approval:
+
+```bash
+npm run contracts:deploy:testnet
+npm run contracts:init:testnet
+```
 
 ## Planning Docs
 

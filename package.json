@@ -15,7 +15,8 @@
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
     "contracts:doctor": "node scripts/contracts/doctor.mjs",
-    "contracts:deploy:testnet": "node scripts/contracts/deploy-testnet.mjs"
+    "contracts:deploy:testnet": "node scripts/contracts/deploy-testnet.mjs",
+    "contracts:init:testnet": "node scripts/contracts/init-testnet.mjs"
   },
   "dependencies": {
     "@stellar/freighter-api": "^6.0.1",
