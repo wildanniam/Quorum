@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:13:12.082Z`
+Generated at: `2026-06-07T18:16:25.367Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `74e01b9`
+- Commit: `e2bbe08`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -33,12 +33,13 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-c23140`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-498aa7`
 
 Covered checks:
 
 - marketplace
 - event-detail
+- contract-status
 - checkout
 - duplicate-checkout-guard
 - free-claim
@@ -128,8 +129,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_99941cbb-4be6-4758-b9cd-8e0bedd74e46",
-    "slug": "smoke-99941cbb",
+    "id": "evt_048dd0f9-c11e-4568-b03e-118abea61c91",
+    "slug": "smoke-048dd0f9",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -160,7 +161,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 2.5s
+✓ Compiled successfully in 2.1s
   Running TypeScript ...
   Finished TypeScript in 1889ms ...
   Collecting page data using 7 workers ...
@@ -168,7 +169,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 153ms
+✓ Generating static pages using 7 workers (10/10) in 103ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -218,12 +219,13 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-c644f557-e939-4d5a-b467-224fda04913d.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-b1d12f8f-3f8c-47bc-bc47-88f98859f4b0.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-c23140",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-498aa7",
   "checks": [
     "marketplace",
     "event-detail",
+    "contract-status",
     "checkout",
     "duplicate-checkout-guard",
     "free-claim",
@@ -251,11 +253,11 @@ found 0 vulnerabilities
 > cargo test
 running 5 tests
 test test::rejects_invalid_split_total - should panic ... ok
-test test::collaborator_can_withdraw_balance ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::collaborator_can_withdraw_balance ... ok
 test test::organizer_can_check_in_pass ... ok
-test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.09s
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
 running 4 tests
 test test::mints_unique_pass_for_owner_event ... ok
 test test::core_can_mark_pass_checked_in ... ok
@@ -277,7 +279,7 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.11s
+    Finished `release` profile [optimized] target(s) in 0.09s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (13034 bytes)
     Wasm Hash: 44d110000addf017e819afadec7860628e854fa0964e2caba379ee46e2fcb4f6
@@ -297,7 +299,7 @@ test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.07s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5155 bytes)
     Wasm Hash: 3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1
