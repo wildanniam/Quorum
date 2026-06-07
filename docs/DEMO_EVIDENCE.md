@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T18:45:36.188Z`
+Generated at: `2026-06-07T18:49:50.463Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `2deeb92`
+- Commit: `a0c5cdf`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -23,6 +23,7 @@ Generated at: `2026-06-07T18:45:36.188Z`
 | Build | `npm run build` | PASS | 0 |
 | Audit | `npm audit --audit-level=moderate` | PASS | 0 |
 | Demo smoke | `npm run demo:smoke` | PASS | 0 |
+| Live policy smoke | `npm run demo:live-policy` | PASS | 0 |
 | Contract tests | `npm run contracts:test` | PASS | 0 |
 | Contract build | `npm run contracts:build` | PASS | 0 |
 | Contract doctor | `npm run contracts:doctor` | PASS | 0 |
@@ -33,7 +34,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-0d290a`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-f0d197`
 
 Covered checks:
 
@@ -132,8 +133,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_b95de1d5-c3fb-4051-971b-0593800db28a",
-    "slug": "smoke-b95de1d5",
+    "id": "evt_fba3eff8-7c7f-4736-88b4-e5cdf5998ff8",
+    "slug": "smoke-fba3eff8",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -164,15 +165,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 3.1s
+✓ Compiled successfully in 2.8s
   Running TypeScript ...
-  Finished TypeScript in 1865ms ...
+  Finished TypeScript in 1831ms ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 98ms
+✓ Generating static pages using 7 workers (10/10) in 93ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -222,9 +223,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-941798a2-0008-49b2-bf65-43c1f648c092.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-8d00d887-8a24-4f7c-9b9d-60585c2df42e.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-0d290a",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-f0d197",
   "checks": [
     "marketplace",
     "event-detail",
@@ -248,6 +249,37 @@ found 0 vulnerabilities
 }
 ```
 
+### Live policy smoke
+
+- Command: `npm run demo:live-policy`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 demo:live-policy
+> node scripts/live-policy-smoke.mjs
+{
+  "ok": true,
+  "baseUrl": "http://127.0.0.1:3036",
+  "fakeCoreContractId": "CADQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQOBYHA4DQP5KR",
+  "fakePassContractId": "CAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQCAIBAEAQMCJ",
+  "mutationCounts": {
+    "checkIns": 0,
+    "passes": 0,
+    "purchases": 0,
+    "withdrawals": 0
+  },
+  "checks": [
+    "live-contract-status",
+    "publish-live-required",
+    "checkout-live-required",
+    "check-in-live-required",
+    "withdraw-live-required",
+    "no-local-proof-mutations"
+  ]
+}
+```
+
 ### Contract tests
 
 - Command: `npm run contracts:test`
@@ -259,27 +291,27 @@ found 0 vulnerabilities
 > cargo test
 running 17 tests
 test test::rejects_check_in_for_unknown_token - should panic ... ok
-test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::organizer_can_check_in_pass ... ok
-test test::collaborator_can_withdraw_balance ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
-test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::duplicate_check_in_is_idempotent ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::organizer_can_check_in_pass ... ok
+test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
 test test::rejects_check_in_for_token_from_another_event - should panic ... ok
-test test::duplicate_check_in_is_idempotent ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
-test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_withdraw_without_balance - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.30s
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.25s
 running 6 tests
 test test::rejects_unauthorized_mint - should panic ... ok
-test test::mints_unique_pass_for_owner_event ... ok
-test test::core_can_
+test test::rejects_unauthorized_check_in_mark - should panic ... ok
+test
 ... [truncated]
 ```
 
@@ -293,7 +325,7 @@ test test::core_can_
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.09s
+    Finished `release` profile [optimized] target(s) in 0.10s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (13034 bytes)
     Wasm Hash: 44d110000addf017e819afadec7860628e854fa0964e2caba379ee46e2fcb4f6
