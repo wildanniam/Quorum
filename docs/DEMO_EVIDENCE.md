@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-07T21:49:15.158Z`
+Generated at: `2026-06-07T21:57:09.052Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `1eab697`
+- Commit: `7099560`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -42,7 +42,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-ddb44c`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-110891`
 
 Covered checks:
 
@@ -146,8 +146,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_0233b9b6-8375-4838-8329-5af3c1113f3d",
-    "slug": "smoke-0233b9b6",
+    "id": "evt_178d5350-1c88-4c9d-822c-c0e3ea1b8ae5",
+    "slug": "smoke-178d5350",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -178,7 +178,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
   Creating an optimized production build ...
-✓ Compiled successfully in 2.8s
+✓ Compiled successfully in 6.4s
   Running TypeScript ...
   Finished TypeScript in 2.3s ...
   Collecting page data using 7 workers ...
@@ -186,7 +186,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 124ms
+✓ Generating static pages using 7 workers (10/10) in 106ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -237,9 +237,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-61e492ae-0133-47de-b6c1-09478e635ba2.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-a0dcdc13-da7c-4bb5-8ba7-b79bd995a43c.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-ddb44c",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-110891",
   "checks": [
     "marketplace",
     "event-detail",
@@ -317,7 +317,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-06-07T21:49:51.616Z",
+  "generatedAt": "2026-06-07T21:57:55.317Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -373,13 +373,25 @@ found 0 vulnerabilities
     "preflight-before-signing",
     "freighter-signing-options",
     "submit-and-poll-finality",
+    "publish-live-flow",
+    "checkout-live-flow",
+    "check-in-live-flow",
+    "withdraw-live-flow",
     "decode-token-id-from-finality",
+    "decode-withdraw-amount-from-finality",
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-a7fd1dad-5ccf-4eea-91f5-f38188a9ed6b.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-6f155a4d-d86b-452a-a114-3066b52b9807.db",
+  "persistedEventId": "evt_21d52dd9-eaaf-426f-bfae-883885155d5f",
   "persistedTokenId": "9001",
-  "txHash": "1515151515151515151515151515151515151515151515151515151515151515"
+  "persistedWithdrawUsdc": "2.8",
+  "txHashes": [
+    "1515151515151515151515151515151515151515151515151515151515151515",
+    "1616161616161616161616161616161616161616161616161616161616161616",
+    "1717171717171717171717171717171717171717171717171717171717171717",
+    "1818181818181818181818181818181818181818181818181818181818181818"
+  ]
 }
 ```
 
@@ -394,7 +406,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-92dc86ee-78e8-45d5-b075-e8c415ce2ebc.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-967e87cc-2313-4756-8ecd-9950e94efe2d.db",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -542,28 +554,28 @@ found 0 vulnerabilities
 > quorum@0.1.0 contracts:test
 > cargo test
 running 18 tests
-test test::purchase_mints_pass_and_splits_balance ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::collaborator_can_withdraw_balance ... ok
-test test::free_event_claim_mints_pass_without_balances ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
 test test::admin_can_withdraw_platform_fee ... ok
-test test::organizer_can_check_in_pass ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::free_event_claim_mints_pass_without_balances ... ok
 test test::duplicate_check_in_is_idempotent ... ok
+test test::organizer_can_check_in_pass ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_check_in_from_non_organizer - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
+test test::rejects_check_in_from_non_organizer - should panic ... ok
 test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
 running 6 tests
 test test::rejects_unauthorized_mint - should panic ... ok
-test test::core_can_ma
+test test::mints_uniqu
 ... [truncated]
 ```
 
