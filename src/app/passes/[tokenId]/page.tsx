@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { ProofDisplay } from "@/components/proof-display";
 import type { EventRecord } from "@/lib/db/models";
 import { getPassByTokenId, listResources } from "@/lib/events/repository";
 
@@ -129,30 +130,9 @@ export default async function PassPage({ params }: PassPageProps) {
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <div className="border border-line bg-background/35 p-4">
-                <p className="font-mono text-xs uppercase tracking-normal text-muted">
-                  Mint tx
-                </p>
-                <p className="mt-2 break-all font-mono text-xs text-foreground">
-                  {pass.mintTxHash ?? "Pending"}
-                </p>
-              </div>
-              <div className="border border-line bg-background/35 p-4">
-                <p className="font-mono text-xs uppercase tracking-normal text-muted">
-                  Payment tx
-                </p>
-                <p className="mt-2 break-all font-mono text-xs text-foreground">
-                  {purchase?.txHash ?? "Pending"}
-                </p>
-              </div>
-              <div className="border border-line bg-background/35 p-4">
-                <p className="font-mono text-xs uppercase tracking-normal text-muted">
-                  Metadata
-                </p>
-                <p className="mt-2 break-all font-mono text-xs text-foreground">
-                  {pass.metadataHash ?? "Pending"}
-                </p>
-              </div>
+              <ProofDisplay label="Mint tx" value={pass.mintTxHash} />
+              <ProofDisplay label="Payment tx" value={purchase?.txHash} />
+              <ProofDisplay label="Metadata" value={pass.metadataHash} />
             </div>
           </div>
         </div>

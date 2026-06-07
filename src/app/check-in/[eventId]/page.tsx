@@ -3,6 +3,7 @@ import { ArrowLeft, BadgeCheck, QrCode, TicketCheck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { CheckInPanel } from "@/components/events/check-in-panel";
+import { ProofDisplay } from "@/components/proof-display";
 import {
   getEventById,
   getEventDashboardMetrics,
@@ -123,9 +124,13 @@ export default async function CheckInPage({ params }: CheckInPageProps) {
                       owner {shorten(checkIn.ownerWallet)}
                     </p>
                   </div>
-                  <p className="break-all text-right font-mono text-xs text-muted">
-                    {checkIn.txHash}
-                  </p>
+                  <ProofDisplay
+                    align="right"
+                    className="md:min-w-64"
+                    compact
+                    label="Check-in proof"
+                    value={checkIn.txHash}
+                  />
                 </div>
               ))
             ) : (

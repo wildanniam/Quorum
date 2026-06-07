@@ -2,7 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { BadgeCheck, Loader2, Search, WalletCards } from "lucide-react";
+import { Loader2, Search, WalletCards } from "lucide-react";
+import { ProofDisplay } from "@/components/proof-display";
 import { useWallet } from "@/components/wallet-provider";
 
 type CheckInPanelProps = {
@@ -107,10 +108,12 @@ export function CheckInPanel({ eventId }: CheckInPanelProps) {
       ) : null}
 
       {txHash ? (
-        <div className="mt-4 flex items-start gap-3 border border-accent/50 bg-accent/10 p-3 text-sm text-accent">
-          <BadgeCheck size={18} />
-          <span className="break-all font-mono">{txHash}</span>
-        </div>
+        <ProofDisplay
+          className="mt-4"
+          compact
+          label="Check-in proof"
+          value={txHash}
+        />
       ) : null}
 
       <button

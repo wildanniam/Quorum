@@ -306,6 +306,28 @@ async function main() {
     const passHtml = await passPage.text();
     assert(passPage.status === 200, "pass page should render");
     assert(passHtml.includes("Checked in"), "pass should show checked-in state");
+    assert(
+      passHtml.includes("Local proof"),
+      "pass page should label local proof records",
+    );
+    assert(
+      passHtml.includes("Metadata"),
+      "pass page should label metadata hash",
+    );
+
+    const checkInPage = await fetch(`${baseUrl}/check-in/${eventId}`, {
+      headers: { cookie: organizerCookie },
+    });
+    const checkInHtml = await checkInPage.text();
+    assert(checkInPage.status === 200, "check-in page should render");
+    assert(
+      checkInHtml.includes("Check-in proof"),
+      "check-in page should show proof records",
+    );
+    assert(
+      checkInHtml.includes("Local proof"),
+      "check-in page should label local proof records",
+    );
 
     const withdrawal = await fetch(
       `${baseUrl}/api/events/${eventId}/withdrawals`,
@@ -366,6 +388,7 @@ async function main() {
             "resource-gating",
             "organizer-check-in",
             "duplicate-check-in-guard",
+            "proof-labels",
             "collaborator-withdraw",
             "duplicate-withdraw-guard",
             "pass-page",

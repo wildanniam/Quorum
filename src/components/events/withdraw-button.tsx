@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { BanknoteArrowUp, Loader2 } from "lucide-react";
+import { ProofDisplay } from "@/components/proof-display";
 
 type WithdrawButtonProps = {
   amountUsdc: string;
@@ -66,9 +67,7 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
         <p className="text-right text-xs leading-5 text-coral">{error}</p>
       ) : null}
       {txHash ? (
-        <p className="break-all text-right font-mono text-xs leading-5 text-accent">
-          {txHash}
-        </p>
+        <ProofDisplay align="right" compact label="Withdraw proof" value={txHash} />
       ) : null}
     </div>
   );
