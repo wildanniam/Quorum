@@ -1,8 +1,8 @@
 #![no_std]
 
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, panic_with_error, Address, BytesN, Env,
-    String,
+    contract, contracterror, contractimpl, contracttype, panic_with_error, symbol_short, Address,
+    BytesN, Env, String,
 };
 
 #[contract]
@@ -71,6 +71,24 @@ fn require_core(env: &Env, caller: &Address) {
     }
 }
 
+#[allow(deprecated)]
+fn emit_core_set(env: &Env, core: Address) {
+    env.events()
+        .publish((symbol_short!("core"), symbol_short!("set")), core);
+}
+
+#[allow(deprecated)]
+fn emit_mint(env: &Env, event_id: BytesN<32>, owner: Address, token_id: u64) {
+    env.events()
+        .publish((symbol_short!("pass"), symbol_short!("mint")), (event_id, owner, token_id));
+}
+
+#[allow(deprecated)]
+fn emit_checked_in(env: &Env, token_id: u64) {
+    env.events()
+        .publish((symbol_short!("pass"), symbol_short!("checkin")), token_id);
+}
+
 #[contractimpl]
 impl QuorumPassNft {
     pub fn init(env: Env, admin: Address) {
@@ -86,6 +104,7 @@ impl QuorumPassNft {
     pub fn set_core(env: Env, caller: Address, core: Address) {
         require_admin(&env, &caller);
         env.storage().instance().set(&DataKey::Core, &core);
+        emit_core_set(&env, core);
     }
 
     pub fn mint(
@@ -111,8 +130,8 @@ impl QuorumPassNft {
             .unwrap_or(1_u64);
         let pass = Pass {
             token_id,
-            event_id,
-            owner: to,
+            event_id: event_id.clone(),
+            owner: to.clone(),
             metadata_uri,
             metadata_hash,
             checked_in: false,
@@ -125,6 +144,7 @@ impl QuorumPassNft {
         env.storage()
             .instance()
             .set(&DataKey::NextTokenId, &(token_id + 1));
+        emit_mint(&env, event_id, to, token_id);
 
         token_id
     }
@@ -161,6 +181,7 @@ impl QuorumPassNft {
         env.storage()
             .persistent()
             .set(&DataKey::Pass(token_id), &pass);
+        emit_checked_in(&env, token_id);
     }
 
     pub fn transfer(env: Env, _from: Address, _to: Address, _token_id: u64) {

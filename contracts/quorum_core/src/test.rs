@@ -2,8 +2,8 @@
 
 use super::*;
 use quorum_pass_nft::{QuorumPassNft, QuorumPassNftClient};
-use soroban_sdk::testutils::Address as _;
-use soroban_sdk::{token, Address, BytesN, Env, String};
+use soroban_sdk::testutils::{Address as _, Events as _};
+use soroban_sdk::{token, xdr, Address, BytesN, Env, String};
 
 struct Setup {
     env: Env,
@@ -126,6 +126,33 @@ fn pass_metadata(env: &Env) -> (String, BytesN<32>) {
     )
 }
 
+fn sc_symbol_matches(value: &xdr::ScVal, expected: &str) -> bool {
+    if let xdr::ScVal::Symbol(symbol) = value {
+        match symbol.to_utf8_string() {
+            Ok(value) => value == expected,
+            Err(_) => false,
+        }
+    } else {
+        false
+    }
+}
+
+fn has_topic_pair(env: &Env, contract: &Address, first: &str, second: &str) -> bool {
+    env.events()
+        .all()
+        .filter_by_contract(contract)
+        .events()
+        .iter()
+        .any(|event| {
+            let xdr::ContractEventBody::V0(body) = &event.body;
+            let topics: &[xdr::ScVal] = body.topics.as_ref();
+
+            topics.len() >= 2
+                && sc_symbol_matches(&topics[0], first)
+                && sc_symbol_matches(&topics[1], second)
+        })
+}
+
 #[test]
 fn purchase_mints_pass_and_splits_balance() {
     let s = setup();
@@ -144,6 +171,29 @@ fn purchase_mints_pass_and_splits_balance() {
     assert_eq!(s.core.platform_balance(&s.currency), 50);
     assert_eq!(token.balance(&s.buyer), 9_000);
     assert_eq!(token.balance(&s.core.address), 1_000);
+}
+
+#[test]
+fn emits_core_and_pass_proof_events() {
+    let s = setup();
+    let (uri, hash) = pass_metadata(&s.env);
+
+    assert!(has_topic_pair(&s.env, &s.core.address, "event", "created"));
+
+    let token_id = s.core.purchase(&s.buyer, &s.event_id, &1_000, &uri, &hash);
+
+    assert!(has_topic_pair(&s.env, &s.core.address, "pass", "purchase"));
+    assert!(has_topic_pair(&s.env, &s.core.address, "balance", "credit"));
+    assert!(has_topic_pair(&s.env, &s.pass.address, "pass", "mint"));
+
+    s.core.withdraw(&s.speaker, &s.event_id);
+
+    assert!(has_topic_pair(&s.env, &s.core.address, "balance", "withdraw"));
+
+    s.core.check_in(&s.organizer, &s.event_id, &token_id);
+
+    assert!(has_topic_pair(&s.env, &s.core.address, "pass", "checkin"));
+    assert!(has_topic_pair(&s.env, &s.pass.address, "pass", "checkin"));
 }
 
 #[test]

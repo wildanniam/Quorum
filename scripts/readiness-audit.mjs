@@ -171,6 +171,11 @@ const requiredLiveUiCoverage = [
   "withdraw-live-ui-wiring",
 ];
 
+const requiredContractCoverage = [
+  "emits_core_and_pass_proof_events",
+  "set_core_emits_event",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
@@ -363,6 +368,12 @@ function checkEvidence() {
   for (const coverage of requiredLiveUiCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live UI wiring coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredContractCoverage) {
+    if (!evidence.includes(coverage)) {
+      fail(`DEMO_EVIDENCE is missing contract coverage: ${coverage}`);
     }
   }
 

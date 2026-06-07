@@ -152,6 +152,8 @@ signing, and signed-XDR submit sequence with mock fetch and signer boundaries,
 including encoded argument mismatch rejection before signing.
 The live UI wiring smoke verifies publish, checkout, check-in, and withdraw
 buttons call that helper when the server reports `live_required`.
+The contract tests verify Soroban proof events for event creation, pass
+purchase/claim/mint, balance credit, withdraw, and check-in.
 
 ## Live Testnet Boundary
 

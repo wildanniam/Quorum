@@ -14,8 +14,8 @@
     "coreContractId": "<C... QuorumCore contract ID>",
     "passContractId": "<C... QuorumPassNFT contract ID>",
     "usdcContractId": "<C... testnet USDC token contract ID>",
-    "coreWasmHash": "f67c4483f74bdfce3931a7d30577fabc5b4b6d1bdb7bdb1cec4696818c917761",
-    "passWasmHash": "3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1",
+    "coreWasmHash": "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0",
+    "passWasmHash": "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec",
     "platformFeeBps": "<configured platform fee bps>"
   },
   "deploymentTransactions": {

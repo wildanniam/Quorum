@@ -174,6 +174,65 @@ fn mark_pass_checked_in(env: &Env, pass_contract: &Address, token_id: u64) {
     );
 }
 
+#[allow(deprecated)]
+fn emit_event_created(env: &Env, event_id: BytesN<32>, organizer: Address) {
+    env.events().publish(
+        (symbol_short!("event"), symbol_short!("created")),
+        (event_id, organizer),
+    );
+}
+
+#[allow(deprecated)]
+fn emit_pass_purchase(
+    env: &Env,
+    event_id: BytesN<32>,
+    buyer: Address,
+    token_id: u64,
+    amount: i128,
+    is_free: bool,
+) {
+    let event_type = if is_free {
+        symbol_short!("claim")
+    } else {
+        symbol_short!("purchase")
+    };
+
+    env.events()
+        .publish((symbol_short!("pass"), event_type), (event_id, buyer, token_id, amount));
+}
+
+#[allow(deprecated)]
+fn emit_balance_credit(env: &Env, event_id: BytesN<32>, wallet: Address, amount: i128) {
+    if amount == 0 {
+        return;
+    }
+
+    env.events().publish(
+        (symbol_short!("balance"), symbol_short!("credit")),
+        (event_id, wallet, amount),
+    );
+}
+
+#[allow(deprecated)]
+fn emit_withdraw(env: &Env, event_id: BytesN<32>, wallet: Address, amount: i128) {
+    env.events().publish(
+        (symbol_short!("balance"), symbol_short!("withdraw")),
+        (event_id, wallet, amount),
+    );
+}
+
+#[allow(deprecated)]
+fn emit_check_in(env: &Env, event_id: BytesN<32>, token_id: u64) {
+    env.events()
+        .publish((symbol_short!("pass"), symbol_short!("checkin")), (event_id, token_id));
+}
+
+#[allow(deprecated)]
+fn emit_admin_withdraw(env: &Env, currency: Address, amount: i128) {
+    env.events()
+        .publish((symbol_short!("admin"), symbol_short!("withdraw")), (currency, amount));
+}
+
 #[contractimpl]
 impl QuorumCore {
     pub fn init(env: Env, admin: Address, platform_fee_bps: u32) {
@@ -242,7 +301,8 @@ impl QuorumCore {
         write_event(&env, &event);
         env.storage()
             .persistent()
-            .set(&DataKey::Splits(event_id), &splits);
+            .set(&DataKey::Splits(event_id.clone()), &splits);
+        emit_event_created(&env, event_id, event.organizer);
     }
 
     pub fn get_event(env: Env, event_id: BytesN<32>) -> Event {
@@ -302,7 +362,7 @@ impl QuorumCore {
             &DataKey::Purchase(event_id.clone(), buyer.clone()),
             &Purchase {
                 event_id: event_id.clone(),
-                buyer,
+                buyer: buyer.clone(),
                 amount,
                 token_id,
             },
@@ -310,6 +370,14 @@ impl QuorumCore {
         env.storage()
             .persistent()
             .set(&DataKey::TokenEvent(token_id), &event_id);
+        emit_pass_purchase(
+            &env,
+            event_id.clone(),
+            buyer.clone(),
+            token_id,
+            amount,
+            event.is_free,
+        );
 
         if amount > 0 {
             let platform_fee = amount * i128::from(event.platform_fee_bps) / 10_000_i128;
@@ -326,10 +394,13 @@ impl QuorumCore {
                 let split_amount = net * i128::from(split.percent_bps) / 10_000_i128;
                 distributed += split_amount;
                 add_balance(&env, &event_id, &split.wallet, split_amount);
+                emit_balance_credit(&env, event_id.clone(), split.wallet, split_amount);
             }
 
             if let Some(wallet) = first_wallet {
-                add_balance(&env, &event_id, &wallet, net - distributed);
+                let residual = net - distributed;
+                add_balance(&env, &event_id, &wallet, residual);
+                emit_balance_credit(&env, event_id.clone(), wallet, residual);
             }
 
             let platform_balance = env
@@ -367,7 +438,7 @@ impl QuorumCore {
 
         env.storage()
             .persistent()
-            .set(&DataKey::Balance(event_id, collaborator.clone()), &0_i128);
+            .set(&DataKey::Balance(event_id.clone(), collaborator.clone()), &0_i128);
         transfer_token(
             &env,
             &event.currency,
@@ -375,6 +446,7 @@ impl QuorumCore {
             &collaborator,
             amount,
         );
+        emit_withdraw(&env, event_id, collaborator, amount);
 
         amount
     }
@@ -400,7 +472,8 @@ impl QuorumCore {
         mark_pass_checked_in(&env, &event.pass_contract, token_id);
         env.storage()
             .persistent()
-            .set(&DataKey::CheckedIn(event_id, token_id), &true);
+            .set(&DataKey::CheckedIn(event_id.clone(), token_id), &true);
+        emit_check_in(&env, event_id, token_id);
     }
 
     pub fn is_checked_in(env: Env, event_id: BytesN<32>, token_id: u64) -> bool {
@@ -431,6 +504,7 @@ impl QuorumCore {
             &caller,
             amount,
         );
+        emit_admin_withdraw(&env, currency, amount);
         amount
     }
 }

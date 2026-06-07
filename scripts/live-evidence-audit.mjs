@@ -12,9 +12,9 @@ const evidencePath = path.isAbsolute(evidenceArg)
   : path.join(projectRoot, evidenceArg);
 
 const coreWasmHash =
-  "f67c4483f74bdfce3931a7d30577fabc5b4b6d1bdb7bdb1cec4696818c917761";
+  "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0";
 const passWasmHash =
-  "3c29db47b953e91e2b85628422fc18e66c82e4c68c8b1a4a9bd8b769945c0bc1";
+  "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec";
 
 const requiredFields = [
   ["generatedAt", "isoDate"],

@@ -8,7 +8,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 The local hackathon demo flow is implemented and verified. The app can create, update, publish, publicly list local paid/free events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
 
-The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, and check-in. Live on-chain publish/checkout/withdraw/check-in still needs deployed testnet contract IDs, a confirmed testnet USDC token contract ID, and wallet signing approval.
+The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Live on-chain publish/checkout/withdraw/check-in still needs deployed testnet contract IDs, a confirmed testnet USDC token contract ID, and wallet signing approval.
 
 Implemented in the app shell:
 
