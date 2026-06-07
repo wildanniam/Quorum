@@ -6,9 +6,9 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-Phase 9 local proof flow is in progress. The app can create, update, publish, publicly list local events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, and record organizer check-ins.
+Phase 9 local proof flow is in progress. The app can create, update, publish, publicly list local events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
 
-The Soroban contracts cover event registry, NFT pass minting, split accounting, withdraw accounting, and check-in. Live on-chain publish/checkout still needs deployed testnet contract IDs and wallet signing approval.
+The Soroban contracts cover event registry, NFT pass minting, split accounting, withdraw accounting, and check-in. Live on-chain publish/checkout/withdraw/check-in still needs deployed testnet contract IDs and wallet signing approval.
 
 Implemented in the app shell:
 
@@ -34,12 +34,14 @@ Implemented in the app shell:
 - local pass proof and purchase recording;
 - marketplace metrics for minted passes and routed USDC;
 - organizer-authorized local check-in API route;
+- collaborator local withdrawal API route;
 - dashboard metrics for organizer revenue, collaborator balances, attendee passes, and proof queue.
 
 Not implemented yet:
 
 - live on-chain checkout transaction signing;
 - live NFT mint transaction submission from the app;
+- live on-chain withdraw transaction submission from the app;
 - live on-chain check-in transaction submission from the app.
 
 ## Local Development
@@ -71,7 +73,7 @@ npm run contracts:doctor
 npm run contracts:deploy:testnet
 ```
 
-`npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, checkout, duplicate pass guard, gated resources, organizer check-in, pass detail, and dashboard proof surfaces.
+`npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, checkout, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
 `npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 

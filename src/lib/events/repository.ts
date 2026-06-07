@@ -13,6 +13,7 @@ import type {
   ResourceRecord,
   ResourceType,
   UserRecord,
+  WithdrawalRecord,
 } from "@/lib/db/models";
 
 type UserRow = {
@@ -102,6 +103,15 @@ type CheckInRow = {
   created_at: string;
 };
 
+type WithdrawalRow = {
+  id: string;
+  event_id: string;
+  collaborator_wallet: string;
+  amount_usdc: string;
+  tx_hash: string;
+  created_at: string;
+};
+
 export type CreateDraftEventInput = {
   slug: string;
   title: string;
@@ -153,6 +163,10 @@ function assertWalletAddress(walletAddress: string) {
   if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
     throw new Error(`Invalid Stellar wallet address: ${walletAddress}`);
   }
+}
+
+function formatUsdcAmount(value: number) {
+  return value.toFixed(7).replace(/\.?0+$/, "") || "0";
 }
 
 function toUserRecord(row: UserRow): UserRecord {
@@ -251,6 +265,17 @@ function toCheckInRecord(row: CheckInRow): CheckInRecord {
     tokenId: row.token_id,
     ownerWallet: row.owner_wallet,
     checkedInByWallet: row.checked_in_by_wallet,
+    txHash: row.tx_hash,
+    createdAt: row.created_at,
+  };
+}
+
+function toWithdrawalRecord(row: WithdrawalRow): WithdrawalRecord {
+  return {
+    id: row.id,
+    eventId: row.event_id,
+    collaboratorWallet: row.collaborator_wallet,
+    amountUsdc: row.amount_usdc,
     txHash: row.tx_hash,
     createdAt: row.created_at,
   };
@@ -706,6 +731,88 @@ export function getWithdrawnTotalUsdc(eventId: string, walletAddress: string) {
     .get(eventId, walletAddress) as { total: number };
 
   return Number(row.total);
+}
+
+export function listWithdrawalsByWallet(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  return (
+    getDatabase()
+      .prepare(
+        `
+        SELECT *
+        FROM withdrawals
+        WHERE collaborator_wallet = ?
+        ORDER BY created_at DESC
+        `,
+      )
+      .all(walletAddress) as WithdrawalRow[]
+  ).map(toWithdrawalRecord);
+}
+
+export function createLocalWithdrawalProof(eventId: string, collaboratorWallet: string) {
+  assertWalletAddress(collaboratorWallet);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Only published events can be withdrawn from.");
+    }
+
+    const collaboratorRow = db
+      .prepare(
+        "SELECT * FROM collaborators WHERE event_id = ? AND wallet_address = ?",
+      )
+      .get(eventId, collaboratorWallet) as CollaboratorRow | undefined;
+
+    if (!collaboratorRow) {
+      throw new Error("Connected wallet is not a collaborator for this event.");
+    }
+
+    const collaborator = toCollaboratorRecord(collaboratorRow);
+    const revenueUsdc = getEventRevenueUsdc(event.id);
+    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, collaboratorWallet);
+    const earnedUsdc = (revenueUsdc * collaborator.splitPercentage) / 100;
+    const availableUsdc = Math.max(earnedUsdc - withdrawnUsdc, 0);
+
+    if (availableUsdc <= 0.0000001) {
+      throw new Error("No withdrawable balance is available.");
+    }
+
+    const withdrawalId = createId("wdr");
+    const txHash = `stub:withdraw:${event.id}:${withdrawalId}`;
+    const amountUsdc = formatUsdcAmount(availableUsdc);
+
+    db.prepare(
+      `
+      INSERT INTO withdrawals (
+        id, event_id, collaborator_wallet, amount_usdc, tx_hash
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(withdrawalId, event.id, collaboratorWallet, amountUsdc, txHash);
+
+    const withdrawal = db
+      .prepare("SELECT * FROM withdrawals WHERE id = ?")
+      .get(withdrawalId) as WithdrawalRow;
+
+    return {
+      collaborator,
+      event,
+      withdrawal: toWithdrawalRecord(withdrawal),
+    };
+  })();
 }
 
 export function getEventDashboardMetrics(eventId: string) {

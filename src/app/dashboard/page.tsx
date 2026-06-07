@@ -12,6 +12,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { ContractReadiness } from "@/components/contract-readiness";
 import { WalletReadiness } from "@/components/wallet-readiness";
+import { WithdrawButton } from "@/components/events/withdraw-button";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
   getEventById,
@@ -33,6 +34,10 @@ function formatUsdc(value: number) {
 
 function shorten(address: string) {
   return `${address.slice(0, 8)}...${address.slice(-6)}`;
+}
+
+function amountForAction(value: number) {
+  return value > 0 ? value.toFixed(7).replace(/\.?0+$/, "") : "0";
 }
 
 export default async function DashboardPage() {
@@ -61,6 +66,9 @@ export default async function DashboardPage() {
     );
     return total + available;
   }, 0);
+  const hasWithdrawalProof = collaborations.some(
+    (collaboration) => collaboration.withdrawnUsdc > 0,
+  );
   const cards = [
     {
       icon: CalendarDays,
@@ -108,7 +116,11 @@ export default async function DashboardPage() {
     },
     {
       label: "Withdraw",
-      status: withdrawableUsdc > 0 ? "queued" : "pending",
+      status: hasWithdrawalProof
+        ? "ready"
+        : withdrawableUsdc > 0
+          ? "queued"
+          : "pending",
     },
   ];
 
@@ -247,7 +259,7 @@ export default async function DashboardPage() {
 
                     return (
                       <div
-                        className="grid gap-4 border border-line bg-background/30 p-4 md:grid-cols-[1fr_auto]"
+                        className="grid gap-4 border border-line bg-background/30 p-4 lg:grid-cols-[1fr_auto_auto]"
                         key={entry.collaborator.id}
                       >
                         <div>
@@ -256,7 +268,7 @@ export default async function DashboardPage() {
                             {entry.collaborator.displayName} · {entry.collaborator.role}
                           </p>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 text-right">
+                        <div className="grid grid-cols-4 gap-2 text-right">
                           <div>
                             <p className="font-mono text-lg text-accent">
                               {entry.collaborator.splitPercentage}%
@@ -270,12 +282,22 @@ export default async function DashboardPage() {
                             <p className="mt-1 text-xs text-muted">earned</p>
                           </div>
                           <div>
+                            <p className="font-mono text-lg text-coral">
+                              {formatUsdc(entry.withdrawnUsdc)}
+                            </p>
+                            <p className="mt-1 text-xs text-muted">withdrawn</p>
+                          </div>
+                          <div>
                             <p className="font-mono text-lg text-amber">
                               {formatUsdc(available)}
                             </p>
                             <p className="mt-1 text-xs text-muted">available</p>
                           </div>
                         </div>
+                        <WithdrawButton
+                          amountUsdc={amountForAction(available)}
+                          eventId={entry.event.id}
+                        />
                       </div>
                     );
                   })

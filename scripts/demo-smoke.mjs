@@ -15,6 +15,8 @@ const eventId = "evt_apac_stellar_builder_meetup";
 const eventSlug = "apac-stellar-builder-meetup";
 const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
+const speakerWallet =
+  "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 
 function resolveDatabasePath() {
   if (!databaseUrl.startsWith("file:")) {
@@ -153,6 +155,7 @@ async function main() {
     const attendeeWallet = Keypair.random().publicKey();
     const attendeeCookie = `quorum_session=${createSession(attendeeWallet)}`;
     const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
+    const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
 
     const marketplace = await fetch(baseUrl);
     const marketplaceHtml = await marketplace.text();
@@ -260,6 +263,36 @@ async function main() {
     assert(passPage.status === 200, "pass page should render");
     assert(passHtml.includes("Checked in"), "pass should show checked-in state");
 
+    const withdrawal = await fetch(
+      `${baseUrl}/api/events/${eventId}/withdrawals`,
+      {
+        method: "POST",
+        headers: { cookie: speakerCookie },
+      },
+    );
+    const withdrawalBody = await readJson(withdrawal);
+    assert(withdrawal.status === 201, "collaborator withdrawal should succeed");
+    assert(
+      withdrawalBody?.withdrawal?.amountUsdc === "1",
+      "speaker should withdraw 20% of 5 USDC",
+    );
+    assert(
+      withdrawalBody?.withdrawal?.txHash?.startsWith("stub:withdraw:"),
+      "withdrawal should record proof hash",
+    );
+
+    const duplicateWithdrawal = await fetch(
+      `${baseUrl}/api/events/${eventId}/withdrawals`,
+      {
+        method: "POST",
+        headers: { cookie: speakerCookie },
+      },
+    );
+    assert(
+      duplicateWithdrawal.status === 409,
+      "duplicate withdrawal should fail when balance is empty",
+    );
+
     const organizerDashboard = await fetch(`${baseUrl}/dashboard`, {
       headers: { cookie: organizerCookie },
     });
@@ -287,6 +320,8 @@ async function main() {
             "resource-gating",
             "organizer-check-in",
             "duplicate-check-in-guard",
+            "collaborator-withdraw",
+            "duplicate-withdraw-guard",
             "pass-page",
             "dashboard-proof",
           ],
