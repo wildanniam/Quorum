@@ -29,6 +29,8 @@ const requiredFiles = [
   "scripts/live-submission-smoke.ts",
   "scripts/live-ui-wiring-smoke.mjs",
   "scripts/live-xdr-smoke.ts",
+  "scripts/contracts/live-signing-approval.mjs",
+  "scripts/contracts/live-signing-approval-smoke.mjs",
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
@@ -44,6 +46,7 @@ const requiredFiles = [
 const requiredPackageScripts = [
   "build",
   "contracts:build",
+  "contracts:approval:smoke",
   "contracts:deploy:testnet",
   "contracts:doctor",
   "contracts:init:testnet",
@@ -92,6 +95,7 @@ const requiredEvidenceChecks = [
   "Live XDR smoke",
   "Contract tests",
   "Contract build",
+  "Contract approval smoke",
   "Contract doctor",
 ];
 
@@ -176,9 +180,18 @@ const requiredContractCoverage = [
   "set_core_emits_event",
 ];
 
+const requiredContractApprovalCoverage = [
+  "approval-helper-default-deny",
+  "approval-helper-exact-phrase",
+  "deploy-script-denies-without-live-approval",
+  "init-script-denies-without-live-approval",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
+  "QUORUM_LIVE_SIGNING_APPROVED",
+  "I_APPROVE_TESTNET_SIGNING",
   "Freighter",
   "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
   "Acceptance Evidence For Live Mode",
@@ -376,6 +389,12 @@ function checkEvidence() {
   for (const coverage of requiredContractCoverage) {
     if (!evidence.includes(coverage)) {
       fail(`DEMO_EVIDENCE is missing contract coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredContractApprovalCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing contract approval coverage: ${coverage}`);
     }
   }
 

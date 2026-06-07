@@ -165,6 +165,7 @@ Before live deployment:
 ```bash
 export STELLAR_NETWORK=testnet
 export STELLAR_ACCOUNT=<funded-identity-or-secret>
+export QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING
 export ADMIN_ADDRESS=<admin-public-key>
 export QUORUM_PLATFORM_FEE_BPS=0
 npm run contracts:doctor
@@ -177,6 +178,9 @@ npm run contracts:init:testnet
 
 Until those values are configured, the web app uses local proof records that
 mirror the contract flow.
+The deploy/init scripts refuse to sign unless
+`QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is set after explicit
+approval.
 The final live evidence packet must record the pass deploy, core deploy, pass
 init, core init, and pass `set_core` transaction hashes.
 

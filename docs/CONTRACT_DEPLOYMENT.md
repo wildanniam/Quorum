@@ -11,10 +11,12 @@ npm run contracts:doctor
 ```
 
 `npm run contracts:doctor` is a non-signing readiness check. It verifies local
-tooling, WASM artifacts, Stellar RPC reachability, contract ID env format, and
-whether `STELLAR_ACCOUNT` is configured. Missing contract IDs are reported as
-warnings before deployment; missing signing/funding configuration is a blocker
-for live deploy.
+tooling, WASM artifacts, Stellar RPC reachability, contract ID env format,
+whether `STELLAR_ACCOUNT` is configured, and whether the explicit live signing
+approval guard is set. Missing contract IDs are reported as warnings before
+deployment; missing signing/funding configuration or missing
+`QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is a blocker for live
+deploy.
 
 ## Testnet Deployment
 
@@ -23,6 +25,7 @@ Deployment signs transactions. Do not run this until a funded testnet account or
 ```bash
 export STELLAR_NETWORK=testnet
 export STELLAR_ACCOUNT=<funded-identity-or-secret>
+export QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING
 npm run contracts:doctor
 npm run contracts:deploy:testnet
 ```
@@ -44,6 +47,7 @@ omitted. The contract supports non-zero fees, but the locked demo fee is 0%.
 ```bash
 export ADMIN_ADDRESS=<admin-public-key>
 export QUORUM_PLATFORM_FEE_BPS=0
+export QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING
 export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>
 export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID=<deployed-core-contract-id>
 npm run contracts:init:testnet

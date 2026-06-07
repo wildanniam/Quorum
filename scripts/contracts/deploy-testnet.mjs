@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
 
 const account = process.env.STELLAR_ACCOUNT;
 const network = process.env.STELLAR_NETWORK || "testnet";
@@ -9,6 +10,8 @@ if (!account) {
   );
   process.exit(1);
 }
+
+requireLiveSigningApproval();
 
 function run(args, options = {}) {
   return execFileSync("stellar", args, {

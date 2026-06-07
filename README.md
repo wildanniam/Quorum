@@ -136,7 +136,9 @@ withdraw UI actions are wired to the browser live flow helper when
 for the same contract actions. These XDRs are not signed and still require live
 account sequence fetch plus RPC simulation/assembly before Freighter signing.
 
-`npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
+`npm run contracts:doctor` is safe to run without signing transactions. It
+reports live deployment blockers such as missing `STELLAR_ACCOUNT` or missing
+`QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING`.
 
 `npm run evidence:local` runs the local verification suite and writes `docs/DEMO_EVIDENCE.md`.
 
@@ -151,6 +153,9 @@ wallet approval:
 npm run contracts:deploy:testnet
 npm run contracts:init:testnet
 ```
+
+Those scripts refuse to run unless `QUORUM_LIVE_SIGNING_APPROVED` is set to
+`I_APPROVE_TESTNET_SIGNING` after explicit approval.
 
 After approved live signing, record the pass deploy, core deploy, pass init,
 core init, and pass `set_core` transaction hashes in

@@ -27,6 +27,7 @@ const checks = [
   { label: "Live UI wiring smoke", command: "npm", args: ["run", "live:ui-wiring:smoke"] },
   { label: "Contract tests", command: "npm", args: ["run", "contracts:test"] },
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },
+  { label: "Contract approval smoke", command: "npm", args: ["run", "contracts:approval:smoke"] },
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },
 ];
 

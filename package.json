@@ -29,6 +29,7 @@
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
     "contracts:doctor": "node scripts/contracts/doctor.mjs",
+    "contracts:approval:smoke": "node scripts/contracts/live-signing-approval-smoke.mjs",
     "contracts:deploy:testnet": "node scripts/contracts/deploy-testnet.mjs",
     "contracts:init:testnet": "node scripts/contracts/init-testnet.mjs"
   },

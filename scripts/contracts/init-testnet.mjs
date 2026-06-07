@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { StrKey } from "@stellar/stellar-sdk";
+import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
 
 const account = process.env.STELLAR_ACCOUNT;
 const network = process.env.STELLAR_NETWORK || "testnet";
@@ -21,6 +22,8 @@ if (missing.length > 0) {
   );
   process.exit(1);
 }
+
+requireLiveSigningApproval();
 
 if (!StrKey.isValidEd25519PublicKey(adminAddress)) {
   console.error("ADMIN_ADDRESS must be a valid Stellar public key.");

@@ -3,6 +3,12 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { StrKey } from "@stellar/stellar-sdk";
+import {
+  hasLiveSigningApproval,
+  liveSigningApprovalEnv,
+  liveSigningApprovalMessage,
+  liveSigningApprovalValue,
+} from "./live-signing-approval.mjs";
 
 const projectRoot = process.cwd();
 const strict = process.env.CONTRACTS_DOCTOR_STRICT === "1";
@@ -151,6 +157,7 @@ const coreContractId = optionalEnv("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID");
 const passContractId = optionalEnv("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID");
 const usdcContractId = optionalEnv("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID");
 const platformFeeBps = optionalEnv("QUORUM_PLATFORM_FEE_BPS") ?? "0";
+const liveSigningApproved = hasLiveSigningApproval(env);
 const rpc = await checkRpc(appRpcUrl);
 const blockers = [];
 const warnings = [];
@@ -179,6 +186,10 @@ if (!rpc.ok) {
 
 if (!stellarAccount) {
   blockers.push("STELLAR_ACCOUNT is missing. Set a funded Stellar identity/secret before deploy.");
+}
+
+if (!liveSigningApproved) {
+  blockers.push(liveSigningApprovalMessage());
 }
 
 if (!/^\d+$/.test(platformFeeBps) || Number(platformFeeBps) > 10_000) {
@@ -250,6 +261,9 @@ const report = {
   },
   signing: {
     stellarAccountConfigured: Boolean(stellarAccount),
+    liveSigningApproved,
+    approvalEnv: liveSigningApprovalEnv,
+    approvalValue: liveSigningApprovalValue,
   },
   blockers,
   warnings,

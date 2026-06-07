@@ -26,11 +26,12 @@ transactions until the user explicitly approves that step.
 These actions require explicit user approval:
 
 1. Configure `STELLAR_ACCOUNT` or any funded signing identity.
-2. Deploy contracts or initialize deployed contracts.
-3. Configure hosted environment variables containing real contract IDs.
-4. Ask Freighter to sign publish, checkout, check-in, withdraw, or admin
+2. Set `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING`.
+3. Deploy contracts or initialize deployed contracts.
+4. Configure hosted environment variables containing real contract IDs.
+5. Ask Freighter to sign publish, checkout, check-in, withdraw, or admin
    transactions.
-5. Change product scope, fee policy, payment asset, or transferability rules.
+6. Change product scope, fee policy, payment asset, or transferability rules.
 
 ## Required Environment
 
@@ -39,6 +40,7 @@ Local deployment/signing:
 ```bash
 STELLAR_NETWORK="testnet"
 STELLAR_ACCOUNT="<funded Stellar CLI identity or secret>"
+QUORUM_LIVE_SIGNING_APPROVED="I_APPROVE_TESTNET_SIGNING"
 ADMIN_ADDRESS="<admin public key>"
 QUORUM_PLATFORM_FEE_BPS="0"
 ```
@@ -67,6 +69,10 @@ export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID="<printed pass id>"
 export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID="<printed core id>"
 npm run contracts:init:testnet
 ```
+
+`contracts:deploy:testnet` and `contracts:init:testnet` refuse to run unless
+`QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is present. Set it only
+after the user explicitly approves live testnet signing for the current run.
 
 Record the pass deploy, core deploy, pass init, core init, and pass `set_core`
 transaction hashes, plus contract IDs, network, WASM hashes, and admin address

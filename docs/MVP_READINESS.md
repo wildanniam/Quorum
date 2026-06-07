@@ -21,8 +21,8 @@ Quorum is considered locally demo-ready when these criteria pass:
 8. Local DB, lint, build, audit, demo smoke, live policy smoke, browser QA,
    live args smoke, live flow smoke, live persistence smoke, live preflight
    smoke, live signing smoke, live submission smoke, live XDR smoke, contract
-   tests, contract build, and deployment doctor checks pass with live signing
-   exceptions documented.
+   tests, contract build, contract approval smoke, and deployment doctor checks
+   pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
 The live hackathon acceptance criteria add two gated requirements:
@@ -38,15 +38,17 @@ The live hackathon acceptance criteria add two gated requirements:
   contract evidence.
 - `Contract-ready`: contract behavior is implemented, built, and tested, but the
   app is still using local proof records until deployment.
-- `Gated`: requires funded `STELLAR_ACCOUNT`, deployed contract IDs, hosted app
-  env vars, or explicit approval before signing live transactions.
+- `Gated`: requires funded `STELLAR_ACCOUNT`,
+  `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING`, deployed contract
+  IDs, hosted app env vars, or explicit approval before signing live
+  transactions.
 
 ## Final Definition Of Done Mapping
 
 | Requirement | Current status | Evidence |
 |---|---|---|
 | App is deployed | Gated | Requires hosted deployment URL and env configuration. |
-| Contracts are deployed on Stellar testnet | Gated | `docs/DEMO_EVIDENCE.md` reports `STELLAR_ACCOUNT` missing; `contracts:doctor` is otherwise ready. |
+| Contracts are deployed on Stellar testnet | Gated | `docs/DEMO_EVIDENCE.md` reports `STELLAR_ACCOUNT` and `QUORUM_LIVE_SIGNING_APPROVED` missing; `contracts:doctor` is otherwise ready. |
 | Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
 | Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `npm run browser:qa` verifies desktop/mobile marketplace rendering. |
 | Attendee can buy paid pass | Verified local, contract-ready | `npm run demo:smoke` covers `checkout`; `QuorumCore` tests cover paid purchase, payment token transfer into escrow, capacity, duplicate guard, invalid amount, split accounting, zero-fee demo accounting, and purchase/balance proof events. |
@@ -66,7 +68,7 @@ The live hackathon acceptance criteria add two gated requirements:
 | UI actions are wired to live browser flow fallback | Verified local | `npm run live:ui-wiring:smoke` verifies publish, checkout, check-in, and withdraw UI actions call `executeLiveBrowserContractAction` when the server returns `live_required`. |
 | Unsigned Soroban XDR templates are parseable | Verified local | `npm run live:xdr:smoke` covers pre-simulation unsigned invokeHostFunction XDR templates for publish/checkout/check-in/withdraw, including typed split recipient maps. |
 | Live action preparation and submit boundaries are fail-safe | Verified local | `npm run demo:live-policy` covers `GET /api/events/[eventId]/contract-action` prepare responses for publish/checkout/check-in/withdraw with fake valid contract IDs, verifies short numeric live check-in token IDs reach `live_required`, verifies `POST /api/events/[eventId]/contract-action` rejects invalid signed XDR before persistence, then verifies mutation routes still return live-required responses without local proof writes. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
+| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`. |
 
 ## Live Testnet Gate
@@ -76,14 +78,16 @@ deployment and signing:
 
 1. Configure a funded Stellar testnet identity through `STELLAR_ACCOUNT`.
 2. Run `npm run contracts:doctor`.
-3. Run `npm run contracts:deploy:testnet`.
-4. Export the printed `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID` and
+3. Set `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` after explicit
+   approval for the current live testnet signing run.
+4. Run `npm run contracts:deploy:testnet`.
+5. Export the printed `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID` and
    `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`.
-5. Run `npm run contracts:init:testnet`.
-6. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
-7. Configure the hosted app environment and verify Freighter signing on the
+6. Run `npm run contracts:init:testnet`.
+7. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
+8. Configure the hosted app environment and verify Freighter signing on the
    deployed URL.
-8. Record pass deploy, core deploy, pass init, core init, pass `set_core`, and
+9. Record pass deploy, core deploy, pass init, core init, pass `set_core`, and
    app flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
    `npm run live:evidence:audit`.
 
