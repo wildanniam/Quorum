@@ -181,6 +181,18 @@ async function main() {
     assert(freeEventPage.status === 200, "free event detail should render");
     assert(freeEventHtml.includes("Claim pass"), "free event should show claim CTA");
 
+    const contractStatus = await fetch(`${baseUrl}/api/contracts/status`);
+    const contractStatusBody = await readJson(contractStatus);
+    assert(contractStatus.status === 200, "contract status should render");
+    assert(
+      contractStatusBody?.proofMode === "local",
+      "contract status should expose local proof mode before deployment",
+    );
+    assert(
+      contractStatusBody?.configured === false,
+      "contract status should remain unconfigured without contract IDs",
+    );
+
     const checkout = await fetch(
       `${baseUrl}/api/events/${eventId}/passes`,
       {
@@ -369,6 +381,10 @@ async function main() {
       dashboardHtml.includes("APAC Stellar Builder Meetup"),
       "dashboard should show organizer event",
     );
+    assert(
+      dashboardHtml.includes("Local proof mode"),
+      "dashboard should show local proof mode before live contracts",
+    );
 
     console.log(
       JSON.stringify(
@@ -381,6 +397,7 @@ async function main() {
           checks: [
             "marketplace",
             "event-detail",
+            "contract-status",
             "checkout",
             "duplicate-checkout-guard",
             "free-claim",

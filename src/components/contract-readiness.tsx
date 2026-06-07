@@ -1,4 +1,4 @@
-import { Boxes, RadioTower, ShieldCheck } from "lucide-react";
+import { Boxes, FileKey2, RadioTower, ShieldCheck } from "lucide-react";
 import { getContractReadiness } from "@/lib/stellar/contracts";
 
 export function ContractReadiness() {
@@ -6,16 +6,34 @@ export function ContractReadiness() {
 
   const rows = [
     {
+      icon: FileKey2,
+      label: "Proof mode",
+      value: readiness.configured ? "Live contracts" : "Local proof mode",
+      active: readiness.configured,
+    },
+    {
       icon: Boxes,
       label: "Core",
-      value: readiness.coreContractId ? "Configured" : "Missing",
-      active: Boolean(readiness.coreContractId),
+      value: readiness.coreContractId
+        ? readiness.invalid.includes("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID")
+          ? "Invalid"
+          : "Configured"
+        : "Missing",
+      active:
+        Boolean(readiness.coreContractId) &&
+        !readiness.invalid.includes("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID"),
     },
     {
       icon: ShieldCheck,
       label: "Pass",
-      value: readiness.passContractId ? "Configured" : "Missing",
-      active: Boolean(readiness.passContractId),
+      value: readiness.passContractId
+        ? readiness.invalid.includes("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID")
+          ? "Invalid"
+          : "Configured"
+        : "Missing",
+      active:
+        Boolean(readiness.passContractId) &&
+        !readiness.invalid.includes("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID"),
     },
     {
       icon: RadioTower,
@@ -32,6 +50,11 @@ export function ContractReadiness() {
       </p>
       <p className="mt-2 text-xl font-semibold">
         {readiness.configured ? "Contracts configured" : "Deployment pending"}
+      </p>
+      <p className="mt-3 text-sm leading-6 text-muted">
+        {readiness.configured
+          ? "Live Stellar contract IDs are configured for proof surfaces."
+          : "Using local proof records until valid Stellar testnet contract IDs are configured."}
       </p>
 
       <div className="mt-5 grid gap-3">

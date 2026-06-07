@@ -1,4 +1,4 @@
-import { Contract, Networks, rpc } from "@stellar/stellar-sdk";
+import { Contract, Networks, StrKey, rpc } from "@stellar/stellar-sdk";
 
 const DEFAULT_TESTNET_RPC_URL = "https://soroban-testnet.stellar.org";
 
@@ -8,12 +8,18 @@ export type ContractReadiness = {
   networkPassphrase: string;
   coreContractId: string | null;
   passContractId: string | null;
+  proofMode: "live" | "local";
   configured: boolean;
   missing: string[];
+  invalid: string[];
 };
 
 function optionalEnv(value: string | undefined) {
   return value && value.trim().length > 0 ? value.trim() : null;
+}
+
+function isValidContractId(value: string | null) {
+  return Boolean(value && StrKey.isValidContract(value));
 }
 
 export function getContractReadiness(): ContractReadiness {
@@ -29,6 +35,15 @@ export function getContractReadiness(): ContractReadiness {
     coreContractId ? null : "NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID",
     passContractId ? null : "NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID",
   ].filter((item): item is string => Boolean(item));
+  const invalid = [
+    coreContractId && !isValidContractId(coreContractId)
+      ? "NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID"
+      : null,
+    passContractId && !isValidContractId(passContractId)
+      ? "NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID"
+      : null,
+  ].filter((item): item is string => Boolean(item));
+  const configured = missing.length === 0 && invalid.length === 0;
 
   return {
     network,
@@ -36,8 +51,10 @@ export function getContractReadiness(): ContractReadiness {
     networkPassphrase,
     coreContractId,
     passContractId,
-    configured: missing.length === 0,
+    proofMode: configured ? "live" : "local",
+    configured,
     missing,
+    invalid,
   };
 }
 
@@ -46,15 +63,19 @@ export function getRpcServer() {
 }
 
 export function getCoreContract() {
-  const { coreContractId } = getContractReadiness();
-  if (!coreContractId) return null;
+  const { coreContractId, invalid } = getContractReadiness();
+  if (!coreContractId || invalid.includes("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID")) {
+    return null;
+  }
 
   return new Contract(coreContractId);
 }
 
 export function getPassContract() {
-  const { passContractId } = getContractReadiness();
-  if (!passContractId) return null;
+  const { passContractId, invalid } = getContractReadiness();
+  if (!passContractId || invalid.includes("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID")) {
+    return null;
+  }
 
   return new Contract(passContractId);
 }
