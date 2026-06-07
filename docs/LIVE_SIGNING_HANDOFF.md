@@ -87,7 +87,9 @@ The app should replace each `local_proof` mutation with a two-step live flow:
 2. Browser asks Freighter to sign the prepared transaction.
 3. Server or browser submits the signed transaction to RPC.
 4. Server verifies the result, then stores the real transaction hash, token ID,
-   and proof metadata in SQLite.
+   and proof metadata in SQLite using the `recordLivePublishedEvent`,
+   `recordLivePass`, `recordLiveCheckIn`, and `recordLiveWithdrawal`
+   repository functions.
 
 The current action policy is the switch point:
 
@@ -102,9 +104,10 @@ Keep the fail-safe behavior until every row above has a real transaction path.
 Partial live mode must not mix live IDs with local proof writes for these
 actions.
 
-Run `npm run live:args:smoke`, `npm run live:xdr:smoke`, and
-`npm run demo:live-policy` before wiring Freighter signing to verify the
-non-signing argument encoding, XDR template, and preparation boundaries.
+Run `npm run live:args:smoke`, `npm run live:xdr:smoke`,
+`npm run live:persistence:smoke`, and `npm run demo:live-policy` before wiring
+Freighter signing to verify the non-signing argument encoding, XDR template,
+post-success persistence, and preparation boundaries.
 
 Before asking Freighter to sign, the live implementation must fetch the
 signer's current account sequence from testnet, simulate the Soroban transaction

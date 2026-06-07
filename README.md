@@ -70,6 +70,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:persistence:smoke
 npm run live:xdr:smoke
 npm run evidence:local
 npm run readiness:audit
@@ -89,6 +90,10 @@ checks and regenerates `docs/BROWSER_QA.md`.
 
 `npm run live:args:smoke` verifies deterministic contract argument encoding for
 future Freighter-signed publish, checkout, check-in, and withdraw flows.
+
+`npm run live:persistence:smoke` verifies the DB path for recording verified
+live publish, pass, check-in, and withdrawal transaction results while rejecting
+stub hashes.
 
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live

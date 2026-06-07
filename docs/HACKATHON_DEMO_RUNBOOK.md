@@ -101,6 +101,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run live:args:smoke
+npm run live:persistence:smoke
 npm run live:xdr:smoke
 npm run contracts:test
 npm run contracts:build
@@ -116,6 +117,8 @@ transaction submission, exposes non-signing live action prepare responses, and
 does not create local proof records.
 The live XDR smoke verifies pre-simulation unsigned Soroban transaction
 templates without signing or submission.
+The live persistence smoke verifies the post-RPC-success DB recording path for
+real transaction hashes and rejects local `stub:` hashes.
 
 ## Live Testnet Boundary
 

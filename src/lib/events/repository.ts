@@ -159,9 +159,74 @@ export type CollaboratorEventRecord = {
   withdrawnUsdc: number;
 };
 
+export type RecordLivePublishInput = {
+  coreEventId: string;
+  eventId: string;
+  metadataHash: string;
+  organizerWallet: string;
+  publishTxHash: string;
+};
+
+export type RecordLivePassInput = {
+  eventId: string;
+  metadataHash: string;
+  metadataUri: string;
+  ownerWallet: string;
+  tokenId: string;
+  txHash: string;
+};
+
+export type RecordLiveCheckInInput = {
+  checkedInByWallet: string;
+  eventId: string;
+  tokenId: string;
+  txHash: string;
+};
+
+export type RecordLiveWithdrawalInput = {
+  amountUsdc: string;
+  collaboratorWallet: string;
+  eventId: string;
+  txHash: string;
+};
+
 function assertWalletAddress(walletAddress: string) {
   if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
     throw new Error(`Invalid Stellar wallet address: ${walletAddress}`);
+  }
+}
+
+function assertLiveTransactionHash(txHash: string) {
+  if (!/^[a-f0-9]{64}$/i.test(txHash)) {
+    throw new Error("Live transaction hash must be a 64-character hex string.");
+  }
+}
+
+function assertContractEventId(coreEventId: string) {
+  if (!/^[a-f0-9]{64}$/i.test(coreEventId)) {
+    throw new Error("Core event ID must be a 32-byte hex string.");
+  }
+}
+
+function normalizeHashForStorage(value: string, label: string) {
+  const normalized = value.trim().replace(/^sha256:/i, "");
+
+  if (!/^[a-f0-9]{64}$/i.test(normalized)) {
+    throw new Error(`${label} must be a 32-byte hex string.`);
+  }
+
+  return `sha256:${normalized.toLowerCase()}`;
+}
+
+function assertTokenId(tokenId: string) {
+  if (!/^\d+$/.test(tokenId)) {
+    throw new Error("Live token ID must be a non-negative integer string.");
+  }
+}
+
+function assertUsdcAmount(amountUsdc: string) {
+  if (!/^\d+(\.\d{1,7})?$/.test(amountUsdc) || Number(amountUsdc) <= 0) {
+    throw new Error("USDC amount must be a positive decimal with up to 7 decimals.");
   }
 }
 
@@ -509,6 +574,63 @@ export function publishDraftEventStub(eventId: string, organizerWallet: string) 
   })();
 }
 
+export function recordLivePublishedEvent(input: RecordLivePublishInput) {
+  assertWalletAddress(input.organizerWallet);
+  assertContractEventId(input.coreEventId);
+  assertLiveTransactionHash(input.publishTxHash);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const event = db
+      .prepare(
+        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
+      )
+      .get(input.eventId, input.organizerWallet) as EventRow | undefined;
+
+    if (!event) {
+      throw new Error("Draft event not found for connected organizer.");
+    }
+
+    if (event.status !== "draft") {
+      throw new Error("Only draft events can be recorded as live published.");
+    }
+
+    const splitTotal = getCollaboratorSplitTotal(input.eventId);
+    const resourceCount = listResources(input.eventId).length;
+
+    if (Math.abs(splitTotal - 100) > 0.001) {
+      throw new Error("Collaborator split total must equal 100% before publish.");
+    }
+
+    if (resourceCount < 1) {
+      throw new Error("Add at least one gated resource before publish.");
+    }
+
+    db.prepare(
+      `
+      UPDATE events
+      SET status = 'published',
+          metadata_hash = ?,
+          core_event_id = ?,
+          publish_tx_hash = ?
+      WHERE id = ?
+      `,
+    ).run(
+      normalizeHashForStorage(input.metadataHash, "Event metadata hash"),
+      input.coreEventId.toLowerCase(),
+      input.publishTxHash.toLowerCase(),
+      input.eventId,
+    );
+
+    return {
+      event: getEventById(input.eventId),
+      collaborators: listCollaborators(input.eventId),
+      resources: listResources(input.eventId),
+    };
+  })();
+}
+
 export function getEventById(id: string) {
   const row = getDatabase().prepare("SELECT * FROM events WHERE id = ?").get(id) as
     | EventRow
@@ -815,6 +937,67 @@ export function createLocalWithdrawalProof(eventId: string, collaboratorWallet: 
   })();
 }
 
+export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
+  assertWalletAddress(input.collaboratorWallet);
+  assertLiveTransactionHash(input.txHash);
+  assertUsdcAmount(input.amountUsdc);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(input.eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Only published events can be withdrawn from.");
+    }
+
+    const collaboratorRow = db
+      .prepare(
+        "SELECT * FROM collaborators WHERE event_id = ? AND wallet_address = ?",
+      )
+      .get(input.eventId, input.collaboratorWallet) as CollaboratorRow | undefined;
+
+    if (!collaboratorRow) {
+      throw new Error("Connected wallet is not a collaborator for this event.");
+    }
+
+    const withdrawalId = createId("wdr");
+
+    db.prepare(
+      `
+      INSERT INTO withdrawals (
+        id, event_id, collaborator_wallet, amount_usdc, tx_hash
+      )
+      VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(
+      withdrawalId,
+      event.id,
+      input.collaboratorWallet,
+      input.amountUsdc,
+      input.txHash.toLowerCase(),
+    );
+
+    const withdrawal = db
+      .prepare("SELECT * FROM withdrawals WHERE id = ?")
+      .get(withdrawalId) as WithdrawalRow;
+
+    return {
+      collaborator: toCollaboratorRecord(collaboratorRow),
+      event,
+      withdrawal: toWithdrawalRecord(withdrawal),
+    };
+  })();
+}
+
 export function getEventDashboardMetrics(eventId: string) {
   const event = getEventById(eventId);
   const passCount = countPassesForEvent(event.id);
@@ -968,6 +1151,81 @@ export function markLocalPassCheckedIn({
   })();
 }
 
+export function recordLiveCheckIn(input: RecordLiveCheckInInput) {
+  assertWalletAddress(input.checkedInByWallet);
+  assertLiveTransactionHash(input.txHash);
+  assertTokenId(input.tokenId);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(input.eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Only published events can be checked in.");
+    }
+
+    if (event.organizerWallet !== input.checkedInByWallet) {
+      throw new Error("Only the event organizer can check in passes.");
+    }
+
+    const passRow = db
+      .prepare("SELECT * FROM passes WHERE event_id = ? AND token_id = ?")
+      .get(input.eventId, input.tokenId) as PassRow | undefined;
+
+    if (!passRow) {
+      throw new Error("Pass not found for this event.");
+    }
+
+    if (passRow.checked_in === 1) {
+      throw new Error("Pass is already checked in.");
+    }
+
+    const checkInId = createId("chk");
+
+    db.prepare(
+      `
+      INSERT INTO check_ins (
+        id, event_id, token_id, owner_wallet, checked_in_by_wallet, tx_hash
+      )
+      VALUES (?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      checkInId,
+      input.eventId,
+      input.tokenId,
+      passRow.owner_wallet,
+      input.checkedInByWallet,
+      input.txHash.toLowerCase(),
+    );
+
+    db.prepare(
+      "UPDATE passes SET checked_in = 1 WHERE event_id = ? AND token_id = ?",
+    ).run(input.eventId, input.tokenId);
+
+    const checkIn = db
+      .prepare("SELECT * FROM check_ins WHERE id = ?")
+      .get(checkInId) as CheckInRow;
+    const pass = db
+      .prepare("SELECT * FROM passes WHERE id = ?")
+      .get(passRow.id) as PassRow;
+
+    return {
+      checkIn: toCheckInRecord(checkIn),
+      event,
+      pass: toPassRecord(pass),
+    };
+  })();
+}
+
 export function createLocalPassProof(eventId: string, ownerWallet: string) {
   assertWalletAddress(ownerWallet);
 
@@ -1046,6 +1304,96 @@ export function createLocalPassProof(eventId: string, ownerWallet: string) {
       event.isFree ? "0" : event.priceUsdc,
       tokenId,
       localTxHash,
+    );
+
+    const pass = db
+      .prepare("SELECT * FROM passes WHERE id = ?")
+      .get(passId) as PassRow;
+    const purchase = db
+      .prepare("SELECT * FROM purchases WHERE id = ?")
+      .get(purchaseId) as PurchaseRow;
+
+    return {
+      event,
+      pass: toPassRecord(pass),
+      purchase: toPurchaseRecord(purchase),
+    };
+  })();
+}
+
+export function recordLivePass(input: RecordLivePassInput) {
+  assertWalletAddress(input.ownerWallet);
+  assertLiveTransactionHash(input.txHash);
+  assertTokenId(input.tokenId);
+
+  const db = getDatabase();
+
+  return db.transaction(() => {
+    const eventRow = db
+      .prepare("SELECT * FROM events WHERE id = ?")
+      .get(input.eventId) as EventRow | undefined;
+
+    if (!eventRow) {
+      throw new Error("Event not found.");
+    }
+
+    const event = toEventRecord(eventRow);
+
+    if (event.status !== "published") {
+      throw new Error("Passes can only be recorded for published events.");
+    }
+
+    const existingPass = db
+      .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
+      .get(input.eventId, input.ownerWallet) as PassRow | undefined;
+
+    if (existingPass) {
+      throw new Error("Connected wallet already owns a pass for this event.");
+    }
+
+    const mintedCount = countPassesForEvent(input.eventId);
+
+    if (mintedCount >= event.capacity) {
+      throw new Error("Event capacity is sold out.");
+    }
+
+    const passId = createId("pas");
+    const purchaseId = createId("pur");
+    const source: PassSource = event.isFree ? "free_claim" : "purchase";
+
+    db.prepare(
+      `
+      INSERT INTO passes (
+        id, event_id, owner_wallet, token_id, metadata_uri, metadata_hash,
+        mint_tx_hash, source
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+    ).run(
+      passId,
+      event.id,
+      input.ownerWallet,
+      input.tokenId,
+      input.metadataUri,
+      normalizeHashForStorage(input.metadataHash, "Pass metadata hash"),
+      input.txHash.toLowerCase(),
+      source,
+    );
+
+    db.prepare(
+      `
+      INSERT INTO purchases (
+        id, event_id, buyer_wallet, amount_usdc, token_id, tx_hash, status
+      )
+      VALUES (?, ?, ?, ?, ?, ?, 'succeeded')
+      `,
+    ).run(
+      purchaseId,
+      event.id,
+      input.ownerWallet,
+      event.isFree ? "0" : event.priceUsdc,
+      input.tokenId,
+      input.txHash.toLowerCase(),
     );
 
     const pass = db
