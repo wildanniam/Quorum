@@ -105,6 +105,7 @@ npm run evidence:local
 ```
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
+The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
 
 ## Live Testnet Boundary
 
@@ -131,6 +132,7 @@ mirror the contract flow.
 ## Submission Evidence Checklist
 
 - `docs/DEMO_EVIDENCE.md`
+- `docs/BROWSER_QA.md`
 - contract WASM hashes from `npm run contracts:build`
 - screenshot or short clip of marketplace, checkout, pass page, resources,
   check-in, dashboard, and withdrawal proof
