@@ -29,6 +29,7 @@ const requiredFiles = [
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
   "src/lib/stellar/live-flow.ts",
+  "src/lib/stellar/live-result-persistence.ts",
   "src/lib/stellar/live-preflight.ts",
   "src/lib/stellar/live-submission.ts",
   "src/lib/stellar/live-xdr.ts",
@@ -113,6 +114,8 @@ const requiredLiveFlowCoverage = [
   "withdraw-live-flow",
   "decode-token-id-from-finality",
   "decode-withdraw-amount-from-finality",
+  "persist-live-result-helper",
+  "reject-mismatched-live-result",
   "reject-finality-failure-without-persistence",
 ];
 
@@ -125,6 +128,7 @@ const requiredLiveHandoffTerms = [
   "Partial live mode must not mix live IDs with local proof writes",
   "sourceSequence",
   "live-flow.ts",
+  "live-result-persistence.ts",
   "live-preflight.ts",
   "recordLivePublishedEvent",
   "recordLivePass",

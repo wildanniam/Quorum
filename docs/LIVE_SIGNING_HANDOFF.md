@@ -130,6 +130,10 @@ return value decoding for purchase token IDs and withdraw amounts.
 signing, mockable submission, decoded return values, and post-success
 persistence inputs so publish, paid checkout, free claim, check-in, and withdraw
 chains can be tested without a real wallet signature.
+`src/lib/stellar/live-result-persistence.ts` maps verified successful finality
+results into `recordLivePublishedEvent`, `recordLivePass`,
+`recordLiveCheckIn`, and `recordLiveWithdrawal`, rejecting mismatched
+prepared/submitted actions before any DB write.
 
 ## Contract Call Inputs
 

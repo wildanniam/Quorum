@@ -126,7 +126,7 @@ templates without signing or submission.
 The live flow smoke verifies mock full live publish, paid checkout, free claim,
 check-in, and withdraw chains from prepared DB action to preflight, mock
 Freighter signing, mock RPC finality, decoded return values, and post-success
-persistence without submitting to testnet.
+persistence through `live-result-persistence.ts` without submitting to testnet.
 The live persistence smoke verifies the post-RPC-success DB recording path for
 real transaction hashes and rejects local `stub:` hashes.
 The live preflight smoke verifies signer sequence lookup and RPC

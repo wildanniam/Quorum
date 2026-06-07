@@ -15,11 +15,7 @@ import type {
   FreighterLiveSigner,
 } from "../src/lib/stellar/freighter-live-signing";
 import type { PreparedLiveContractAction } from "../src/lib/stellar/live-action";
-import {
-  atomicUnitsToUsdc,
-  type CreateEventContractArgs,
-  type PurchaseContractArgs,
-} from "../src/lib/stellar/live-encoding";
+import type { PurchaseContractArgs } from "../src/lib/stellar/live-encoding";
 import type { LiveTransactionPreflightRpc } from "../src/lib/stellar/live-preflight";
 import type { LiveTransactionSubmissionRpc } from "../src/lib/stellar/live-submission";
 
@@ -109,6 +105,9 @@ async function main() {
   );
   const { executePreparedLiveTransactionFlow } = await import(
     "../src/lib/stellar/live-flow"
+  );
+  const { persistLiveTransactionResult } = await import(
+    "../src/lib/stellar/live-result-persistence"
   );
 
   let preflightAccountCalls = 0;
@@ -233,7 +232,6 @@ async function main() {
     eventId: draft.event.id,
     signerWallet: organizerWallet,
   });
-  const publishArgs = publishAction.args as CreateEventContractArgs;
   const publishFlow = await runLiveFlow({
     expectedSigner: organizerWallet,
     preparedAction: publishAction,
@@ -241,13 +239,13 @@ async function main() {
   });
   assert.equal(publishFlow.submission.returnValue.kind, "void");
 
-  const published = repository.recordLivePublishedEvent({
-    coreEventId: publishArgs.eventIdHex,
+  const persistedPublish = persistLiveTransactionResult({
     eventId: draft.event.id,
-    metadataHash: publishArgs.metadataHashHex,
-    organizerWallet,
-    publishTxHash: publishFlow.submission.txHash,
+    preparedAction: publishAction,
+    submission: publishFlow.submission,
   });
+  assert.equal(persistedPublish.action, "publish_event");
+  const published = persistedPublish.result;
   assert.equal(published.event.status, "published");
   assert.equal(published.event.publishTxHash, txHash(21));
 
@@ -256,7 +254,6 @@ async function main() {
     eventId: published.event.id,
     signerWallet: attendeeWallet,
   });
-  const purchaseArgs = checkoutAction.args as PurchaseContractArgs;
   const checkoutFlow = await runLiveFlow({
     expectedSigner: attendeeWallet,
     preparedAction: checkoutAction,
@@ -272,14 +269,14 @@ async function main() {
   const tokenId = checkoutFlow.submission.returnValue.value;
   assert.equal(tokenId, "9001");
 
-  const passResult = repository.recordLivePass({
+  const persistedPass = persistLiveTransactionResult({
     eventId: published.event.id,
-    metadataHash: purchaseArgs.metadataHashHex,
-    metadataUri: purchaseArgs.metadataUri,
-    ownerWallet: attendeeWallet,
-    tokenId,
-    txHash: checkoutFlow.submission.txHash,
+    preparedAction: checkoutAction,
+    submission: checkoutFlow.submission,
   });
+  assert.equal(persistedPass.action, "checkout_pass");
+  assert.equal(persistedPass.tokenId, tokenId);
+  const passResult = persistedPass.result;
 
   assert.equal(passResult.pass.ownerWallet, attendeeWallet);
   assert.equal(passResult.pass.mintTxHash, txHash(22));
@@ -303,14 +300,14 @@ async function main() {
   }
   const freeTokenId = freeClaimFlow.submission.returnValue.value;
   assert.equal(freeTokenId, "9002");
-  const freePassResult = repository.recordLivePass({
+  const persistedFreePass = persistLiveTransactionResult({
     eventId: freeEventId,
-    metadataHash: freeClaimArgs.metadataHashHex,
-    metadataUri: freeClaimArgs.metadataUri,
-    ownerWallet: freeAttendeeWallet,
-    tokenId: freeTokenId,
-    txHash: freeClaimFlow.submission.txHash,
+    preparedAction: freeClaimAction,
+    submission: freeClaimFlow.submission,
   });
+  assert.equal(persistedFreePass.action, "checkout_pass");
+  assert.equal(persistedFreePass.tokenId, freeTokenId);
+  const freePassResult = persistedFreePass.result;
   assert.equal(freePassResult.pass.source, "free_claim");
   assert.equal(freePassResult.pass.mintTxHash, txHash(26));
   assert.equal(freePassResult.purchase.amountUsdc, "0");
@@ -328,12 +325,13 @@ async function main() {
     transactionHash: txHash(23),
   });
   assert.equal(checkInFlow.submission.returnValue.kind, "void");
-  const checkInResult = repository.recordLiveCheckIn({
-    checkedInByWallet: organizerWallet,
+  const persistedCheckIn = persistLiveTransactionResult({
     eventId: published.event.id,
-    tokenId,
-    txHash: checkInFlow.submission.txHash,
+    preparedAction: checkInAction,
+    submission: checkInFlow.submission,
   });
+  assert.equal(persistedCheckIn.action, "check_in_pass");
+  const checkInResult = persistedCheckIn.result;
   assert.equal(checkInResult.pass.checkedIn, true);
   assert.equal(checkInResult.checkIn.txHash, txHash(23));
 
@@ -351,14 +349,29 @@ async function main() {
   if (withdrawFlow.submission.returnValue.kind !== "withdraw_amount_atomic") {
     throw new Error("Expected live withdraw finality to return an amount.");
   }
-  const withdrawalResult = repository.recordLiveWithdrawal({
-    amountUsdc: atomicUnitsToUsdc(withdrawFlow.submission.returnValue.value),
-    collaboratorWallet: speakerWallet,
+  const persistedWithdrawal = persistLiveTransactionResult({
     eventId: published.event.id,
-    txHash: withdrawFlow.submission.txHash,
+    preparedAction: withdrawAction,
+    submission: withdrawFlow.submission,
   });
+  assert.equal(persistedWithdrawal.action, "withdraw_balance");
+  assert.equal(persistedWithdrawal.amountUsdc, "2.8");
+  const withdrawalResult = persistedWithdrawal.result;
   assert.equal(withdrawalResult.withdrawal.amountUsdc, "2.8");
   assert.equal(withdrawalResult.withdrawal.txHash, txHash(24));
+
+  assert.throws(
+    () =>
+      persistLiveTransactionResult({
+        eventId: published.event.id,
+        preparedAction: checkoutAction,
+        submission: {
+          ...checkoutFlow.submission,
+          action: "withdraw_balance",
+        },
+      }),
+    /does not match/,
+  );
 
   assert.equal(preflightAccountCalls, 5);
   assert.equal(preflightPrepareCalls, 5);
@@ -466,6 +479,8 @@ async function main() {
           "withdraw-live-flow",
           "decode-token-id-from-finality",
           "decode-withdraw-amount-from-finality",
+          "persist-live-result-helper",
+          "reject-mismatched-live-result",
           "persist-after-success-only",
           "reject-finality-failure-without-persistence",
         ],
