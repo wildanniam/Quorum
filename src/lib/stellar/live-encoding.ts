@@ -110,6 +110,36 @@ export function usdcToAtomicUnits(amountUsdc: string, decimals = USDC_DECIMALS) 
   return BigInt(`${whole}${fraction.padEnd(decimals, "0")}`);
 }
 
+export function atomicUnitsToUsdc(
+  amountAtomic: bigint | string,
+  decimals = USDC_DECIMALS,
+) {
+  if (!Number.isInteger(decimals) || decimals < 0) {
+    throw new Error("USDC decimals must be a non-negative integer.");
+  }
+
+  const value =
+    typeof amountAtomic === "bigint"
+      ? amountAtomic.toString()
+      : amountAtomic.trim();
+
+  if (!/^\d+$/.test(value)) {
+    throw new Error("USDC atomic amount must be a non-negative integer string.");
+  }
+
+  const normalized = value.replace(/^0+(?=\d)/, "");
+
+  if (decimals === 0) {
+    return normalized;
+  }
+
+  const padded = normalized.padStart(decimals + 1, "0");
+  const whole = padded.slice(0, -decimals) || "0";
+  const fraction = padded.slice(-decimals).replace(/0+$/, "");
+
+  return fraction ? `${whole}.${fraction}` : whole;
+}
+
 export function splitPercentageToBps(splitPercentage: number) {
   if (!Number.isFinite(splitPercentage)) {
     throw new Error("Split percentage must be finite.");

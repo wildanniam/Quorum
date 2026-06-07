@@ -122,6 +122,7 @@ const requiredLiveHandoffTerms = [
   "freighter-live-signing.ts",
   "live-submission.ts",
   "return value decoding",
+  "atomic-to-decimal",
 ];
 
 const failures = [];

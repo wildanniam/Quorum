@@ -7,6 +7,7 @@ import type {
 } from "../src/lib/db/models";
 import {
   BPS_DENOMINATOR,
+  atomicUnitsToUsdc,
   deriveEventIdHex,
   prepareCheckInContractArgs,
   prepareCreateEventContractArgs,
@@ -110,8 +111,15 @@ function expectThrow(fn: () => unknown, message: string) {
 assert.equal(usdcToAtomicUnits("5").toString(), "50000000");
 assert.equal(usdcToAtomicUnits("0.0000001").toString(), "1");
 assert.equal(usdcToAtomicUnits("12.3400000").toString(), "123400000");
+assert.equal(atomicUnitsToUsdc("50000000"), "5");
+assert.equal(atomicUnitsToUsdc("1"), "0.0000001");
+assert.equal(atomicUnitsToUsdc("123400000"), "12.34");
+assert.equal(atomicUnitsToUsdc(BigInt("15000000")), "1.5");
+assert.equal(atomicUnitsToUsdc("0"), "0");
 expectThrow(() => usdcToAtomicUnits("1.00000001"), "at most 7");
 expectThrow(() => usdcToAtomicUnits("-1"), "non-negative");
+expectThrow(() => atomicUnitsToUsdc("1.5"), "non-negative integer");
+expectThrow(() => atomicUnitsToUsdc("-1"), "non-negative integer");
 
 assert.equal(splitPercentageToBps(70), 7000);
 assert.equal(splitPercentageToBps(0.25), 25);
@@ -220,6 +228,7 @@ console.log(
       purchaseAmountAtomic: purchaseArgs.amountAtomic,
       checks: [
         "usdc-atomic-conversion",
+        "usdc-decimal-conversion",
         "event-id-derivation",
         "create-event-args",
         "purchase-args",

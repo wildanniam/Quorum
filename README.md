@@ -93,7 +93,8 @@ mutation routes fail safe without creating local proof records.
 checks and regenerates `docs/BROWSER_QA.md`.
 
 `npm run live:args:smoke` verifies deterministic contract argument encoding for
-future Freighter-signed publish, checkout, check-in, and withdraw flows.
+future Freighter-signed publish, checkout, check-in, and withdraw flows,
+including USDC decimal-to-atomic and atomic-to-decimal conversion.
 
 `npm run live:flow:smoke` verifies the mock full live checkout chain from
 prepared DB action to preflight, mock Freighter signing, mock RPC finality, and

@@ -112,6 +112,8 @@ Freighter signing to verify the argument encoding, XDR template, pre-signing RPC
 preflight, mock wallet signing adapter, signed transaction submission/finality
 polling, finality return value decoding, full mock live checkout flow,
 post-success persistence, and preparation boundaries.
+`src/lib/stellar/live-encoding.ts` also provides USDC atomic-to-decimal
+conversion for storing contract-returned withdraw amounts in SQLite.
 
 Before asking Freighter to sign, the live implementation must fetch the
 signer's current account sequence from testnet, simulate the Soroban transaction

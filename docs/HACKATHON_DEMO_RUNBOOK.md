@@ -119,6 +119,8 @@ The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
 The live policy smoke verifies fake configured contract IDs require live
 transaction submission, exposes non-signing live action prepare responses, and
 does not create local proof records.
+The live args smoke verifies deterministic contract arguments plus USDC
+decimal-to-atomic and atomic-to-decimal conversion for live proof storage.
 The live XDR smoke verifies pre-simulation unsigned Soroban transaction
 templates without signing or submission.
 The live flow smoke verifies a mock full live checkout chain from prepared DB
