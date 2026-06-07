@@ -67,10 +67,13 @@ npm audit --audit-level=moderate
 npm run demo:smoke
 cargo test
 stellar contract build
+npm run contracts:doctor
 npm run contracts:deploy:testnet
 ```
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, checkout, duplicate pass guard, gated resources, organizer check-in, pass detail, and dashboard proof surfaces.
+
+`npm run contracts:doctor` is safe to run without signing transactions. It reports live deployment blockers such as missing `STELLAR_ACCOUNT`.
 
 ## Planning Docs
 

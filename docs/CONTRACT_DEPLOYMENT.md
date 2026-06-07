@@ -7,7 +7,14 @@ Quorum contracts are built with Stellar CLI and Rust/Soroban.
 ```bash
 npm run contracts:test
 npm run contracts:build
+npm run contracts:doctor
 ```
+
+`npm run contracts:doctor` is a non-signing readiness check. It verifies local
+tooling, WASM artifacts, Stellar RPC reachability, contract ID env format, and
+whether `STELLAR_ACCOUNT` is configured. Missing contract IDs are reported as
+warnings before deployment; missing signing/funding configuration is a blocker
+for live deploy.
 
 ## Testnet Deployment
 
@@ -16,6 +23,7 @@ Deployment signs transactions. Do not run this until a funded testnet account or
 ```bash
 export STELLAR_NETWORK=testnet
 export STELLAR_ACCOUNT=<funded-identity-or-secret>
+npm run contracts:doctor
 npm run contracts:deploy:testnet
 ```
 

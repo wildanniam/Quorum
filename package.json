@@ -13,6 +13,7 @@
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
+    "contracts:doctor": "node scripts/contracts/doctor.mjs",
     "contracts:deploy:testnet": "node scripts/contracts/deploy-testnet.mjs"
   },
   "dependencies": {
