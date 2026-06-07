@@ -27,6 +27,7 @@ const requiredFiles = [
   "scripts/live-preflight-smoke.ts",
   "scripts/live-signing-smoke.ts",
   "scripts/live-submission-smoke.ts",
+  "scripts/live-ui-wiring-smoke.mjs",
   "scripts/live-xdr-smoke.ts",
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
@@ -64,6 +65,7 @@ const requiredPackageScripts = [
   "live:preflight:smoke",
   "live:signing:smoke",
   "live:submission:smoke",
+  "live:ui-wiring:smoke",
   "live:xdr:smoke",
   "readiness:audit",
 ];
@@ -86,6 +88,7 @@ const requiredEvidenceChecks = [
   "Live preflight smoke",
   "Live signing smoke",
   "Live submission smoke",
+  "Live UI wiring smoke",
   "Live XDR smoke",
   "Contract tests",
   "Contract build",
@@ -146,6 +149,14 @@ const requiredLiveBrowserCoverage = [
   "browser-live-submit-error",
 ];
 
+const requiredLiveUiCoverage = [
+  "browser-helper-preflight-submit-routes",
+  "publish-live-ui-wiring",
+  "checkout-live-ui-wiring",
+  "check-in-live-ui-wiring",
+  "withdraw-live-ui-wiring",
+];
+
 const requiredLiveHandoffTerms = [
   "explicitly approves",
   "STELLAR_ACCOUNT",
@@ -169,6 +180,7 @@ const requiredLiveHandoffTerms = [
   "live:evidence:audit",
   "contract-action/preflight",
   "live-browser-flow.ts",
+  "executeLiveBrowserContractAction",
 ];
 
 const failures = [];
@@ -325,6 +337,12 @@ function checkEvidence() {
   for (const coverage of requiredLiveBrowserCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live browser flow coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveUiCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live UI wiring coverage: ${coverage}`);
     }
   }
 

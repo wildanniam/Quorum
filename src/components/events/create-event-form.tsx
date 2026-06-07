@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useWallet } from "@/components/wallet-provider";
+import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type DraftResponse = {
+  executionMode?: "local_proof" | "live_required";
   event?: {
     id: string;
     slug: string;
@@ -37,6 +39,7 @@ type DraftResponse = {
   }>;
   error?: string;
   issues?: Array<{ path: string; message: string }>;
+  result?: DraftResponse;
 };
 
 type CollaboratorFormRow = {
@@ -270,13 +273,31 @@ export function CreateEventForm() {
     setPublishing(true);
     setResult(null);
 
-    const response = await fetch(`/api/events/${savedEventId}/publish`, {
-      method: "POST",
-    });
-    const payload = (await response.json()) as DraftResponse;
+    try {
+      const response = await fetch(`/api/events/${savedEventId}/publish`, {
+        method: "POST",
+      });
+      const payload = (await response.json()) as DraftResponse;
 
-    setResult(payload);
-    setPublishing(false);
+      if (response.status === 501 && payload.executionMode === "live_required") {
+        const liveResult = await executeLiveBrowserContractAction({
+          action: "publish_event",
+          eventId: savedEventId,
+        });
+        const livePayload = liveResult.submission as DraftResponse;
+
+        setResult(livePayload.result ?? livePayload);
+        return;
+      }
+
+      setResult(payload);
+    } catch (error) {
+      setResult({
+        error: error instanceof Error ? error.message : "Could not publish event.",
+      });
+    } finally {
+      setPublishing(false);
+    }
   }
 
   return (

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2, Search, WalletCards } from "lucide-react";
 import { ProofDisplay } from "@/components/proof-display";
 import { useWallet } from "@/components/wallet-provider";
+import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type CheckInPanelProps = {
   eventId: string;
@@ -14,7 +15,14 @@ type CheckInResponse = {
   checkIn?: {
     txHash: string | null;
   };
+  executionMode?: "local_proof" | "live_required";
   error?: string;
+  result?: {
+    checkIn?: {
+      txHash: string | null;
+    };
+  };
+  txHash?: string;
 };
 
 function shorten(address: string) {
@@ -47,8 +55,8 @@ export function CheckInPanel({ eventId }: CheckInPanelProps) {
       return;
     }
 
-    if (tokenId.trim().length < 3) {
-      setCheckInError("Enter a valid token ID.");
+    if (tokenId.trim().length < 1) {
+      setCheckInError("Enter a token ID.");
       return;
     }
 
@@ -61,6 +69,29 @@ export function CheckInPanel({ eventId }: CheckInPanelProps) {
         body: JSON.stringify({ tokenId: tokenId.trim() }),
       });
       const payload = (await response.json().catch(() => ({}))) as CheckInResponse;
+
+      if (response.status === 501 && payload.executionMode === "live_required") {
+        const liveResult = await executeLiveBrowserContractAction({
+          action: "check_in_pass",
+          eventId,
+          tokenId: tokenId.trim(),
+        });
+        const livePayload = liveResult.submission as CheckInResponse;
+        const liveTxHash =
+          livePayload.checkIn?.txHash ??
+          livePayload.result?.checkIn?.txHash ??
+          livePayload.txHash;
+
+        if (!liveTxHash) {
+          setCheckInError("Live transaction completed without check-in proof.");
+          return;
+        }
+
+        setTxHash(liveTxHash);
+        setTokenId("");
+        router.refresh();
+        return;
+      }
 
       if (!response.ok || !payload.checkIn) {
         setCheckInError(payload.error ?? "Could not check in pass.");

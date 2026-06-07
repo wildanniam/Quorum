@@ -77,6 +77,7 @@ npm run live:signing:smoke
 npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run live:browser-flow:smoke
+npm run live:ui-wiring:smoke
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -124,6 +125,10 @@ withdraw amounts.
 `npm run live:browser-flow:smoke` verifies the browser-side preflight,
 Freighter signing, and signed-XDR submit sequence with mock fetch and signer
 boundaries. It does not open Freighter or submit to testnet.
+
+`npm run live:ui-wiring:smoke` verifies the publish, checkout, check-in, and
+withdraw UI actions are wired to the browser live flow helper when
+`live_required` is returned.
 
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2, ShieldCheck, WalletCards } from "lucide-react";
 import { useWallet } from "@/components/wallet-provider";
+import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type CheckoutPanelProps = {
   capacity: number;
@@ -14,10 +15,17 @@ type CheckoutPanelProps = {
 };
 
 type CheckoutResponse = {
+  executionMode?: "local_proof" | "live_required";
   pass?: {
     tokenId: string | null;
   };
   error?: string;
+  result?: {
+    pass?: {
+      tokenId: string | null;
+    };
+  };
+  tokenId?: string;
 };
 
 function shorten(address: string) {
@@ -66,6 +74,27 @@ export function CheckoutPanel({
         method: "POST",
       });
       const payload = (await response.json().catch(() => ({}))) as CheckoutResponse;
+
+      if (response.status === 501 && payload.executionMode === "live_required") {
+        const liveResult = await executeLiveBrowserContractAction({
+          action: "checkout_pass",
+          eventId,
+        });
+        const livePayload = liveResult.submission as CheckoutResponse;
+        const tokenId =
+          livePayload.pass?.tokenId ??
+          livePayload.result?.pass?.tokenId ??
+          livePayload.tokenId;
+
+        if (!tokenId) {
+          setCheckoutError("Live transaction completed without a pass token ID.");
+          return;
+        }
+
+        router.push(`/passes/${tokenId}`);
+        router.refresh();
+        return;
+      }
 
       if (!response.ok || !payload.pass?.tokenId) {
         setCheckoutError(payload.error ?? "Could not create event pass.");

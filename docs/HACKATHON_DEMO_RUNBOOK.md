@@ -109,6 +109,7 @@ npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run live:evidence:template
 npm run live:browser-flow:smoke
+npm run live:ui-wiring:smoke
 npm run contracts:test
 npm run contracts:build
 npm run contracts:doctor
@@ -146,6 +147,8 @@ polling with a mock RPC server, including purchase token ID and withdraw amount
 return value decoding, without submitting to testnet.
 The live browser flow smoke verifies the client-side preflight, Freighter
 signing, and signed-XDR submit sequence with mock fetch and signer boundaries.
+The live UI wiring smoke verifies publish, checkout, check-in, and withdraw
+buttons call that helper when the server reports `live_required`.
 
 ## Live Testnet Boundary
 
