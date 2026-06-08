@@ -97,7 +97,10 @@ function readDeploymentEvidence(): DeploymentEvidence {
 }
 
 function requireString(value: unknown, label: string) {
-  assert.equal(typeof value, "string", `${label} must be a string.`);
+  if (typeof value !== "string") {
+    throw new Error(`${label} must be a string.`);
+  }
+
   assert.notEqual(value.trim(), "", `${label} must not be blank.`);
 
   return value;
@@ -118,14 +121,13 @@ function buildExpectedRuntime(
   assert.equal(evidence.network, "TESTNET", "deployment evidence must be TESTNET.");
 
   const hostedAppUrl = hostedUrlOverride ?? env.QUORUM_HOSTED_APP_URL;
-  assert.equal(
-    typeof hostedAppUrl,
-    "string",
-    "QUORUM_HOSTED_APP_URL or --url is required.",
+  const requiredHostedAppUrl = requireString(
+    hostedAppUrl,
+    "QUORUM_HOSTED_APP_URL or --url",
   );
 
   return {
-    hostedAppUrl,
+    hostedAppUrl: requiredHostedAppUrl,
     network: "TESTNET",
     rpcUrl: requireString(evidence.rpcUrl, "evidence.rpcUrl"),
     networkPassphrase: Networks.TESTNET,
@@ -250,10 +252,11 @@ function assertContractStatusPayload(
 
   const actions = readField(payload, "actions");
   assert(Array.isArray(actions), "contract status actions must be an array.");
+  const actionPolicies: unknown[] = actions;
 
   for (const action of CONTRACT_ACTIONS) {
-    const policy = actions.find(
-      (item) =>
+    const policy = actionPolicies.find(
+      (item: unknown) =>
         item &&
         typeof item === "object" &&
         (item as Record<string, unknown>).action === action,
