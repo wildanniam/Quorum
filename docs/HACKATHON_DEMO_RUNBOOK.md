@@ -204,6 +204,9 @@ The deploy/init scripts refuse to sign unless
 approval.
 They also refuse non-testnet deployment networks; keep
 `STELLAR_NETWORK=testnet` for the approved hackathon deployment path.
+They refuse non-zero `QUORUM_PLATFORM_FEE_BPS` unless
+`QUORUM_NONZERO_PLATFORM_FEE_APPROVED=I_APPROVE_NONZERO_PLATFORM_FEE` is set
+after explicit product approval for a fee-policy change.
 The final live evidence packet must record the pass deploy, core deploy, pass
 init, core init, and pass `set_core` transaction hashes.
 

@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { StrKey } from "@stellar/stellar-sdk";
 import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
+import { requirePlatformFeePolicy } from "./platform-fee-policy.mjs";
 import { requireTestnetDeploymentNetwork } from "./testnet-network-guard.mjs";
 
 const account = process.env.STELLAR_ACCOUNT;
@@ -45,6 +46,8 @@ if (!/^\d+$/.test(platformFeeBps) || Number(platformFeeBps) > 10_000) {
   console.error("QUORUM_PLATFORM_FEE_BPS must be an integer from 0 to 10000.");
   process.exit(1);
 }
+
+requirePlatformFeePolicy(platformFeeBps);
 
 function run(label, args) {
   console.error(`\n${label}`);

@@ -8,6 +8,12 @@ import {
   liveSigningApprovalMessage,
   liveSigningApprovalValue,
 } from "./live-signing-approval.mjs";
+import {
+  hasNonzeroPlatformFeeApproval,
+  nonzeroPlatformFeeApprovalEnv,
+  nonzeroPlatformFeeApprovalMessage,
+  nonzeroPlatformFeeApprovalValue,
+} from "./platform-fee-policy.mjs";
 
 const fakeAdminAddress = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const fakeCoreContractId = StrKey.encodeContract(Buffer.alloc(32, 7));
@@ -21,9 +27,10 @@ function runNode(script, env) {
     ADMIN_ADDRESS: fakeAdminAddress,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: fakeCoreContractId,
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: fakePassContractId,
-    ...env,
   };
   delete childEnv[liveSigningApprovalEnv];
+  delete childEnv[nonzeroPlatformFeeApprovalEnv];
+  Object.assign(childEnv, env);
 
   return spawnSync("node", [script], {
     cwd: process.cwd(),
@@ -51,6 +58,14 @@ assert.equal(
   true,
 );
 assert.match(liveSigningApprovalMessage(), /explicit approval/);
+assert.equal(hasNonzeroPlatformFeeApproval({}), false);
+assert.equal(
+  hasNonzeroPlatformFeeApproval({
+    [nonzeroPlatformFeeApprovalEnv]: nonzeroPlatformFeeApprovalValue,
+  }),
+  true,
+);
+assert.match(nonzeroPlatformFeeApprovalMessage(), /non-zero platform fee/);
 assert.equal(
   extractContractIdFromOutput(
     `stellar output\nContract deployed: ${fakeCoreContractId}\n`,
@@ -107,6 +122,27 @@ assert(
   "contracts doctor should block non-testnet deployment networks",
 );
 
+const initNonzeroFeeWithoutApproval = runNode("scripts/contracts/init-testnet.mjs", {
+  [liveSigningApprovalEnv]: liveSigningApprovalValue,
+  QUORUM_PLATFORM_FEE_BPS: "250",
+});
+assert.equal(initNonzeroFeeWithoutApproval.status, 1);
+assert.match(
+  `${initNonzeroFeeWithoutApproval.stdout}${initNonzeroFeeWithoutApproval.stderr}`,
+  new RegExp(nonzeroPlatformFeeApprovalEnv),
+);
+
+const doctorNonzeroFee = runNode("scripts/contracts/doctor.mjs", {
+  QUORUM_PLATFORM_FEE_BPS: "250",
+});
+const doctorNonzeroFeeJson = parseJsonOutput(doctorNonzeroFee);
+assert(
+  doctorNonzeroFeeJson.blockers.some((blocker) =>
+    blocker.includes(nonzeroPlatformFeeApprovalEnv),
+  ),
+  "contracts doctor should block non-zero platform fees without approval",
+);
+
 console.log(
   JSON.stringify(
     {
@@ -114,6 +150,8 @@ console.log(
       checks: [
         "approval-helper-default-deny",
         "approval-helper-exact-phrase",
+        "fee-policy-helper-default-deny",
+        "fee-policy-helper-exact-phrase",
         "parse-contract-id-from-cli-output",
         "reject-invalid-contract-deploy-output",
         "deploy-script-denies-without-live-approval",
@@ -121,9 +159,13 @@ console.log(
         "deploy-script-denies-non-testnet-network",
         "init-script-denies-non-testnet-network",
         "doctor-blocks-non-testnet-network",
+        "init-script-denies-nonzero-fee-without-approval",
+        "doctor-blocks-nonzero-fee-without-approval",
       ],
       approvalEnv: liveSigningApprovalEnv,
       approvalValue: liveSigningApprovalValue,
+      nonzeroPlatformFeeApprovalEnv,
+      nonzeroPlatformFeeApprovalValue,
     },
     null,
     2,

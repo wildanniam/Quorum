@@ -38,6 +38,7 @@ const requiredFiles = [
   "scripts/contracts/contract-cli-output.mjs",
   "scripts/contracts/live-signing-approval.mjs",
   "scripts/contracts/live-signing-approval-smoke.mjs",
+  "scripts/contracts/platform-fee-policy.mjs",
   "scripts/contracts/testnet-network-guard.mjs",
   "scripts/deploy-env-smoke.ts",
   "src/lib/auth/origin.ts",
@@ -252,6 +253,8 @@ const requiredContractCoverage = [
 const requiredContractApprovalCoverage = [
   "approval-helper-default-deny",
   "approval-helper-exact-phrase",
+  "fee-policy-helper-default-deny",
+  "fee-policy-helper-exact-phrase",
   "parse-contract-id-from-cli-output",
   "reject-invalid-contract-deploy-output",
   "deploy-script-denies-without-live-approval",
@@ -259,6 +262,8 @@ const requiredContractApprovalCoverage = [
   "deploy-script-denies-non-testnet-network",
   "init-script-denies-non-testnet-network",
   "doctor-blocks-non-testnet-network",
+  "init-script-denies-nonzero-fee-without-approval",
+  "doctor-blocks-nonzero-fee-without-approval",
 ];
 
 const requiredDeployEnvCoverage = [
@@ -427,6 +432,7 @@ function checkEnvExample() {
     "QUORUM_LIVE_SIGNING_APPROVED",
     "ADMIN_ADDRESS",
     "QUORUM_PLATFORM_FEE_BPS",
+    "QUORUM_NONZERO_PLATFORM_FEE_APPROVED",
   ];
 
   for (const term of requiredEnvExampleTerms) {

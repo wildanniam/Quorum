@@ -49,6 +49,10 @@ After deployment, initialize both contracts and link the pass contract to the
 core contract. `ADMIN_ADDRESS` must be the public key that authorizes admin
 setup. `QUORUM_PLATFORM_FEE_BPS` defaults to `0` for the hackathon demo when
 omitted. The contract supports non-zero fees, but the locked demo fee is 0%.
+Setting a non-zero fee requires
+`QUORUM_NONZERO_PLATFORM_FEE_APPROVED=I_APPROVE_NONZERO_PLATFORM_FEE` after
+explicit product approval; otherwise `contracts:doctor` and
+`contracts:init:testnet` refuse it before signing.
 
 ```bash
 export ADMIN_ADDRESS=<admin-public-key>

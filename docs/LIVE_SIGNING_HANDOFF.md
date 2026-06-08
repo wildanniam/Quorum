@@ -43,6 +43,7 @@ STELLAR_ACCOUNT="<funded Stellar CLI identity or secret>"
 QUORUM_LIVE_SIGNING_APPROVED="I_APPROVE_TESTNET_SIGNING"
 ADMIN_ADDRESS="<admin public key>"
 QUORUM_PLATFORM_FEE_BPS="0"
+QUORUM_NONZERO_PLATFORM_FEE_APPROVED="<only if non-zero fee is explicitly approved>"
 ```
 
 App/runtime:

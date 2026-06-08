@@ -10,6 +10,12 @@ import {
   liveSigningApprovalValue,
 } from "./live-signing-approval.mjs";
 import {
+  hasNonzeroPlatformFeeApproval,
+  nonzeroPlatformFeeApprovalEnv,
+  nonzeroPlatformFeeApprovalMessage,
+  nonzeroPlatformFeeApprovalValue,
+} from "./platform-fee-policy.mjs";
+import {
   isTestnetDeploymentNetwork,
   normalizeTestnetDeploymentNetwork,
   testnetDeploymentNetworkMessage,
@@ -167,6 +173,7 @@ const passContractId = optionalEnv("NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID");
 const usdcContractId = optionalEnv("NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID");
 const platformFeeBps = optionalEnv("QUORUM_PLATFORM_FEE_BPS") ?? "0";
 const liveSigningApproved = hasLiveSigningApproval(env);
+const nonzeroPlatformFeeApproved = hasNonzeroPlatformFeeApproval(env);
 const rpc = await checkRpc(appRpcUrl);
 const blockers = [];
 const warnings = [];
@@ -210,9 +217,13 @@ if (!/^\d+$/.test(platformFeeBps) || Number(platformFeeBps) > 10_000) {
 }
 
 if (/^\d+$/.test(platformFeeBps) && Number(platformFeeBps) > 0) {
-  warnings.push(
-    "QUORUM_PLATFORM_FEE_BPS is non-zero. The locked hackathon demo default is 0 bps; use a non-zero fee only intentionally.",
-  );
+  if (nonzeroPlatformFeeApproved) {
+    warnings.push(
+      "QUORUM_PLATFORM_FEE_BPS is non-zero with explicit fee policy approval. The locked hackathon demo default remains 0 bps.",
+    );
+  } else {
+    blockers.push(nonzeroPlatformFeeApprovalMessage());
+  }
 }
 
 if (!validContractId(coreContractId)) {
@@ -271,6 +282,9 @@ const report = {
   },
   config: {
     platformFeeBps: /^\d+$/.test(platformFeeBps) ? Number(platformFeeBps) : null,
+    nonzeroPlatformFeeApproved,
+    nonzeroPlatformFeeApprovalEnv,
+    nonzeroPlatformFeeApprovalValue,
   },
   signing: {
     stellarAccountConfigured: Boolean(stellarAccount),
