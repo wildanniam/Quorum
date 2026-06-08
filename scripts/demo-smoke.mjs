@@ -19,6 +19,7 @@ const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet =
   "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
+const smokeSessionSecret = "quorum-local-dev-session-secret";
 
 function resolveDatabasePath() {
   if (!databaseUrl.startsWith("file:")) {
@@ -43,7 +44,7 @@ function createSession(walletAddress) {
   const signature = encodeBase64Url(
     createHmac(
       "sha256",
-      process.env.QUORUM_SESSION_SECRET ?? "quorum-local-dev-session-secret",
+      process.env.DEMO_SMOKE_SESSION_SECRET ?? smokeSessionSecret,
     )
       .update(payload)
       .digest(),
@@ -134,7 +135,7 @@ function createDraftPayload({
     shortDescription:
       "A smoke-test event that verifies Quorum draft validation and publish lifecycle.",
     coverImageUrl:
-      "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1200&q=80",
+      "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80",
     startDateTime: "2026-07-01T10:00:00.000Z",
     endDateTime: "2026-07-01T12:00:00.000Z",
     timezone: "Asia/Jakarta",
@@ -176,6 +177,7 @@ async function main() {
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
     NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
+    QUORUM_SESSION_SECRET: process.env.DEMO_SMOKE_SESSION_SECRET ?? smokeSessionSecret,
   };
 
   await runCommand("node", ["scripts/db-migrate.mjs"], env);

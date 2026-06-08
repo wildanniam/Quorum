@@ -12,8 +12,8 @@ import {
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProofDisplay } from "@/components/proof-display";
-import type { EventRecord } from "@/lib/db/models";
 import { getPassByTokenId, listResources } from "@/lib/events/repository";
+import { eventCoverStyle } from "@/lib/events/theme";
 
 type PassPageProps = {
   params: Promise<{
@@ -30,16 +30,6 @@ function shorten(value: string) {
 
 function sourceLabel(source: string) {
   return source === "free_claim" ? "Free claim" : "Purchase";
-}
-
-function coverStyle(event: EventRecord) {
-  const imageUrl =
-    event.coverImageUrl ??
-    "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80";
-
-  return {
-    backgroundImage: `linear-gradient(135deg, rgba(16, 18, 15, 0.24), rgba(16, 18, 15, 0.82)), url("${imageUrl}")`,
-  };
 }
 
 export default async function PassPage({ params }: PassPageProps) {
@@ -109,7 +99,7 @@ export default async function PassPage({ params }: PassPageProps) {
           <div className="border border-line bg-panel-strong p-5">
             <div
               className="event-cover min-h-[430px] border border-line p-5"
-              style={coverStyle(event)}
+              style={eventCoverStyle(event)}
             >
               <div className="flex h-full flex-col justify-between">
                 <div className="flex items-start justify-between gap-4">

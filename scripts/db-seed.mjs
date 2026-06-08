@@ -65,7 +65,7 @@ const seed = db.transaction(() => {
     "APAC Stellar Builder Meetup",
     "Paid Web3 Meetup + Mini Workshop",
     "A builder meetup with USDC split escrow, non-transferable NFT passes, gated resources, and check-in proof.",
-    "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80",
+    "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1600&q=80",
     "2026-06-21T11:30:00.000Z",
     "2026-06-21T14:30:00.000Z",
     "Asia/Jakarta",

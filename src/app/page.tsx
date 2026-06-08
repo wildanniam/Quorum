@@ -9,6 +9,7 @@ import {
   listResources,
   getSucceededPurchaseTotalUsdc,
 } from "@/lib/events/repository";
+import { eventCoverStyle } from "@/lib/events/theme";
 import type { EventRecord } from "@/lib/db/models";
 
 const toneClass: Record<string, string> = {
@@ -30,16 +31,6 @@ function formatDate(event: EventRecord) {
     timeStyle: "short",
     timeZone: event.timezone,
   }).format(new Date(event.startDateTime));
-}
-
-function coverStyle(event: EventRecord) {
-  const imageUrl =
-    event.coverImageUrl ??
-    "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80";
-
-  return {
-    backgroundImage: `linear-gradient(135deg, rgba(16, 18, 15, 0.36), rgba(16, 18, 15, 0.78)), url("${imageUrl}")`,
-  };
 }
 
 export default function Home() {
@@ -74,7 +65,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-7xl gap-0 px-5 py-8 lg:grid-cols-[1.08fr_0.92fr] lg:px-8 lg:py-12">
           <div
             className="event-cover min-h-[460px] border border-line p-6 md:p-8"
-            style={featuredEvent ? coverStyle(featuredEvent) : undefined}
+            style={featuredEvent ? eventCoverStyle(featuredEvent) : undefined}
           >
             <div className="flex h-full flex-col justify-between">
               <div className="flex flex-wrap gap-2">
@@ -199,7 +190,7 @@ export default function Home() {
                   >
                     <div
                       className="event-cover min-h-64 border-b border-line md:border-b-0 md:border-r"
-                      style={coverStyle(event)}
+                      style={eventCoverStyle(event)}
                     />
                     <div className="p-5">
                       <div className="flex flex-wrap gap-2">

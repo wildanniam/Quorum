@@ -17,6 +17,7 @@ import {
   listCollaborators,
   listResources,
 } from "@/lib/events/repository";
+import { eventCoverStyle } from "@/lib/events/theme";
 
 type EventPageProps = {
   params: Promise<{
@@ -36,16 +37,6 @@ function formatDate(event: EventRecord) {
     timeStyle: "short",
     timeZone: event.timezone,
   }).format(new Date(event.startDateTime));
-}
-
-function coverStyle(event: EventRecord) {
-  const imageUrl =
-    event.coverImageUrl ??
-    "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=1600&q=80";
-
-  return {
-    backgroundImage: `linear-gradient(135deg, rgba(16, 18, 15, 0.36), rgba(16, 18, 15, 0.78)), url("${imageUrl}")`,
-  };
 }
 
 export default async function EventPage({ params }: EventPageProps) {
@@ -80,7 +71,7 @@ export default async function EventPage({ params }: EventPageProps) {
           <div className="border border-line bg-panel">
             <div
               className="event-cover min-h-[340px] border-b border-line p-6"
-              style={coverStyle(event)}
+              style={eventCoverStyle(event)}
             >
               <span className="border border-accent bg-accent px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-normal text-accent-ink">
                 {priceLabel(event)}
