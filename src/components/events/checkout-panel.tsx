@@ -2,7 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Loader2, ShieldCheck, WalletCards } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  ShieldCheck,
+  TicketCheck,
+  WalletCards,
+} from "lucide-react";
 import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
@@ -32,6 +40,10 @@ function shorten(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-5)}`;
 }
 
+function cn(...classNames: Array<string | false | null | undefined>) {
+  return classNames.filter(Boolean).join(" ");
+}
+
 export function CheckoutPanel({
   capacity,
   eventId,
@@ -43,6 +55,7 @@ export function CheckoutPanel({
   const {
     connectAndSignIn,
     error: walletError,
+    network,
     sessionWalletAddress,
     status: walletStatus,
   } = useWallet();
@@ -50,9 +63,46 @@ export function CheckoutPanel({
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
   const isConnected = Boolean(sessionWalletAddress);
-  const isBusy = isSubmitting || walletStatus === "checking";
+  const isCheckingWallet = walletStatus === "checking";
+  const isBusy = isSubmitting || isCheckingWallet;
   const isSoldOut = remainingCapacity <= 0;
   const priceLabel = isFree ? "Free claim" : `${priceUsdc} USDC`;
+  const activeError = checkoutError ?? walletError;
+
+  const buttonLabel = isSoldOut
+    ? "Sold out"
+    : isBusy
+      ? isSubmitting
+        ? "Preparing transaction"
+        : "Checking wallet"
+      : !isConnected
+        ? "Connect wallet"
+        : isFree
+          ? "Claim pass"
+          : "Confirm checkout";
+
+  const steps = [
+    {
+      icon: WalletCards,
+      label: "Wallet session",
+      value: sessionWalletAddress
+        ? `${shorten(sessionWalletAddress)}${network ? ` on ${network}` : ""}`
+        : "Connect Freighter to start.",
+      state: sessionWalletAddress ? "done" : isCheckingWallet ? "active" : "pending",
+    },
+    {
+      icon: ShieldCheck,
+      label: "Manual approval",
+      value: "Freighter will ask before any live transaction is submitted.",
+      state: isConnected ? "active" : "pending",
+    },
+    {
+      icon: TicketCheck,
+      label: "Pass issued",
+      value: "The pass opens resource access and check-in proof.",
+      state: "pending",
+    },
+  ];
 
   async function handleCheckout() {
     setCheckoutError(null);
@@ -113,55 +163,94 @@ export function CheckoutPanel({
   }
 
   return (
-    <div className="border border-line bg-panel p-5">
+    <div className="rounded-[8px] border border-line bg-panel/90 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.3)] backdrop-blur-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-normal text-muted">
-            Checkout
-          </p>
+          <p className="eyebrow">Checkout</p>
           <p className="mt-3 text-4xl font-semibold">{priceLabel}</p>
+          <p className="mt-2 text-sm text-muted">
+            {remainingCapacity} of {capacity} seats left
+          </p>
         </div>
-        <div className="border border-line bg-background/40 px-3 py-2 text-right">
-          <p className="font-mono text-lg text-accent">{remainingCapacity}</p>
-          <p className="mt-1 text-xs text-muted">of {capacity} left</p>
-        </div>
-      </div>
-
-      <div className="mt-5 grid gap-3">
-        <div className="flex items-center gap-3 border border-line bg-background/35 p-3 text-sm text-muted">
-          <WalletCards className="text-accent" size={17} />
-          <span>
-            {sessionWalletAddress
-              ? shorten(sessionWalletAddress)
-              : "Wallet session required"}
-          </span>
-        </div>
-        <div className="flex items-center gap-3 border border-line bg-background/35 p-3 text-sm text-muted">
-          <ShieldCheck className="text-accent" size={17} />
-          <span>One non-transferable pass per wallet</span>
+        <div className="grid h-12 w-12 place-items-center rounded-[8px] border border-event-accent/45 bg-event-accent/10 text-event-accent">
+          <TicketCheck size={23} />
         </div>
       </div>
 
-      {checkoutError ?? walletError ? (
-        <div className="mt-4 border border-coral/55 bg-coral/10 p-3 text-sm text-coral">
-          {checkoutError ?? walletError}
+      <div className="mt-6 grid gap-3">
+        {steps.map((step, index) => {
+          const Icon = step.icon;
+          const isDone = step.state === "done";
+          const isActive = step.state === "active";
+
+          return (
+            <div
+              className={cn(
+                "grid grid-cols-[auto_1fr] gap-3 rounded-[8px] border p-4",
+                isDone || isActive
+                  ? "border-event-accent/45 bg-event-accent/10"
+                  : "border-line bg-background/32",
+              )}
+              key={step.label}
+            >
+              <div
+                className={cn(
+                  "mt-0.5 grid h-7 w-7 place-items-center rounded-[6px] border",
+                  isDone || isActive
+                    ? "border-event-accent/45 text-event-accent"
+                    : "border-line text-muted",
+                )}
+              >
+                {isDone ? <CheckCircle2 size={15} /> : <Icon size={15} />}
+              </div>
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold">{step.label}</p>
+                  <span className="font-mono text-xs text-muted">
+                    0{index + 1}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-muted">{step.value}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {activeError ? (
+        <div
+          className="mt-4 rounded-[8px] border border-coral/55 bg-coral/10 p-3 text-sm text-coral"
+          role="alert"
+        >
+          <div className="flex gap-2">
+            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
+            <div>
+              <p className="font-semibold">Checkout needs attention</p>
+              <p className="mt-1 leading-5">{activeError}</p>
+              <p className="mt-1 leading-5">
+                Reconnect the wallet or try the action again after Freighter is
+                ready.
+              </p>
+            </div>
+          </div>
         </div>
       ) : null}
 
       <button
-        className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        aria-busy={isBusy}
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-event-accent px-4 text-sm font-semibold text-event-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isBusy || isSoldOut}
         onClick={handleCheckout}
         type="button"
       >
         {isBusy ? <Loader2 className="animate-spin" size={16} /> : null}
-        {!isConnected
-          ? "Connect wallet"
-          : isFree
-            ? "Claim pass"
-            : "Buy pass"}
-        {!isBusy ? <ArrowRight size={16} /> : null}
+        {buttonLabel}
+        {!isBusy && !isSoldOut ? <ArrowRight size={16} /> : null}
       </button>
+
+      <p className="mt-3 text-center text-xs leading-5 text-muted">
+        Live testnet transactions still require explicit Freighter approval.
+      </p>
     </div>
   );
 }
