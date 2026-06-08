@@ -32,6 +32,7 @@ const requiredFiles = [
   "scripts/live-submission-smoke.ts",
   "scripts/live-ui-wiring-smoke.mjs",
   "scripts/live-xdr-smoke.ts",
+  "scripts/wallet-auth-smoke.mjs",
   "scripts/contracts/live-signing-approval.mjs",
   "scripts/contracts/live-signing-approval-smoke.mjs",
   "scripts/deploy-env-smoke.ts",
@@ -78,6 +79,7 @@ const requiredPackageScripts = [
   "live:ui-wiring:smoke",
   "live:xdr:smoke",
   "readiness:audit",
+  "wallet:auth:smoke",
 ];
 
 const requiredEvidenceChecks = [
@@ -87,6 +89,7 @@ const requiredEvidenceChecks = [
   "Lint",
   "Build",
   "Audit",
+  "Wallet auth smoke",
   "Demo smoke",
   "Live policy smoke",
   "Browser QA",
@@ -131,6 +134,16 @@ const requiredSmokeCoverage = [
   "dashboard-proof",
   "dashboard-payment-asset-readiness",
   "dashboard-action-policy",
+];
+
+const requiredWalletAuthCoverage = [
+  "reject-invalid-wallet-challenge-request",
+  "issue-wallet-bound-challenge-cookie",
+  "encode-multiline-challenge-cookie",
+  "verify-signed-wallet-challenge",
+  "set-wallet-session-cookie",
+  "me-reads-wallet-session",
+  "logout-clears-wallet-session",
 ];
 
 const requiredLiveFlowCoverage = [
@@ -419,6 +432,12 @@ function checkEvidence() {
     }
   }
 
+  for (const coverage of requiredWalletAuthCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing wallet auth coverage: ${coverage}`);
+    }
+  }
+
   for (const coverage of requiredLiveFlowCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live flow coverage: ${coverage}`);
@@ -536,6 +555,7 @@ function checkLiveBoundaries() {
     "Live RPC preflight can prepare transaction XDR for signing",
     "Freighter signing boundary validates signed transaction output",
     "Signed transaction submission boundary polls finality and decodes return values",
+    "Wallet auth HTTP flow issues signed sessions",
     "Live mode requires Stellar testnet network config",
     "Mock live transaction flow persists only after success",
     "Verified live transaction results can be recorded",

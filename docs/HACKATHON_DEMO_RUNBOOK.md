@@ -97,6 +97,7 @@ npm run db:migrate
 npm run db:seed
 npm run lint
 npm run build
+npm run wallet:auth:smoke
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
@@ -120,6 +121,9 @@ npm run readiness:audit
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
 The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
+The wallet auth smoke verifies the real HTTP challenge, signature verification,
+session cookie, `/api/me`, and logout routes using a local test keypair without
+opening Freighter.
 After an explicitly approved live testnet run, record public-only deployment
 and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
 `npm run live:evidence:audit`. The committed
