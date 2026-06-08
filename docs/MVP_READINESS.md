@@ -49,7 +49,7 @@ The live hackathon acceptance criteria add two gated requirements:
 | Requirement | Current status | Evidence |
 |---|---|---|
 | App is deployed | Gated | Requires hosted deployment URL and env configuration. |
-| Contracts are deployed on Stellar testnet | Gated | `docs/DEMO_EVIDENCE.md` reports `STELLAR_ACCOUNT` and `QUORUM_LIVE_SIGNING_APPROVED` missing; `contracts:doctor` is otherwise ready. |
+| Contracts are deployed on Stellar testnet | Read-only verified | `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json` records deployed contract IDs, admin wallet, deployment/init transaction hashes, and decoded init/set-core evidence; `npm run live:deployment:validate` validates it against Horizon, Soroban RPC events, and fetched contract interfaces without signing. |
 | Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
 | Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `npm run browser:qa` verifies desktop/mobile marketplace rendering. |
 | Attendee can buy paid pass | Verified local, contract-ready | `npm run demo:smoke` covers `checkout`; `QuorumCore` tests cover paid purchase, payment token transfer into escrow, capacity, duplicate guard, invalid amount, split accounting, zero-fee demo accounting, and purchase/balance proof events. |

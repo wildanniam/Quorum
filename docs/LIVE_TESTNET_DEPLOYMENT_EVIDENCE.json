@@ -136,5 +136,18 @@
     "initAndSetCoreHashesRecorded": true,
     "readOnlyOnly": true,
     "requiresFutureValidationScript": true
+  },
+  "readOnlyValidation": {
+    "validatedAt": "2026-06-08T20:18:24.000Z",
+    "command": "npm run live:deployment:validate",
+    "status": "PASS",
+    "checks": [
+      "static-evidence-shape",
+      "horizon-admin-transaction-window",
+      "decoded-init-and-set-core-parameters",
+      "rpc-set-core-event",
+      "stellar-cli-contract-interfaces"
+    ],
+    "notes": "Validation queries Horizon, Soroban RPC, and Stellar CLI contract interfaces. It does not sign or submit transactions."
   }
 }

@@ -372,6 +372,31 @@ function validateContractInterfaces(evidence) {
   pass("stellar-cli-contract-interfaces");
 }
 
+function validateRecordedReadOnlyValidation(evidence) {
+  const recorded = evidence.readOnlyValidation;
+
+  assert(recorded, "readOnlyValidation evidence section must exist.");
+  assert(
+    recorded.command === "npm run live:deployment:validate",
+    "readOnlyValidation.command mismatch.",
+  );
+  assert(recorded.status === "PASS", "readOnlyValidation.status must be PASS.");
+  assert(
+    typeof recorded.validatedAt === "string" &&
+      !Number.isNaN(Date.parse(recorded.validatedAt)),
+    "readOnlyValidation.validatedAt must be an ISO timestamp.",
+  );
+
+  for (const check of checks) {
+    assert(
+      recorded.checks?.includes(check),
+      `readOnlyValidation.checks must include ${check}.`,
+    );
+  }
+
+  pass("recorded-read-only-validation-evidence");
+}
+
 async function main() {
   const evidence = readEvidence();
 
@@ -380,6 +405,7 @@ async function main() {
   await validateInvokeParameters(evidence);
   await validateSetCoreEvent(evidence);
   validateContractInterfaces(evidence);
+  validateRecordedReadOnlyValidation(evidence);
 
   const ok = failures.length === 0;
 
