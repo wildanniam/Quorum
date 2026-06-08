@@ -1,0 +1,140 @@
+{
+  "generatedAt": "2026-06-08T20:07:34.000Z",
+  "network": "TESTNET",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "horizonUrl": "https://horizon-testnet.stellar.org",
+  "collectionMode": "read-only",
+  "collectionNotes": [
+    "Collected from local env, Stellar CLI, Horizon account transaction history, RPC transaction records, and RPC contract events.",
+    "No deployment, faucet, Freighter signing, or transaction submission was performed while collecting this evidence.",
+    "Deployment tx hashes are reconstructed from the admin account transaction window and the existing deploy script order because the original deploy script did not persist tx hashes with labels."
+  ],
+  "tooling": {
+    "stellarCliVersion": "stellar 26.0.0",
+    "stellarXdrVersion": "stellar-xdr 26.0.0 (dd7a165a193126fd37a751d867bee1cb8f3b55a6)",
+    "xdrChannel": "xdr curr (cff714a5ebaaaf2dac343b3546c2df73f0b7a36e)"
+  },
+  "wallets": {
+    "admin": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+  },
+  "contracts": {
+    "passContractId": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+    "coreContractId": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV",
+    "usdcContractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+    "passWasmHash": "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec",
+    "coreWasmHash": "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0",
+    "platformFeeBps": 0
+  },
+  "deploymentTransactions": {
+    "passWasmUploadTxHash": "b1506f1fc396f2040a6f6e6cbcf0d025344a692b973921f4f3a24eb0ea46011f",
+    "passDeployTxHash": "ba7133cef219e08aae0d27657aca94df8e5cb495d7de304690f567f375eb8002",
+    "coreWasmUploadTxHash": "552e3056c087269fab121583a0c5ada5629c119308fc9ead1fe64af37da17efb",
+    "coreDeployTxHash": "579021fd3e1ee60e24e9c8117e98cc27c4bf065b56dce5f50ff17b1a8ddad2a8"
+  },
+  "initializationTransactions": {
+    "passInitTxHash": "4fb637aa6841134dc1de8332f460710b5831076354dd44291b283028bb3a4ed0",
+    "coreInitTxHash": "b0c66ce6c6479c14740559f02bd594733c7aa1d30a471389dcdb4695e495b582",
+    "passSetCoreTxHash": "77896a93eb556e356eac4df87cbd8b38ad8e4772cc83ef42077614b39a7d4f0b"
+  },
+  "adminTransactionWindow": [
+    {
+      "label": "admin_account_funded",
+      "txHash": "8bd5725f5a14bf1a0818c9ca58ae487543c35a1f466479b6a2c40d02e4d24da1",
+      "ledger": 2984959,
+      "closedAt": "2026-06-08T16:39:22Z",
+      "operation": "create_account",
+      "sourceAccount": "GAIH3ULLFQ4DGSECF2AR555KZ4KNDGEKN4AFI4SU2M7B43MGK3QJZNSR"
+    },
+    {
+      "label": "pass_wasm_upload",
+      "txHash": "b1506f1fc396f2040a6f6e6cbcf0d025344a692b973921f4f3a24eb0ea46011f",
+      "ledger": 2985031,
+      "closedAt": "2026-06-08T16:45:22Z",
+      "operation": "HostFunctionTypeUploadContractWasm",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    },
+    {
+      "label": "pass_contract_deploy",
+      "txHash": "ba7133cef219e08aae0d27657aca94df8e5cb495d7de304690f567f375eb8002",
+      "ledger": 2985033,
+      "closedAt": "2026-06-08T16:45:32Z",
+      "operation": "HostFunctionTypeCreateContract",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW",
+      "mappingConfidence": "inferred from deploy script order after pass wasm upload"
+    },
+    {
+      "label": "core_wasm_upload",
+      "txHash": "552e3056c087269fab121583a0c5ada5629c119308fc9ead1fe64af37da17efb",
+      "ledger": 2985035,
+      "closedAt": "2026-06-08T16:45:42Z",
+      "operation": "HostFunctionTypeUploadContractWasm",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    },
+    {
+      "label": "core_contract_deploy",
+      "txHash": "579021fd3e1ee60e24e9c8117e98cc27c4bf065b56dce5f50ff17b1a8ddad2a8",
+      "ledger": 2985037,
+      "closedAt": "2026-06-08T16:45:52Z",
+      "operation": "HostFunctionTypeCreateContract",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW",
+      "mappingConfidence": "inferred from deploy script order after core wasm upload"
+    },
+    {
+      "label": "pass_init",
+      "txHash": "4fb637aa6841134dc1de8332f460710b5831076354dd44291b283028bb3a4ed0",
+      "ledger": 2985047,
+      "closedAt": "2026-06-08T16:46:42Z",
+      "operation": "invoke_contract:init",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    },
+    {
+      "label": "core_init",
+      "txHash": "b0c66ce6c6479c14740559f02bd594733c7aa1d30a471389dcdb4695e495b582",
+      "ledger": 2985049,
+      "closedAt": "2026-06-08T16:46:52Z",
+      "operation": "invoke_contract:init",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    },
+    {
+      "label": "pass_set_core",
+      "txHash": "77896a93eb556e356eac4df87cbd8b38ad8e4772cc83ef42077614b39a7d4f0b",
+      "ledger": 2985051,
+      "closedAt": "2026-06-08T16:47:02Z",
+      "operation": "invoke_contract:set_core",
+      "sourceAccount": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    }
+  ],
+  "decodedInvokeEvidence": {
+    "passInit": {
+      "txHash": "4fb637aa6841134dc1de8332f460710b5831076354dd44291b283028bb3a4ed0",
+      "contractAddressParameter": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+      "functionName": "init",
+      "adminAddressParameter": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW"
+    },
+    "coreInit": {
+      "txHash": "b0c66ce6c6479c14740559f02bd594733c7aa1d30a471389dcdb4695e495b582",
+      "contractAddressParameter": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV",
+      "functionName": "init",
+      "adminAddressParameter": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW",
+      "platformFeeBpsParameter": 0
+    },
+    "passSetCore": {
+      "txHash": "77896a93eb556e356eac4df87cbd8b38ad8e4772cc83ef42077614b39a7d4f0b",
+      "contractAddressParameter": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+      "functionName": "set_core",
+      "callerAddressParameter": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW",
+      "coreAddressParameter": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV",
+      "contractEventTxHash": "77896a93eb556e356eac4df87cbd8b38ad8e4772cc83ef42077614b39a7d4f0b",
+      "contractEventContractId": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+      "contractEventValue": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV"
+    }
+  },
+  "phase1Acceptance": {
+    "contractIdsRecorded": true,
+    "adminWalletRecorded": true,
+    "deploymentTransactionWindowRecorded": true,
+    "initAndSetCoreHashesRecorded": true,
+    "readOnlyOnly": true,
+    "requiresFutureValidationScript": true
+  }
+}

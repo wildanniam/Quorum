@@ -73,6 +73,11 @@ Record the transaction hash for each deployment and initialization step in
 `docs/LIVE_TESTNET_EVIDENCE.json`: `passDeployTxHash`, `coreDeployTxHash`,
 `passInitTxHash`, `coreInitTxHash`, and `passSetCoreTxHash`.
 
+The current read-only deployment evidence captured from testnet is recorded in
+`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. It covers the admin account,
+contract IDs, upload/deploy transaction window, initialization transactions,
+and decoded init/set-core parameters without performing any new signing.
+
 ## Current Boundary
 
 The contracts are fully unit-tested locally. Live testnet deployment is
