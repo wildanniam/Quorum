@@ -47,6 +47,10 @@ function themeForEvent(event: EventRecord): EventTheme {
     return communityTheme;
   }
 
+  if (source.includes("stellar")) {
+    return stellarTheme;
+  }
+
   if (source.includes("workshop")) {
     return workshopTheme;
   }
