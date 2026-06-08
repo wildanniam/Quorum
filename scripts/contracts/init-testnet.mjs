@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { StrKey } from "@stellar/stellar-sdk";
 import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
+import { requireTestnetDeploymentNetwork } from "./testnet-network-guard.mjs";
 
 const account = process.env.STELLAR_ACCOUNT;
-const network = process.env.STELLAR_NETWORK || "testnet";
+const network = requireTestnetDeploymentNetwork(process.env.STELLAR_NETWORK);
 const adminAddress = process.env.ADMIN_ADDRESS;
 const passContractId = process.env.NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID;
 const coreContractId = process.env.NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID;

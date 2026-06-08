@@ -36,6 +36,7 @@ const requiredFiles = [
   "scripts/wallet-auth-smoke.mjs",
   "scripts/contracts/live-signing-approval.mjs",
   "scripts/contracts/live-signing-approval-smoke.mjs",
+  "scripts/contracts/testnet-network-guard.mjs",
   "scripts/deploy-env-smoke.ts",
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
@@ -239,6 +240,9 @@ const requiredContractApprovalCoverage = [
   "approval-helper-exact-phrase",
   "deploy-script-denies-without-live-approval",
   "init-script-denies-without-live-approval",
+  "deploy-script-denies-non-testnet-network",
+  "init-script-denies-non-testnet-network",
+  "doctor-blocks-non-testnet-network",
 ];
 
 const requiredDeployEnvCoverage = [

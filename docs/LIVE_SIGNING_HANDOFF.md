@@ -65,6 +65,9 @@ rejects missing, placeholder, local fallback, or short production secrets.
 Live action policy also requires the app network name and passphrase to remain
 Stellar testnet; non-testnet or mismatched network env keeps the app in local
 proof mode even when contract IDs are valid.
+Contract deployment uses the Stellar CLI `STELLAR_NETWORK=testnet` alias only;
+`contracts:doctor`, `contracts:deploy:testnet`, and `contracts:init:testnet`
+refuse non-testnet deployment networks before any signing step.
 
 ## Contract Deployment Sequence
 

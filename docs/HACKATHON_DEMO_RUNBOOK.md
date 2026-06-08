@@ -194,6 +194,8 @@ credentials.
 The deploy/init scripts refuse to sign unless
 `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is set after explicit
 approval.
+They also refuse non-testnet deployment networks; keep
+`STELLAR_NETWORK=testnet` for the approved hackathon deployment path.
 The final live evidence packet must record the pass deploy, core deploy, pass
 init, core init, and pass `set_core` transaction hashes.
 

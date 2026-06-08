@@ -1,8 +1,9 @@
 import { execFileSync } from "node:child_process";
 import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
+import { requireTestnetDeploymentNetwork } from "./testnet-network-guard.mjs";
 
 const account = process.env.STELLAR_ACCOUNT;
-const network = process.env.STELLAR_NETWORK || "testnet";
+const network = requireTestnetDeploymentNetwork(process.env.STELLAR_NETWORK);
 
 if (!account) {
   console.error(

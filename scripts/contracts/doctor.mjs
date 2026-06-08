@@ -9,6 +9,11 @@ import {
   liveSigningApprovalMessage,
   liveSigningApprovalValue,
 } from "./live-signing-approval.mjs";
+import {
+  isTestnetDeploymentNetwork,
+  normalizeTestnetDeploymentNetwork,
+  testnetDeploymentNetworkMessage,
+} from "./testnet-network-guard.mjs";
 
 const projectRoot = process.cwd();
 const strict = process.env.CONTRACTS_DOCTOR_STRICT === "1";
@@ -145,7 +150,11 @@ const cargoVersion = run("cargo", ["--version"]);
 const rustupTargets = run("rustup", ["target", "list", "--installed"]);
 const wasmArtifacts = wasmFiles.map(getWasmInfo);
 const stellarAccount = optionalEnv("STELLAR_ACCOUNT");
-const stellarNetwork = optionalEnv("STELLAR_NETWORK") ?? "testnet";
+const rawStellarNetwork = optionalEnv("STELLAR_NETWORK") ?? "testnet";
+const stellarNetworkIsTestnet = isTestnetDeploymentNetwork(rawStellarNetwork);
+const stellarNetwork = stellarNetworkIsTestnet
+  ? normalizeTestnetDeploymentNetwork(rawStellarNetwork)
+  : rawStellarNetwork;
 const appRpcUrl =
   optionalEnv("NEXT_PUBLIC_STELLAR_RPC_URL") ??
   "https://soroban-testnet.stellar.org";
@@ -182,6 +191,10 @@ for (const artifact of wasmArtifacts) {
 
 if (!rpc.ok) {
   blockers.push(`Stellar RPC is not reachable at ${appRpcUrl}.`);
+}
+
+if (!stellarNetworkIsTestnet) {
+  blockers.push(testnetDeploymentNetworkMessage(rawStellarNetwork));
 }
 
 if (!stellarAccount) {

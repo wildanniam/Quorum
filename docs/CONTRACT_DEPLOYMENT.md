@@ -16,11 +16,14 @@ whether `STELLAR_ACCOUNT` is configured, and whether the explicit live signing
 approval guard is set. Missing contract IDs are reported as warnings before
 deployment; missing signing/funding configuration or missing
 `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is a blocker for live
-deploy.
+deploy. The doctor also blocks any `STELLAR_NETWORK` value other than
+`testnet`; Quorum's hackathon deployment path is intentionally testnet-only.
 
 ## Testnet Deployment
 
-Deployment signs transactions. Do not run this until a funded testnet account or Stellar CLI identity is intentionally configured.
+Deployment signs transactions. Do not run this until a funded testnet account or
+Stellar CLI identity is intentionally configured. `STELLAR_NETWORK` must remain
+`testnet`; the deploy/init scripts refuse non-testnet networks before signing.
 
 ```bash
 export STELLAR_NETWORK=testnet
@@ -65,6 +68,8 @@ Record the transaction hash for each deployment and initialization step in
 
 ## Current Boundary
 
-The contracts are fully unit-tested locally. Live testnet deployment is intentionally gated by wallet/funding approval.
+The contracts are fully unit-tested locally. Live testnet deployment is
+intentionally gated by wallet/funding approval and locked to
+`STELLAR_NETWORK=testnet`.
 After deployment, use `docs/LIVE_SIGNING_HANDOFF.md` for the app-side Freighter
 transaction work required to replace local proof records.
