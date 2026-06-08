@@ -13,7 +13,7 @@ import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { ProofDisplay } from "@/components/proof-display";
 import { getPassByTokenId, listResources } from "@/lib/events/repository";
-import { eventCoverStyle } from "@/lib/events/theme";
+import { eventCoverStyle, eventThemeStyle } from "@/lib/events/theme";
 
 type PassPageProps = {
   params: Promise<{
@@ -45,105 +45,119 @@ export default async function PassPage({ params }: PassPageProps) {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8">
-        <Link
-          href={`/events/${event.slug}`}
-          className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-accent"
-        >
-          <ArrowLeft size={15} /> Event
-        </Link>
+      <section className="border-b border-line/70" style={eventThemeStyle(event)}>
+        <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
+          <Link
+            href={`/events/${event.slug}`}
+            className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-event-accent"
+          >
+            <ArrowLeft size={15} /> Back to event
+          </Link>
 
-        <div className="mt-6 grid gap-5 lg:grid-cols-[0.78fr_1.22fr]">
-          <div className="border border-line bg-panel p-5">
-            <p className="font-mono text-xs uppercase tracking-normal text-accent">
-              QuorumPassNFT
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold leading-tight">
-              Attendee pass
-            </h1>
-            <p className="mt-4 text-sm leading-6 text-muted">
-              {event.title}
-            </p>
+          <div className="mt-6 grid gap-5 lg:grid-cols-[390px_minmax(0,1fr)] lg:items-start">
+            <aside className="rounded-[8px] border border-line bg-panel/90 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+              <p className="eyebrow">QuorumPassNFT</p>
+              <h1 className="mt-3 text-4xl font-semibold leading-tight">
+                Attendee pass
+              </h1>
+              <p className="mt-4 text-sm leading-6 text-muted">{event.title}</p>
 
-            <div className="mt-6 grid gap-3">
-              <div className="flex items-center gap-3 border border-line bg-background/35 p-3 text-sm text-muted">
-                <WalletCards className="text-accent" size={17} />
-                {shorten(pass.ownerWallet)}
-              </div>
-              <div className="flex items-center gap-3 border border-line bg-background/35 p-3 text-sm text-muted">
-                <ShieldCheck className="text-accent" size={17} />
-                {sourceLabel(pass.source)}
-              </div>
-              <div className="flex items-center gap-3 border border-line bg-background/35 p-3 text-sm text-muted">
-                <Fingerprint className="text-accent" size={17} />
-                {pass.checkedIn ? "Checked in" : "Not checked in"}
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <Link
-                href={`/events/${event.slug}/resources`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-              >
-                Open resources <ArrowUpRight size={16} />
-              </Link>
-              <Link
-                href={`/check-in/${event.id}`}
-                className="inline-flex min-h-11 items-center justify-center gap-2 border border-line bg-panel-strong px-4 text-sm font-semibold transition hover:border-accent hover:text-accent"
-              >
-                <QrCode size={16} /> Verify
-              </Link>
-            </div>
-          </div>
-
-          <div className="border border-line bg-panel-strong p-5">
-            <div
-              className="event-cover min-h-[430px] border border-line p-5"
-              style={eventCoverStyle(event)}
-            >
-              <div className="flex h-full flex-col justify-between">
-                <div className="flex items-start justify-between gap-4">
-                  <span className="border border-accent bg-accent px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-normal text-accent-ink">
-                    Unique pass
-                  </span>
-                  <BadgeCheck className="text-accent" size={28} />
+              <div className="mt-6 grid gap-3">
+                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
+                  <WalletCards className="text-event-accent" size={17} />
+                  {shorten(pass.ownerWallet)}
                 </div>
-                <div>
-                  <p className="font-mono text-xs uppercase tracking-normal text-accent">
-                    {pass.tokenId}
-                  </p>
-                  <h2 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">
-                    {event.title}
-                  </h2>
+                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
+                  <ShieldCheck className="text-event-accent" size={17} />
+                  {sourceLabel(pass.source)}
+                </div>
+                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
+                  <Fingerprint className="text-event-accent" size={17} />
+                  {pass.checkedIn ? "Checked in" : "Not checked in"}
                 </div>
               </div>
-            </div>
 
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <ProofDisplay label="Mint tx" value={pass.mintTxHash} />
-              <ProofDisplay label="Payment tx" value={purchase?.txHash} />
-              <ProofDisplay label="Metadata" value={pass.metadataHash} />
-            </div>
+              <div className="mt-5 grid gap-3">
+                <Link
+                  href={`/events/${event.slug}/resources`}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-event-accent px-4 text-sm font-semibold text-event-ink transition hover:bg-foreground"
+                >
+                  Open resources <ArrowUpRight size={16} />
+                </Link>
+                <Link
+                  href={`/check-in/${event.id}`}
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-line bg-panel-strong px-4 text-sm font-semibold transition hover:border-event-accent hover:text-event-accent"
+                >
+                  <QrCode size={16} /> Verify check-in
+                </Link>
+              </div>
+            </aside>
+
+            <article className="rounded-[8px] border border-line bg-panel p-5">
+              <div
+                className="event-cover min-h-[500px] p-5 lg:p-6"
+                style={eventCoverStyle(event)}
+              >
+                <div className="flex h-full flex-col justify-between gap-10">
+                  <div className="flex items-start justify-between gap-4">
+                    <span className="rounded-[6px] bg-event-accent px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-normal text-event-ink">
+                      Unique pass
+                    </span>
+                    <BadgeCheck className="text-event-accent" size={28} />
+                  </div>
+                  <div>
+                    <p className="max-w-2xl break-all font-mono text-xs uppercase tracking-normal text-event-accent">
+                      {pass.tokenId}
+                    </p>
+                    <h2 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">
+                      {event.title}
+                    </h2>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <ProofDisplay label="Mint tx" value={pass.mintTxHash} />
+                <ProofDisplay label="Payment tx" value={purchase?.txHash} />
+                <ProofDisplay label="Metadata" value={pass.metadataHash} />
+              </div>
+            </article>
           </div>
         </div>
+      </section>
 
-        <div className="mt-5 border border-line bg-panel p-5">
-          <p className="font-mono text-xs uppercase tracking-normal text-muted">
-            Included resources
-          </p>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {resources.map((resource) => (
-              <div
-                className="border border-line bg-background/35 p-4"
-                key={resource.id}
-              >
-                <FileKey2 className="text-accent" size={18} />
-                <p className="mt-3 font-medium">{resource.title}</p>
-                <p className="mt-2 font-mono text-xs uppercase tracking-normal text-muted">
-                  {resource.type}
-                </p>
-              </div>
-            ))}
+      <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
+        <div className="rounded-[8px] border border-line bg-panel p-5">
+          <div className="grid gap-4 md:grid-cols-[0.7fr_1.3fr] md:items-start">
+            <div>
+              <p className="eyebrow">Included resources</p>
+              <h2 className="mt-3 text-2xl font-semibold">
+                This pass unlocks the event material.
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-muted">
+                Resource access is tied to the connected wallet that owns this
+                pass.
+              </p>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {resources.map((resource) => (
+                <div
+                  className="rounded-[8px] border border-line bg-background/32 p-4"
+                  key={resource.id}
+                >
+                  <FileKey2 className="text-event-accent" size={18} />
+                  <p className="mt-3 font-medium">{resource.title}</p>
+                  <p className="mt-2 font-mono text-xs uppercase tracking-normal text-muted">
+                    {resource.type}
+                  </p>
+                  {resource.description ? (
+                    <p className="mt-2 text-xs leading-5 text-muted">
+                      {resource.description}
+                    </p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
