@@ -2,7 +2,7 @@
   "generatedAt": "<ISO timestamp after approved live run>",
   "network": "TESTNET",
   "rpcUrl": "https://soroban-testnet.stellar.org",
-  "hostedAppUrl": "<deployed app URL>",
+  "hostedAppUrl": "<public HTTPS deployed app URL>",
   "wallets": {
     "admin": "<G... admin account>",
     "organizer": "<G... organizer account>",
@@ -28,7 +28,7 @@
   "liveFlows": {
     "publishPaidEvent": {
       "txHash": "<64 hex transaction hash>",
-      "eventUrl": "<hosted paid event URL>"
+      "eventUrl": "<public HTTPS hosted paid event URL>"
     },
     "paidCheckout": {
       "txHash": "<64 hex transaction hash>",
@@ -49,10 +49,10 @@
     }
   },
   "browserProof": {
-    "contractStatusUrl": "<hosted /api/contracts/status URL>",
+    "contractStatusUrl": "<public HTTPS hosted /api/contracts/status URL>",
     "contractStatusProofMode": "live",
     "contractStatusActionsLive": "<true after all policies are live>",
-    "paidResourceUnlockedUrl": "<hosted resource URL unlocked by paid attendee>",
+    "paidResourceUnlockedUrl": "<public HTTPS hosted resource URL unlocked by paid attendee>",
     "browserQaDeployed": "<deployed browser QA notes or artifact URL>"
   },
   "verification": {

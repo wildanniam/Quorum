@@ -150,6 +150,18 @@ assert.match(
   /must be filled, not a placeholder/,
 );
 
+const localUrlResult = runAudit(
+  "local-url.json",
+  buildEvidence({
+    hostedAppUrl: "http://localhost:3000",
+  }),
+);
+assert.notEqual(localUrlResult.status, 0);
+assert.match(
+  `${localUrlResult.stdout}${localUrlResult.stderr}`,
+  /public HTTPS URL/,
+);
+
 fs.rmSync(tmpDir, { recursive: true, force: true });
 
 console.log(
@@ -159,6 +171,7 @@ console.log(
       checks: [
         "accept-filled-live-evidence",
         "reject-filled-live-evidence-placeholder",
+        "reject-filled-live-evidence-local-url",
       ],
     },
     null,

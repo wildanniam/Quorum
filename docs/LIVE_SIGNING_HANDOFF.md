@@ -220,7 +220,7 @@ table level from the initial schema.
 
 Live mode is not complete until the evidence packet includes:
 
-- deployed app URL;
+- public HTTPS deployed app URL;
 - pass and core contract IDs;
 - confirmed testnet USDC contract ID;
 - pass deploy, core deploy, pass init, core init, and pass `set_core`
@@ -240,6 +240,11 @@ Live mode is not complete until the evidence packet includes:
 - a filled `docs/LIVE_TESTNET_EVIDENCE.json` based on
   `docs/LIVE_TESTNET_EVIDENCE.example.json` that passes
   `npm run live:evidence:audit`.
+
+Filled live evidence must use public HTTPS URLs for the hosted app, contract
+status, event, and unlocked resource proof. Localhost, private network, or
+non-HTTPS URLs are rejected so local proof cannot be mistaken for hosted live
+deployment evidence.
 
 Until this evidence exists, Quorum should be described as locally demo-ready and
 contract-ready, not fully live-testnet complete.

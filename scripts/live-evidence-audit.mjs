@@ -114,6 +114,60 @@ function isUrl(value) {
   }
 }
 
+function isPrivateIpv4(hostname) {
+  const octets = hostname.split(".").map((part) => Number(part));
+
+  if (
+    octets.length !== 4 ||
+    octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)
+  ) {
+    return false;
+  }
+
+  const [first, second] = octets;
+
+  return (
+    first === 0 ||
+    first === 10 ||
+    first === 127 ||
+    (first === 169 && second === 254) ||
+    (first === 172 && second >= 16 && second <= 31) ||
+    (first === 192 && second === 168)
+  );
+}
+
+function isLocalOrPrivateHostname(hostname) {
+  const normalized = hostname.toLowerCase().replace(/^\[|\]$/g, "");
+
+  return (
+    normalized === "localhost" ||
+    normalized === "localhost.localdomain" ||
+    normalized === "::1" ||
+    normalized.endsWith(".localhost") ||
+    normalized.endsWith(".local") ||
+    normalized.endsWith(".internal") ||
+    normalized.startsWith("fc") ||
+    normalized.startsWith("fd") ||
+    normalized.startsWith("fe80") ||
+    isPrivateIpv4(normalized)
+  );
+}
+
+function isPublicHttpsUrl(value) {
+  if (!hasText(value)) return false;
+
+  try {
+    const parsed = new URL(value);
+    return (
+      parsed.protocol === "https:" &&
+      Boolean(parsed.hostname) &&
+      !isLocalOrPrivateHostname(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
 function isIsoDate(value) {
   return hasText(value) && !Number.isNaN(Date.parse(value));
 }
@@ -193,6 +247,8 @@ function validateType(fieldPath, value, type) {
     case "url":
       if (!isUrl(value)) {
         fail(`${fieldPath} must be an http(s) URL.`);
+      } else if (requireFilled && !isPublicHttpsUrl(value)) {
+        fail(`${fieldPath} must be a public HTTPS URL for filled live evidence.`);
       }
       break;
     case "zeroExit":

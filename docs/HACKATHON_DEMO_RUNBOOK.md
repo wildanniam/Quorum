@@ -130,6 +130,8 @@ After an explicitly approved live testnet run, record public-only deployment
 and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
 `npm run live:evidence:audit`. The committed
 `docs/LIVE_TESTNET_EVIDENCE.example.json` is the required shape for that packet.
+Filled live evidence must use public HTTPS hosted URLs; the audit rejects
+localhost, private network, and non-HTTPS URLs.
 The live policy smoke verifies fake configured contract IDs require live
 transaction submission, exposes non-signing live action prepare responses, and
 rejects invalid signed XDR before persistence without creating local proof

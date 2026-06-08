@@ -265,6 +265,7 @@ const requiredDeployEnvCoverage = [
 const requiredLiveEvidenceAuditCoverage = [
   "accept-filled-live-evidence",
   "reject-filled-live-evidence-placeholder",
+  "reject-filled-live-evidence-local-url",
 ];
 
 const requiredLiveHandoffTerms = [
