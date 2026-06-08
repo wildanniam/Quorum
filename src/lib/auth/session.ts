@@ -1,4 +1,5 @@
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
+import { StrKey } from "@stellar/stellar-sdk";
 
 export const CHALLENGE_COOKIE = "quorum_challenge";
 export const SESSION_COOKIE = "quorum_session";
@@ -102,6 +103,10 @@ export function isChallengeValidForWallet(
 }
 
 export function createSessionToken(walletAddress: string, issuedAt = Date.now()) {
+  if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
+    throw new Error("Session walletAddress must be a valid Stellar public key.");
+  }
+
   const payload: SessionPayload = {
     walletAddress,
     issuedAt,
@@ -134,6 +139,7 @@ export function readSessionToken(
     const payload = JSON.parse(decodeBase64Url(encodedPayload).toString());
     if (
       typeof payload.walletAddress !== "string" ||
+      !StrKey.isValidEd25519PublicKey(payload.walletAddress) ||
       typeof payload.issuedAt !== "number" ||
       !Number.isFinite(payload.issuedAt)
     ) {
