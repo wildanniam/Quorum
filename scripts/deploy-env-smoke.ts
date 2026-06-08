@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import {
+  SESSION_MAX_AGE_MS,
   createSessionToken,
   readSessionToken,
   resolveSessionSecret,
@@ -42,6 +43,12 @@ const token = createSessionToken(walletAddress);
 const session = readSessionToken(token);
 assert.equal(session?.walletAddress, walletAddress);
 
+const now = Date.now();
+const expiredToken = createSessionToken(walletAddress, now - SESSION_MAX_AGE_MS - 1);
+const futureToken = createSessionToken(walletAddress, now + 60 * 60 * 1000);
+assert.equal(readSessionToken(expiredToken, now), null);
+assert.equal(readSessionToken(futureToken, now), null);
+
 console.log(
   JSON.stringify(
     {
@@ -53,6 +60,8 @@ console.log(
         "reject-short-production-session-secret",
         "accept-valid-production-session-secret",
         "local-session-token-roundtrip",
+        "reject-expired-session-token",
+        "reject-future-session-token",
       ],
     },
     null,

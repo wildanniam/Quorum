@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   CHALLENGE_COOKIE,
   SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
   createSessionToken,
 } from "@/lib/auth/session";
 import {
@@ -67,7 +68,7 @@ export async function POST(request: NextRequest) {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
-    maxAge: 60 * 60 * 24 * 7,
+    maxAge: SESSION_MAX_AGE_SECONDS,
     path: "/",
   });
 

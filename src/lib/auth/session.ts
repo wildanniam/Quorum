@@ -2,6 +2,10 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 export const CHALLENGE_COOKIE = "quorum_challenge";
 export const SESSION_COOKIE = "quorum_session";
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
+export const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
+
+const SESSION_CLOCK_SKEW_MS = 5 * 60 * 1000;
 
 type SessionPayload = {
   walletAddress: string;
@@ -68,16 +72,19 @@ export function createChallenge(walletAddress?: string) {
   ].join("\n");
 }
 
-export function createSessionToken(walletAddress: string) {
+export function createSessionToken(walletAddress: string, issuedAt = Date.now()) {
   const payload: SessionPayload = {
     walletAddress,
-    issuedAt: Date.now(),
+    issuedAt,
   };
   const encodedPayload = encodeBase64Url(JSON.stringify(payload));
   return `${encodedPayload}.${sign(encodedPayload)}`;
 }
 
-export function readSessionToken(token?: string | null): SessionPayload | null {
+export function readSessionToken(
+  token?: string | null,
+  now = Date.now(),
+): SessionPayload | null {
   if (!token) return null;
 
   const [encodedPayload, signature] = token.split(".");
@@ -98,10 +105,19 @@ export function readSessionToken(token?: string | null): SessionPayload | null {
     const payload = JSON.parse(decodeBase64Url(encodedPayload).toString());
     if (
       typeof payload.walletAddress !== "string" ||
-      typeof payload.issuedAt !== "number"
+      typeof payload.issuedAt !== "number" ||
+      !Number.isFinite(payload.issuedAt)
     ) {
       return null;
     }
+
+    if (
+      payload.issuedAt > now + SESSION_CLOCK_SKEW_MS ||
+      now - payload.issuedAt > SESSION_MAX_AGE_MS
+    ) {
+      return null;
+    }
+
     return payload;
   } catch {
     return null;
