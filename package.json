@@ -12,6 +12,7 @@
     "db:smoke": "node scripts/db-smoke.mjs",
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "wallet:auth:smoke": "node scripts/wallet-auth-smoke.mjs",
+    "api:origin:smoke": "tsx scripts/mutation-origin-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "browser:qa": "node scripts/browser-qa.mjs",
     "deploy:env:smoke": "tsx scripts/deploy-env-smoke.ts",

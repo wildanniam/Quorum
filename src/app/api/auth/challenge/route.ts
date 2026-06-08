@@ -1,5 +1,6 @@
 import { StrKey } from "@stellar/stellar-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import {
   CHALLENGE_COOKIE,
   CHALLENGE_MAX_AGE_SECONDS,
@@ -7,6 +8,10 @@ import {
 } from "@/lib/auth/session";
 
 export async function POST(request: NextRequest) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const body = (await request.json().catch(() => ({}))) as {
     walletAddress?: string;
   };

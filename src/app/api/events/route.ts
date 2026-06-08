@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
   createDraftEventWithSetup,
@@ -37,6 +38,10 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const session = getSession(request);
 
   if (!session) {

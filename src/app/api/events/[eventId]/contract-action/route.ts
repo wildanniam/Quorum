@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { CONTRACT_ACTIONS } from "@/lib/stellar/action-policy";
 import {
@@ -128,6 +129,10 @@ export async function POST(
   request: NextRequest,
   context: ContractActionRouteContext,
 ) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const session = getSession(request);
 
   if (!session) {

@@ -1,5 +1,6 @@
 import { StrKey } from "@stellar/stellar-sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import {
   CHALLENGE_COOKIE,
   SESSION_COOKIE,
@@ -20,6 +21,10 @@ type VerifyBody = {
 };
 
 export async function POST(request: NextRequest) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const body = (await request.json().catch(() => ({}))) as VerifyBody;
   const challenge = request.cookies.get(CHALLENGE_COOKIE)?.value;
 

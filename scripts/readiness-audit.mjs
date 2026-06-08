@@ -21,6 +21,7 @@ const requiredFiles = [
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
   "db/migrations/0002_live_proof_uniqueness.sql",
+  "scripts/mutation-origin-smoke.ts",
   "scripts/live-args-smoke.ts",
   "scripts/live-browser-flow-smoke.ts",
   "scripts/live-evidence-audit.mjs",
@@ -38,6 +39,7 @@ const requiredFiles = [
   "scripts/contracts/live-signing-approval-smoke.mjs",
   "scripts/contracts/testnet-network-guard.mjs",
   "scripts/deploy-env-smoke.ts",
+  "src/lib/auth/origin.ts",
   "src/lib/stellar/freighter-live-signing.ts",
   "src/lib/stellar/live-action.ts",
   "src/lib/stellar/live-encoding.ts",
@@ -61,6 +63,7 @@ const requiredPackageScripts = [
   "db:migrate",
   "db:seed",
   "db:smoke",
+  "api:origin:smoke",
   "demo:live-policy",
   "demo:smoke",
   "deploy:env:smoke",
@@ -92,6 +95,7 @@ const requiredEvidenceChecks = [
   "Build",
   "Audit",
   "Wallet auth smoke",
+  "API origin smoke",
   "Demo smoke",
   "Live policy smoke",
   "Browser QA",
@@ -154,6 +158,15 @@ const requiredWalletAuthCoverage = [
   "set-wallet-session-cookie",
   "me-reads-wallet-session",
   "logout-clears-wallet-session",
+];
+
+const requiredApiOriginCoverage = [
+  "allow-same-origin-mutation",
+  "allow-missing-origin-mutation",
+  "allow-forwarded-same-origin-mutation",
+  "reject-cross-origin-mutation",
+  "reject-invalid-origin-mutation",
+  "all-mutation-routes-use-origin-guard",
 ];
 
 const requiredLiveFlowCoverage = [
@@ -475,6 +488,12 @@ function checkEvidence() {
   for (const coverage of requiredWalletAuthCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing wallet auth coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredApiOriginCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing API origin coverage: ${coverage}`);
     }
   }
 

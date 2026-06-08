@@ -98,6 +98,7 @@ npm run db:seed
 npm run lint
 npm run build
 npm run wallet:auth:smoke
+npm run api:origin:smoke
 npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
@@ -126,6 +127,9 @@ that keep event IDs and transaction hashes from being replayed in SQLite.
 The wallet auth smoke verifies the real HTTP challenge, signature verification,
 session cookie, `/api/me`, and logout routes using a local test keypair without
 opening Freighter.
+The API origin smoke verifies cookie-backed POST/PATCH routes reject
+cross-origin mutation attempts while allowing same-origin and forwarded hosted
+requests.
 After an explicitly approved live testnet run, record public-only deployment
 and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
 `npm run live:evidence:audit`. The committed

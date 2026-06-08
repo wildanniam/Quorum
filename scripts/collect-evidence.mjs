@@ -13,6 +13,7 @@ const checks = [
   { label: "Build", command: "npm", args: ["run", "build"] },
   { label: "Audit", command: "npm", args: ["audit", "--audit-level=moderate"] },
   { label: "Wallet auth smoke", command: "npm", args: ["run", "wallet:auth:smoke"] },
+  { label: "API origin smoke", command: "npm", args: ["run", "api:origin:smoke"] },
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
   { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
   { label: "Browser QA", command: "npm", args: ["run", "browser:qa"] },

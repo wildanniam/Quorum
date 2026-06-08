@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { updateDraftEventWithSetup } from "@/lib/events/repository";
 import { createDraftEventRequestSchema } from "@/lib/events/validation";
@@ -14,6 +15,10 @@ function getSession(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest, context: EventRouteContext) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const session = getSession(request);
 
   if (!session) {

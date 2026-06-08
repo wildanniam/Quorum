@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { createLocalPassProof } from "@/lib/events/repository";
 import {
@@ -24,6 +25,10 @@ function statusForMessage(message: string) {
 }
 
 export async function POST(request: NextRequest, context: PassRouteContext) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const session = getSession(request);
 
   if (!session) {

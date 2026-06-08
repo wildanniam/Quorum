@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { rejectCrossOriginMutation } from "@/lib/auth/origin";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { markLocalPassCheckedIn } from "@/lib/events/repository";
 import {
@@ -29,6 +30,10 @@ function statusForMessage(message: string) {
 }
 
 export async function POST(request: NextRequest, context: CheckInRouteContext) {
+  const originRejection = rejectCrossOriginMutation(request);
+
+  if (originRejection) return originRejection;
+
   const session = getSession(request);
 
   if (!session) {

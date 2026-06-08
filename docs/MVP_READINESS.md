@@ -18,10 +18,11 @@ Quorum is considered locally demo-ready when these criteria pass:
 6. Collaborator balances are visible and withdrawal proof can be recorded.
 7. Organizer, attendee, collaborator, and proof readiness dashboard surfaces are
    visible in the app.
-8. Local DB, lint, build, audit, demo smoke, live policy smoke, browser QA,
-   deploy env smoke, live args smoke, live flow smoke, live persistence smoke,
-   live preflight smoke, live signing smoke, live submission smoke, live XDR
-   smoke, contract tests, contract build, contract approval smoke, and
+8. Local DB, lint, build, audit, API origin smoke, demo smoke, live policy
+   smoke, browser QA, deploy env smoke, live args smoke, live flow smoke,
+   live persistence smoke, live preflight smoke, live signing smoke, live
+   submission smoke, live XDR smoke, contract tests, contract build,
+   contract approval smoke, and
    deployment doctor checks pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
@@ -60,6 +61,7 @@ The live hackathon acceptance criteria add two gated requirements:
 | Dashboards show proof surfaces | Verified local | `npm run demo:smoke` covers `dashboard-proof`; `npm run browser:qa` verifies dashboard proof mode and readiness panels. |
 | DB schema protects live proof identity | Verified local | `npm run db:smoke` verifies unique live proof indexes for core event IDs plus publish, pass mint, and check-in transaction hashes. Purchases and withdrawals also retain table-level unique transaction hash constraints. |
 | Wallet auth HTTP flow issues signed sessions | Verified local | `npm run wallet:auth:smoke` covers invalid wallet challenge rejection, wallet-bound challenge cookie issuance, encoded multiline challenge cookies, signed challenge verification, session cookie creation, `/api/me` session reads, and logout. |
+| Cookie-backed mutation routes are same-origin guarded | Verified local | `npm run api:origin:smoke` covers same-origin, missing-origin, and forwarded same-origin mutation allowance; cross-origin and invalid-origin rejection; and static guard wiring across all POST/PATCH API routes that mutate auth, event, or live transaction state. |
 | Live contract argument encoding is deterministic | Verified local | `npm run live:args:smoke` covers USDC decimal-to-atomic and atomic-to-decimal conversion, event ID derivation, split bps, metadata hashes, and publish/checkout/check-in/withdraw argument DTOs without signing. |
 | Live mode requires Stellar testnet network config | Verified local | `npm run live:readiness:smoke` verifies valid testnet contract/payment/network env enables live action policy, while non-testnet or mismatched passphrase env remains in local proof mode even when contract IDs are valid. |
 | Contract deployment commands are testnet-only | Verified local | `npm run contracts:approval:smoke` verifies `contracts:doctor`, `contracts:deploy:testnet`, and `contracts:init:testnet` reject non-testnet `STELLAR_NETWORK` values before live signing. |
@@ -73,7 +75,7 @@ The live hackathon acceptance criteria add two gated requirements:
 | Unsigned Soroban XDR templates are parseable | Verified local | `npm run live:xdr:smoke` covers pre-simulation unsigned invokeHostFunction XDR templates for publish/checkout/check-in/withdraw, including typed split recipient maps. |
 | Live action preparation and submit boundaries are fail-safe | Verified local | `npm run demo:live-policy` covers `GET /api/events/[eventId]/contract-action` prepare responses for publish/checkout/check-in/withdraw with fake valid contract IDs, verifies short numeric live check-in token IDs reach `live_required`, verifies `POST /api/events/[eventId]/contract-action` rejects invalid signed XDR before persistence, then verifies mutation routes still return live-required responses without local proof writes. |
 | Hosted session configuration is fail-safe | Verified local | `npm run deploy:env:smoke` verifies production rejects missing, placeholder, local fallback, and short `QUORUM_SESSION_SECRET` values, accepts a valid 32+ character secret, rejects malformed/invalid/expired/future-dated session tokens, and rejects expired, malformed, or wallet-mismatched login challenges. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, demo smoke, live policy smoke, browser QA, deploy env smoke, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
+| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, API origin smoke, demo smoke, live policy smoke, browser QA, deploy env smoke, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
 | Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`; `npm run live:evidence:audit:smoke` verifies filled live evidence rejects placeholders, local/non-HTTPS hosted URLs, reused transaction hashes, token mismatches, origin mismatches, and zero-value withdrawal evidence. |
 
 ## Live Testnet Gate
