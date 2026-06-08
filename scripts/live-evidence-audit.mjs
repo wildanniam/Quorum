@@ -127,7 +127,12 @@ function validateType(fieldPath, value, type) {
     return;
   }
 
-  if (!requireFilled && isPlaceholder(value)) return;
+  if (isPlaceholder(value)) {
+    if (requireFilled) {
+      fail(`${fieldPath} must be filled, not a placeholder.`);
+    }
+    return;
+  }
 
   switch (type) {
     case "accountId":

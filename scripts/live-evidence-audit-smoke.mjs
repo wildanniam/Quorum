@@ -1,0 +1,167 @@
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import assert from "node:assert/strict";
+import { Keypair, StrKey } from "@stellar/stellar-sdk";
+
+const projectRoot = process.cwd();
+const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "quorum-live-evidence-"));
+
+const account = () => Keypair.random().publicKey();
+const contract = (fill) => StrKey.encodeContract(Buffer.alloc(32, fill));
+const hex64 = (fill) => fill.toString(16).padStart(2, "0").repeat(32);
+
+function buildEvidence(overrides = {}) {
+  return {
+    generatedAt: "2026-06-08T00:00:00.000Z",
+    network: "TESTNET",
+    rpcUrl: "https://soroban-testnet.stellar.org",
+    hostedAppUrl: "https://quorum.example.com",
+    wallets: {
+      admin: account(),
+      organizer: account(),
+      paidAttendee: account(),
+      freeAttendee: account(),
+      collaborator: account(),
+    },
+    contracts: {
+      coreContractId: contract(7),
+      passContractId: contract(8),
+      usdcContractId: contract(9),
+      coreWasmHash:
+        "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0",
+      passWasmHash:
+        "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec",
+      platformFeeBps: 0,
+    },
+    deploymentTransactions: {
+      passDeployTxHash: hex64(1),
+      coreDeployTxHash: hex64(2),
+      passInitTxHash: hex64(3),
+      coreInitTxHash: hex64(4),
+      passSetCoreTxHash: hex64(5),
+    },
+    liveFlows: {
+      publishPaidEvent: {
+        txHash: hex64(6),
+        eventUrl: "https://quorum.example.com/events/paid",
+      },
+      paidCheckout: {
+        txHash: hex64(7),
+        tokenId: "1",
+        paymentAsset: "USDC",
+      },
+      freeClaim: {
+        txHash: hex64(8),
+        tokenId: "2",
+      },
+      checkIn: {
+        txHash: hex64(9),
+        tokenId: "1",
+      },
+      collaboratorWithdraw: {
+        txHash: hex64(10),
+        withdrawAmountUsdc: "2.5",
+      },
+    },
+    browserProof: {
+      contractStatusUrl: "https://quorum.example.com/api/contracts/status",
+      contractStatusProofMode: "live",
+      contractStatusActionsLive: true,
+      paidResourceUnlockedUrl: "https://quorum.example.com/events/paid/resources",
+      browserQaDeployed: "Deployed browser QA passed.",
+    },
+    verification: {
+      commands: {
+        contractsDoctor: {
+          command: "npm run contracts:doctor",
+          status: "PASS",
+          exitCode: 0,
+        },
+        contractsTest: {
+          command: "npm run contracts:test",
+          status: "PASS",
+          exitCode: 0,
+        },
+        contractsBuild: {
+          command: "npm run contracts:build",
+          status: "PASS",
+          exitCode: 0,
+        },
+        lint: {
+          command: "npm run lint",
+          status: "PASS",
+          exitCode: 0,
+        },
+        build: {
+          command: "npm run build",
+          status: "PASS",
+          exitCode: 0,
+        },
+        readinessAudit: {
+          command: "npm run readiness:audit",
+          status: "PASS",
+          exitCode: 0,
+        },
+      },
+    },
+    approval: {
+      explicitApprovalRecorded: true,
+      approvedBy: "Quorum demo owner",
+      approvedAt: "2026-06-08T00:00:00.000Z",
+      notes: "Approved live testnet signing evidence run.",
+    },
+    ...overrides,
+  };
+}
+
+function runAudit(filename, evidence) {
+  const evidencePath = path.join(tmpDir, filename);
+  fs.writeFileSync(evidencePath, JSON.stringify(evidence, null, 2));
+
+  return spawnSync(
+    "node",
+    ["scripts/live-evidence-audit.mjs", evidencePath, "--require-filled"],
+    {
+      cwd: projectRoot,
+      encoding: "utf8",
+    },
+  );
+}
+
+const validResult = runAudit("valid.json", buildEvidence());
+assert.equal(validResult.status, 0, validResult.stderr || validResult.stdout);
+
+const placeholderResult = runAudit(
+  "placeholder.json",
+  buildEvidence({
+    approval: {
+      explicitApprovalRecorded: true,
+      approvedBy: "Quorum demo owner",
+      approvedAt: "2026-06-08T00:00:00.000Z",
+      notes: "<approval scope notes>",
+    },
+  }),
+);
+assert.notEqual(placeholderResult.status, 0);
+assert.match(
+  `${placeholderResult.stdout}${placeholderResult.stderr}`,
+  /must be filled, not a placeholder/,
+);
+
+fs.rmSync(tmpDir, { recursive: true, force: true });
+
+console.log(
+  JSON.stringify(
+    {
+      ok: true,
+      checks: [
+        "accept-filled-live-evidence",
+        "reject-filled-live-evidence-placeholder",
+      ],
+    },
+    null,
+    2,
+  ),
+);

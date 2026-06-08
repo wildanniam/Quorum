@@ -23,6 +23,7 @@ const requiredFiles = [
   "scripts/live-args-smoke.ts",
   "scripts/live-browser-flow-smoke.ts",
   "scripts/live-evidence-audit.mjs",
+  "scripts/live-evidence-audit-smoke.mjs",
   "scripts/live-flow-smoke.ts",
   "scripts/live-persistence-smoke.ts",
   "scripts/live-preflight-smoke.ts",
@@ -65,6 +66,7 @@ const requiredPackageScripts = [
   "live:args:smoke",
   "live:browser-flow:smoke",
   "live:evidence:audit",
+  "live:evidence:audit:smoke",
   "live:evidence:template",
   "live:flow:smoke",
   "live:persistence:smoke",
@@ -89,6 +91,7 @@ const requiredEvidenceChecks = [
   "Deploy env smoke",
   "Live args smoke",
   "Live browser flow smoke",
+  "Live evidence audit smoke",
   "Live evidence template",
   "Live flow smoke",
   "Live persistence smoke",
@@ -206,6 +209,11 @@ const requiredDeployEnvCoverage = [
   "reject-future-wallet-challenge",
   "reject-wallet-mismatched-challenge",
   "reject-malformed-wallet-challenge",
+];
+
+const requiredLiveEvidenceAuditCoverage = [
+  "accept-filled-live-evidence",
+  "reject-filled-live-evidence-placeholder",
 ];
 
 const requiredLiveHandoffTerms = [
@@ -451,6 +459,12 @@ function checkEvidence() {
   for (const coverage of requiredDeployEnvCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing deploy env coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveEvidenceAuditCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live evidence audit coverage: ${coverage}`);
     }
   }
 
