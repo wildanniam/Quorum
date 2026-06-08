@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-08T01:56:14.736Z`
+Generated at: `2026-06-08T20:57:26.646Z`
 
 ## Source State
 
 - Branch: `main`
-- Commit: `daeceba`
+- Commit: `533e2b0`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -28,6 +28,7 @@ Generated at: `2026-06-08T01:56:14.736Z`
 | Live policy smoke | `npm run demo:live-policy` | PASS | 0 |
 | Browser QA | `npm run browser:qa` | PASS | 0 |
 | Deploy env smoke | `npm run deploy:env:smoke` | PASS | 0 |
+| Deploy hosted preflight smoke | `npm run deploy:hosted:preflight:smoke` | PASS | 0 |
 | Live args smoke | `npm run live:args:smoke` | PASS | 0 |
 | Live flow smoke | `npm run live:flow:smoke` | PASS | 0 |
 | Live persistence smoke | `npm run live:persistence:smoke` | PASS | 0 |
@@ -38,6 +39,7 @@ Generated at: `2026-06-08T01:56:14.736Z`
 | Live XDR smoke | `npm run live:xdr:smoke` | PASS | 0 |
 | Live evidence template | `npm run live:evidence:template` | PASS | 0 |
 | Live evidence audit smoke | `npm run live:evidence:audit:smoke` | PASS | 0 |
+| Live deployment validation | `npm run live:deployment:validate` | PASS | 0 |
 | Live browser flow smoke | `npm run live:browser-flow:smoke` | PASS | 0 |
 | Live UI wiring smoke | `npm run live:ui-wiring:smoke` | PASS | 0 |
 | Contract tests | `npm run contracts:test` | PASS | 0 |
@@ -51,7 +53,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-c33b8e`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-2909a2`
 
 Covered checks:
 
@@ -98,7 +100,7 @@ the `npm run contracts:test` output:
 - RPC reachable: `true`
 - Deploy network: `testnet`
 - App RPC: `https://soroban-testnet.stellar.org`
-- Payment asset configured: `false`
+- Payment asset configured: `true`
 - Platform fee bps: `0`
 - Stellar CLI: `stellar 26.0.0`
 - Rust: `rustc 1.95.0 (59807616e 2026-04-14)`
@@ -106,14 +108,11 @@ the `npm run contracts:test` output:
 
 Blockers:
 
-- STELLAR_ACCOUNT is missing. Set a funded Stellar identity/secret before deploy.
 - Set QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING only after explicit approval for live testnet signing.
 
 Warnings:
 
-- NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID is missing or not a valid contract ID. This is expected before deploy.
-- NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID is missing or not a valid contract ID. This is expected before deploy.
-- NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID is missing or not a valid contract ID. This is expected before live app transaction signing.
+- None reported by contracts:doctor.
 
 ## Live Deployment Boundary
 
@@ -164,8 +163,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_c2fd48d6-2dc0-4365-98b5-66255ba9e9a3",
-    "slug": "smoke-c2fd48d6",
+    "id": "evt_41079f0e-ee40-4576-9a77-54336c48d356",
+    "slug": "smoke-41079f0e",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -202,16 +201,17 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > quorum@0.1.0 build
 > next build
 ▲ Next.js 16.2.7 (Turbopack)
+- Environments: .env.local
   Creating an optimized production build ...
-✓ Compiled successfully in 4.3s
+✓ Compiled successfully in 2.4s
   Running TypeScript ...
-  Finished TypeScript in 2.8s ...
+  Finished TypeScript in 2.1s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/10) ...
   Generating static pages using 7 workers (2/10)
   Generating static pages using 7 workers (4/10)
   Generating static pages using 7 workers (7/10)
-✓ Generating static pages using 7 workers (10/10) in 186ms
+✓ Generating static pages using 7 workers (10/10) in 139ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -263,7 +263,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3042",
-  "walletAddress": "GD5QKKJMAL3PYJFQV5CCXUXNJXFMIRKAG6RWW6X45GJAVYNQUQOCKCQN",
+  "walletAddress": "GAP32TRR3GP37JZMQRW4KMSCVPMWIBZNPN7QIMMJTBBLP3WIWK6DXB5J",
   "checks": [
     "reject-invalid-wallet-challenge-request",
     "issue-wallet-bound-challenge-cookie",
@@ -311,9 +311,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-119066a9-c7cd-4ccf-9eae-c1fa12bbdd0a.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-demo-smoke-beb43bb7-fd67-4428-ae56-6cb7aceb9e86.db",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-c33b8e",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-2909a2",
   "checks": [
     "marketplace",
     "event-detail",
@@ -394,7 +394,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-06-08T01:57:13.632Z",
+  "generatedAt": "2026-06-08T20:58:03.046Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -428,6 +428,36 @@ found 0 vulnerabilities
     "reject-future-wallet-challenge",
     "reject-wallet-mismatched-challenge",
     "reject-malformed-wallet-challenge"
+  ]
+}
+```
+
+### Deploy hosted preflight smoke
+
+- Command: `npm run deploy:hosted:preflight:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 deploy:hosted:preflight:smoke
+> tsx scripts/hosted-deployment-preflight.ts --smoke
+{
+  "ok": true,
+  "mode": "smoke",
+  "checks": [
+    "hosted-url-public-https",
+    "production-session-secret-present",
+    "runtime-env-matches-deployment-evidence",
+    "operator-signing-env-absent",
+    "contract-status-live-proof-mode",
+    "contract-status-rpc-reachable",
+    "contract-status-actions-live-required",
+    "reject-localhost-hosted-url",
+    "reject-contract-id-mismatch",
+    "reject-operator-signing-env",
+    "reject-invalid-production-session-secret",
+    "reject-local-contract-status",
+    "reject-non-live-action-policy"
   ]
 }
 ```
@@ -493,8 +523,8 @@ found 0 vulnerabilities
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-3deb04b7-a97a-46a2-9f24-e5f08d6d94b8.db",
-  "persistedEventId": "evt_6d2de581-cd2f-4964-a32d-c8dde13a687d",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-flow-smoke-9d694b43-f5f7-406b-8575-493709b63078.db",
+  "persistedEventId": "evt_3eb56141-3fa3-40cf-a82a-cc645dd4f232",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -519,7 +549,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-533b032e-0494-48c7-8cb5-89f40a1dee64.db",
+  "databasePath": "/Users/wildanniam/Development/project/Quorum/data/quorum-live-persistence-smoke-c4fd0a16-6d7b-4320-8b4b-8a345ea21576.db",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -735,6 +765,39 @@ found 0 vulnerabilities
 }
 ```
 
+### Live deployment validation
+
+- Command: `npm run live:deployment:validate`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 live:deployment:validate
+> node scripts/live-deployment-validate.mjs
+{
+  "ok": true,
+  "evidencePath": "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
+  "network": "TESTNET",
+  "contracts": {
+    "passContractId": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+    "coreContractId": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV",
+    "usdcContractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+    "passWasmHash": "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec",
+    "coreWasmHash": "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0",
+    "platformFeeBps": 0
+  },
+  "checks": [
+    "static-evidence-shape",
+    "horizon-admin-transaction-window",
+    "decoded-init-and-set-core-parameters",
+    "rpc-set-core-event",
+    "stellar-cli-contract-interfaces",
+    "recorded-read-only-validation-evidence"
+  ],
+  "failures": []
+}
+```
+
 ### Live browser flow smoke
 
 - Command: `npm run live:browser-flow:smoke`
@@ -790,26 +853,26 @@ found 0 vulnerabilities
 > quorum@0.1.0 contracts:test
 > cargo test
 running 19 tests
+test test::free_event_claim_mints_pass_without_balances ... ok
+test test::organizer_can_check_in_pass ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::duplicate_check_in_is_idempotent ... ok
-test test::free_event_claim_mints_pass_without_balances ... ok
-test test::collaborator_can_withdraw_balance ... ok
-test test::emits_core_and_pass_proof_events ... ok
-test test::organizer_can_check_in_pass ... ok
 test test::admin_can_withdraw_platform_fee ... ok
-test test::rejects_invalid_split_total - should panic ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::duplicate_check_in_is_idempotent ... ok
+test test::emits_core_and_pass_proof_events ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
-test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
-test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::rejects_invalid_split_total - should panic ... ok
+test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.53s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
 running 7 tests
 test test::set_core_emits_even
 ... [truncated]
@@ -825,7 +888,7 @@ test test::set_core_emits_even
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.25s
+    Finished `release` profile [optimized] target(s) in 0.09s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (14247 bytes)
     Wasm Hash: 73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0
@@ -845,7 +908,7 @@ test test::set_core_emits_even
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.22s
+    Finished `release` profile [optimized] target(s) in 0.05s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5467 bytes)
     Wasm Hash: e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec
@@ -924,8 +987,8 @@ test test::set_core_emits_even
     "wasm32v1NoneInstalled": true
   },
   "contracts": {
-    "coreContractIdConfigured": false,
-    "passContractIdConfigured": false,
+    "coreContractIdConfigured": true,
+    "passContractIdConfigured": true,
     "wasmArtifacts": [
       {
         "label": "QuorumCore",
@@ -944,9 +1007,9 @@ test test::set_core_emits_even
     ]
   },
   "paymentAsset": {
-    "usdcContractIdConfigured": false
+    "usdcContractIdConfigured": true
   },
-  "conf
+  "config"
 ... [truncated]
 ```
 
