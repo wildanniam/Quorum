@@ -69,10 +69,8 @@ export function ContractReadiness() {
   ];
 
   return (
-    <div className="border border-line bg-panel p-5">
-      <p className="font-mono text-xs uppercase tracking-normal text-muted">
-        Contract readiness
-      </p>
+    <div className="rounded-[8px] border border-line bg-panel p-5">
+      <p className="eyebrow">Contract readiness</p>
       <p className="mt-2 text-xl font-semibold">
         {readiness.configured ? "Contracts configured" : "Deployment pending"}
       </p>
@@ -88,7 +86,7 @@ export function ContractReadiness() {
 
           return (
             <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border border-line bg-background/35 p-3"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3"
               key={row.label}
             >
               <Icon className={row.active ? "text-accent" : "text-muted"} size={17} />
@@ -101,7 +99,7 @@ export function ContractReadiness() {
         })}
       </div>
 
-      <div className="mt-5 border border-line bg-background/25">
+      <div className="mt-5 overflow-hidden rounded-[8px] border border-line bg-background/25">
         <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-line p-3">
           <ListChecks className="text-accent" size={17} />
           <div>

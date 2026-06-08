@@ -80,7 +80,7 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
   return (
     <div className="grid gap-2">
       <button
-        className="inline-flex min-h-10 items-center justify-center gap-2 bg-accent px-3 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[8px] bg-accent px-3 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isSubmitting || amountUsdc === "0"}
         onClick={handleWithdraw}
         type="button"
@@ -93,7 +93,9 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
         Withdraw
       </button>
       {error ? (
-        <p className="text-right text-xs leading-5 text-coral">{error}</p>
+        <p className="text-right text-xs leading-5 text-coral" role="alert">
+          {error}
+        </p>
       ) : null}
       {txHash ? (
         <ProofDisplay align="right" compact label="Withdraw proof" value={txHash} />
