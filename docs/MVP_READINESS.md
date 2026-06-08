@@ -48,7 +48,7 @@ The live hackathon acceptance criteria add two gated requirements:
 
 | Requirement | Current status | Evidence |
 |---|---|---|
-| App is deployed | Gated | Requires hosted deployment URL and env configuration. |
+| App is deployed | Gated | Requires hosted deployment URL, the `docs/PRODUCTION_ENV_HANDOFF.md` checklist, and a production storage decision because the current DB client is file-based SQLite. |
 | Contracts are deployed on Stellar testnet | Read-only verified | `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json` records deployed contract IDs, admin wallet, deployment/init transaction hashes, and decoded init/set-core evidence; `npm run live:deployment:validate` validates it against Horizon, Soroban RPC events, and fetched contract interfaces without signing. |
 | Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
 | Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `npm run browser:qa` verifies desktop/mobile marketplace rendering. |

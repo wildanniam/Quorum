@@ -8,7 +8,7 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 The local hackathon demo flow is implemented and verified. The app can create, update, publish, publicly list local paid/free events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
 
-The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Live on-chain publish/checkout/withdraw/check-in still needs deployed testnet contract IDs, a confirmed testnet USDC token contract ID, and wallet signing approval.
+The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Testnet contract IDs and the USDC contract ID are recorded and read-only validated. Live on-chain publish/checkout/withdraw/check-in from the hosted app still needs hosted environment configuration, a production storage decision, and explicit wallet signing approval.
 
 Implemented in the app shell:
 
@@ -82,6 +82,7 @@ npm run live:submission:smoke
 npm run live:xdr:smoke
 npm run live:browser-flow:smoke
 npm run live:ui-wiring:smoke
+npm run live:deployment:validate
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -136,6 +137,10 @@ XDR before signing. It does not open Freighter or submit to testnet.
 withdraw UI actions are wired to the browser live flow helper when
 `live_required` is returned.
 
+`npm run live:deployment:validate` validates the recorded testnet deployment
+evidence against Horizon, Soroban RPC events, and fetched contract interfaces
+without signing or submitting transactions.
+
 `npm run live:xdr:smoke` verifies pre-simulation unsigned Soroban XDR templates
 for the same contract actions. These XDRs are not signed and still require live
 account sequence fetch plus RPC simulation/assembly before Freighter signing.
@@ -165,8 +170,9 @@ npm run contracts:init:testnet
 Those scripts refuse to run unless `QUORUM_LIVE_SIGNING_APPROVED` is set to
 `I_APPROVE_TESTNET_SIGNING` after explicit approval.
 
-After approved live signing, record the pass deploy, core deploy, pass init,
-core init, and pass `set_core` transaction hashes in
+Current read-only deployment evidence is recorded in
+`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. After approved hosted app signing,
+record public hosted URLs and real app flow transaction hashes in
 `docs/LIVE_TESTNET_EVIDENCE.json`, then run `npm run live:evidence:audit`.
 
 ## Planning Docs
@@ -177,4 +183,6 @@ core init, and pass `set_core` transaction hashes in
 - `docs/HACKATHON_DEMO_RUNBOOK.md`
 - `docs/DEMO_EVIDENCE.md`
 - `docs/MVP_READINESS.md`
+- `docs/PRODUCTION_ENV_HANDOFF.md`
+- `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`
 - `docs/LIVE_SIGNING_HANDOFF.md`
