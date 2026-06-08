@@ -202,6 +202,32 @@ function assertLiveTransactionHash(txHash: string) {
   }
 }
 
+function assertLiveProofHashUnused(txHash: string) {
+  const normalizedTxHash = txHash.toLowerCase();
+  const db = getDatabase();
+  const existing = [
+    db
+      .prepare("SELECT id FROM events WHERE publish_tx_hash = ?")
+      .get(normalizedTxHash),
+    db
+      .prepare("SELECT id FROM passes WHERE mint_tx_hash = ?")
+      .get(normalizedTxHash),
+    db
+      .prepare("SELECT id FROM purchases WHERE tx_hash = ?")
+      .get(normalizedTxHash),
+    db
+      .prepare("SELECT id FROM check_ins WHERE tx_hash = ?")
+      .get(normalizedTxHash),
+    db
+      .prepare("SELECT id FROM withdrawals WHERE tx_hash = ?")
+      .get(normalizedTxHash),
+  ].some(Boolean);
+
+  if (existing) {
+    throw new Error("Live transaction hash is already recorded.");
+  }
+}
+
 function assertContractEventId(coreEventId: string) {
   if (!/^[a-f0-9]{64}$/i.test(coreEventId)) {
     throw new Error("Core event ID must be a 32-byte hex string.");
@@ -578,6 +604,7 @@ export function recordLivePublishedEvent(input: RecordLivePublishInput) {
   assertWalletAddress(input.organizerWallet);
   assertContractEventId(input.coreEventId);
   assertLiveTransactionHash(input.publishTxHash);
+  assertLiveProofHashUnused(input.publishTxHash);
 
   const db = getDatabase();
 
@@ -940,6 +967,7 @@ export function createLocalWithdrawalProof(eventId: string, collaboratorWallet: 
 export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
   assertWalletAddress(input.collaboratorWallet);
   assertLiveTransactionHash(input.txHash);
+  assertLiveProofHashUnused(input.txHash);
   assertUsdcAmount(input.amountUsdc);
 
   const db = getDatabase();
@@ -967,14 +995,6 @@ export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
 
     if (!collaboratorRow) {
       throw new Error("Connected wallet is not a collaborator for this event.");
-    }
-
-    const duplicateWithdrawal = db
-      .prepare("SELECT id FROM withdrawals WHERE tx_hash = ?")
-      .get(input.txHash.toLowerCase()) as { id: string } | undefined;
-
-    if (duplicateWithdrawal) {
-      throw new Error("Live withdrawal transaction hash is already recorded.");
     }
 
     const collaborator = toCollaboratorRecord(collaboratorRow);
@@ -1173,6 +1193,7 @@ export function markLocalPassCheckedIn({
 export function recordLiveCheckIn(input: RecordLiveCheckInInput) {
   assertWalletAddress(input.checkedInByWallet);
   assertLiveTransactionHash(input.txHash);
+  assertLiveProofHashUnused(input.txHash);
   assertTokenId(input.tokenId);
 
   const db = getDatabase();
@@ -1343,6 +1364,7 @@ export function createLocalPassProof(eventId: string, ownerWallet: string) {
 export function recordLivePass(input: RecordLivePassInput) {
   assertWalletAddress(input.ownerWallet);
   assertLiveTransactionHash(input.txHash);
+  assertLiveProofHashUnused(input.txHash);
   assertTokenId(input.tokenId);
 
   const db = getDatabase();

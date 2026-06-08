@@ -169,9 +169,10 @@ chains can be tested without a real wallet signature.
 results into `recordLivePublishedEvent`, `recordLivePass`,
 `recordLiveCheckIn`, and `recordLiveWithdrawal`, rejecting mismatched
 prepared/submitted actions before any DB write.
-The withdrawal recording path also rejects duplicate live withdrawal transaction
-hashes and finality amounts that exceed the collaborator's DB withdrawable
-balance, so submit retries cannot inflate local proof totals.
+The live recording path also rejects replayed live proof transaction hashes
+across publish, pass, check-in, and withdrawal records. Withdrawal recording
+additionally rejects finality amounts that exceed the collaborator's DB
+withdrawable balance, so submit retries cannot inflate local proof totals.
 
 ## Contract Call Inputs
 

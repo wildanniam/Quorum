@@ -8,9 +8,11 @@ import { StrKey } from "@stellar/stellar-sdk";
 const projectRoot = process.cwd();
 const databaseUrl = `file:./data/quorum-live-persistence-smoke-${randomUUID()}.db`;
 const eventId = "evt_apac_stellar_builder_meetup";
+const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
+const freeAttendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 5));
 
 function databasePath() {
   return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
@@ -104,6 +106,61 @@ async function main() {
   assert.equal(publishResult.event.publishTxHash, txHash(12));
   assert.equal(publishResult.event.metadataHash, `sha256:${txHash(11)}`);
 
+  const replayDraft = repository.createDraftEventWithSetup(
+    {
+      slug: `live-persistence-replay-${randomUUID().slice(0, 8)}`,
+      title: "Live Persistence Replay Smoke",
+      eventType: "workshop",
+      shortDescription:
+        "A smoke-test draft for rejecting replayed publish transaction hashes.",
+      coverImageUrl: null,
+      startDateTime: "2026-07-02T10:00:00.000Z",
+      endDateTime: "2026-07-02T12:00:00.000Z",
+      timezone: "Asia/Jakarta",
+      locationType: "hybrid",
+      locationText: "Jakarta + livestream",
+      meetingUrl: "https://example.com/live-persistence-replay",
+      isFree: false,
+      priceUsdc: "7",
+      capacity: 42,
+      organizerWallet,
+    },
+    [
+      {
+        displayName: "Live Persistence Replay Host",
+        role: "Host",
+        walletAddress: organizerWallet,
+        splitPercentage: 60,
+      },
+      {
+        displayName: "Live Persistence Replay Speaker",
+        role: "Speaker",
+        walletAddress: speakerWallet,
+        splitPercentage: 40,
+      },
+    ],
+    [
+      {
+        title: "Live Persistence Replay Resource",
+        description: "Gated resource used by live persistence replay smoke.",
+        type: "link",
+        url: "https://example.com/live-persistence-replay-resource",
+        sortOrder: 1,
+      },
+    ],
+  );
+  expectThrow(
+    () =>
+      repository.recordLivePublishedEvent({
+        coreEventId: txHash(20),
+        eventId: replayDraft.event.id,
+        metadataHash: txHash(21),
+        organizerWallet,
+        publishTxHash: txHash(12),
+      }),
+    "already recorded",
+  );
+
   const passResult = repository.recordLivePass({
     eventId,
     metadataHash: txHash(13),
@@ -118,6 +175,30 @@ async function main() {
   assert.equal(passResult.purchase.txHash, txHash(14));
   assert.equal(passResult.purchase.status, "succeeded");
 
+  expectThrow(
+    () =>
+      repository.recordLivePass({
+        eventId: freeEventId,
+        metadataHash: txHash(22),
+        metadataUri: `quorum://events/stellar-open-office-hours/passes/${freeAttendeeWallet}`,
+        ownerWallet: freeAttendeeWallet,
+        tokenId: "54320",
+        txHash: txHash(14),
+      }),
+    "already recorded",
+  );
+
+  const freePassResult = repository.recordLivePass({
+    eventId: freeEventId,
+    metadataHash: txHash(23),
+    metadataUri: `quorum://events/stellar-open-office-hours/passes/${freeAttendeeWallet}`,
+    ownerWallet: freeAttendeeWallet,
+    tokenId: "54321",
+    txHash: txHash(19),
+  });
+  assert.equal(freePassResult.pass.tokenId, "54321");
+  assert.equal(freePassResult.purchase.amountUsdc, "0");
+
   const checkInResult = repository.recordLiveCheckIn({
     checkedInByWallet: organizerWallet,
     eventId,
@@ -126,6 +207,17 @@ async function main() {
   });
   assert.equal(checkInResult.pass.checkedIn, true);
   assert.equal(checkInResult.checkIn.txHash, txHash(15));
+
+  expectThrow(
+    () =>
+      repository.recordLiveCheckIn({
+        checkedInByWallet: organizerWallet,
+        eventId: freeEventId,
+        tokenId: "54321",
+        txHash: txHash(15),
+      }),
+    "already recorded",
+  );
 
   expectThrow(
     () =>
@@ -216,7 +308,10 @@ async function main() {
           "record-live-check-in",
           "record-live-withdrawal",
           "reject-stub-live-hash",
+          "reject-duplicate-live-publish-tx",
+          "reject-duplicate-live-pass-tx",
           "reject-duplicate-live-check-in",
+          "reject-duplicate-live-check-in-tx",
           "reject-live-withdrawal-overdraw",
           "reject-duplicate-live-withdrawal-tx",
           "no-stub-live-records",

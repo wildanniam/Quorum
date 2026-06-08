@@ -142,9 +142,9 @@ check-in, and withdraw chains from prepared DB action to preflight, mock
 Freighter signing, mock RPC finality, decoded return values, and post-success
 persistence through `live-result-persistence.ts` without submitting to testnet.
 The live persistence smoke verifies the post-RPC-success DB recording path for
-real transaction hashes, rejects local `stub:` hashes, and protects live
-withdrawal evidence from duplicate transaction hashes or amounts above the
-collaborator's withdrawable balance.
+real transaction hashes, rejects local `stub:` hashes, rejects replayed live
+proof hashes across publish/pass/check-in/withdrawal records, and protects live
+withdrawal evidence from amounts above the collaborator's withdrawable balance.
 The live preflight smoke verifies signer sequence lookup and RPC
 prepare/simulation orchestration with a mock RPC server, without signing.
 The live signing smoke verifies the Freighter signing adapter with a mock
