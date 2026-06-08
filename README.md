@@ -174,6 +174,8 @@ Current read-only deployment evidence is recorded in
 `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. After approved hosted app signing,
 record public hosted URLs and real app flow transaction hashes in
 `docs/LIVE_TESTNET_EVIDENCE.json`, then run `npm run live:evidence:audit`.
+Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the manual browser wallet
+signing sequence.
 
 ## Planning Docs
 
@@ -184,5 +186,6 @@ record public hosted URLs and real app flow transaction hashes in
 - `docs/DEMO_EVIDENCE.md`
 - `docs/MVP_READINESS.md`
 - `docs/PRODUCTION_ENV_HANDOFF.md`
+- `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md`
 - `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`
 - `docs/LIVE_SIGNING_HANDOFF.md`

@@ -134,6 +134,9 @@ After an explicitly approved live testnet run, record public-only deployment
 and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
 `npm run live:evidence:audit`. The committed
 `docs/LIVE_TESTNET_EVIDENCE.example.json` is the required shape for that packet.
+Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` during the approved browser
+signing session so each Freighter prompt is checked against the expected wallet
+role, contract method, amount, and evidence field before approval.
 Filled live evidence must use public HTTPS hosted URLs; the audit rejects
 localhost, private network, non-HTTPS URLs, reused transaction hashes,
 mismatched check-in token evidence, proof URLs outside the hosted app origin,
@@ -216,6 +219,7 @@ init, core init, and pass `set_core` transaction hashes.
 - `docs/BROWSER_QA.md`
 - `docs/MVP_READINESS.md`
 - contract WASM hashes from `npm run contracts:build`
+- `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for approved browser wallet signing
 - `docs/LIVE_SIGNING_HANDOFF.md` for the remaining live transaction handoff
 - `docs/LIVE_TESTNET_EVIDENCE.example.json` as the machine-readable checklist
   for approved live deployment and Freighter-signed transaction evidence

@@ -187,6 +187,16 @@ publish transaction hashes, pass mint transaction hashes, and check-in
 transaction hashes; purchase and withdrawal transaction hashes are unique at
 table level from the initial schema.
 
+## Manual Freighter Runbook
+
+Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the first approved hosted
+browser signing session. That runbook maps each human approval to the expected
+page, wallet role, contract method, Freighter prompt checks, stop conditions,
+and `docs/LIVE_TESTNET_EVIDENCE.json` fields. It intentionally keeps
+`STELLAR_ACCOUNT`, secret seeds, and `QUORUM_LIVE_SIGNING_APPROVED` out of the
+routine hosted runtime unless a separate server-side signing design is
+approved.
+
 ## Contract Call Inputs
 
 `create_event`:
