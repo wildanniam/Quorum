@@ -14,30 +14,30 @@ const fallbackCoverImage =
   "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1600&q=80";
 
 const stellarTheme: EventTheme = {
-  accent: "#6fe9ff",
-  accent2: "#f6c760",
-  fallbackEnd: "#182a38",
-  fallbackStart: "#101820",
-  glow: "rgba(111, 233, 255, 0.32)",
-  ink: "#041318",
+  accent: "#d9a85c",
+  accent2: "#8fb8bd",
+  fallbackEnd: "#2a2116",
+  fallbackStart: "#15130f",
+  glow: "rgba(217, 168, 92, 0.24)",
+  ink: "#111112",
 };
 
 const communityTheme: EventTheme = {
-  accent: "#9be77d",
-  accent2: "#ff9a76",
-  fallbackEnd: "#26331f",
-  fallbackStart: "#111c17",
-  glow: "rgba(155, 231, 125, 0.28)",
-  ink: "#0c1608",
+  accent: "#a993ff",
+  accent2: "#d98571",
+  fallbackEnd: "#211b34",
+  fallbackStart: "#131119",
+  glow: "rgba(169, 147, 255, 0.22)",
+  ink: "#111112",
 };
 
 const workshopTheme: EventTheme = {
-  accent: "#b8a7ff",
-  accent2: "#72e6c8",
-  fallbackEnd: "#25223a",
-  fallbackStart: "#11131f",
-  glow: "rgba(184, 167, 255, 0.28)",
-  ink: "#0f0c1f",
+  accent: "#d98571",
+  accent2: "#d9a85c",
+  fallbackEnd: "#301c19",
+  fallbackStart: "#15100f",
+  glow: "rgba(217, 133, 113, 0.2)",
+  ink: "#111112",
 };
 
 function themeForEvent(event: EventRecord): EventTheme {

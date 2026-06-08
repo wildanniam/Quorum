@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import { WalletProvider } from "@/components/wallet-provider";
 import "./globals.css";
 
@@ -13,10 +13,15 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const playfairDisplay = Playfair_Display({
+  variable: "--font-display",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Quorum",
   description:
-    "Stellar-native collaborative event checkout with split payouts and NFT access proof.",
+    "Create paid events, split revenue transparently, and unlock attendee access with wallet-based passes.",
 };
 
 export default function RootLayout({
@@ -27,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full`}
     >
       <body className="min-h-full">
         <WalletProvider>{children}</WalletProvider>
