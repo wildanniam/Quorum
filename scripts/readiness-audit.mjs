@@ -20,6 +20,7 @@ const requiredFiles = [
   "docs/MVP_READINESS.md",
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
+  "db/migrations/0002_live_proof_uniqueness.sql",
   "scripts/live-args-smoke.ts",
   "scripts/live-browser-flow-smoke.ts",
   "scripts/live-evidence-audit.mjs",
@@ -134,6 +135,14 @@ const requiredSmokeCoverage = [
   "dashboard-proof",
   "dashboard-payment-asset-readiness",
   "dashboard-action-policy",
+];
+
+const requiredDbSmokeCoverage = [
+  "unique-live-proof-indexes",
+  "event-crud",
+  "collaborator-split-total",
+  "resource-crud",
+  "cascade-cleanup",
 ];
 
 const requiredWalletAuthCoverage = [
@@ -438,6 +447,12 @@ function checkEvidence() {
     const row = new RegExp(`\\| ${check} \\| [^\\n]+ \\| PASS \\| 0 \\|`);
     if (!row.test(evidence)) {
       fail(`DEMO_EVIDENCE is missing PASS row for ${check}.`);
+    }
+  }
+
+  for (const coverage of requiredDbSmokeCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing DB smoke coverage: ${coverage}`);
     }
   }
 

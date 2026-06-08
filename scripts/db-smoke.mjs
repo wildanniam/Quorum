@@ -1,4 +1,5 @@
 import Database from "better-sqlite3";
+import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import path from "node:path";
 
@@ -19,8 +20,40 @@ const id = randomUUID();
 const eventId = `evt_${id}`;
 const slug = `smoke-${id.slice(0, 8)}`;
 const organizerWallet = "GBRPYHILQKWXPH7F6TRXA3J2ZWW63CMUDSJ2Y5X6MX4F2YQN6LQG3YYW";
+const requiredUniqueIndexes = {
+  check_ins: ["idx_check_ins_tx_hash_unique"],
+  events: [
+    "idx_events_core_event_id_unique",
+    "idx_events_publish_tx_hash_unique",
+  ],
+  passes: ["idx_passes_mint_tx_hash_unique"],
+};
+
+function tableIndexNames(tableName) {
+  return new Set(
+    db
+      .prepare(`PRAGMA index_list(${JSON.stringify(tableName)})`)
+      .all()
+      .map((row) => row.name),
+  );
+}
+
+function assertUniqueLiveProofIndexes() {
+  for (const [tableName, indexNames] of Object.entries(requiredUniqueIndexes)) {
+    const actualIndexNames = tableIndexNames(tableName);
+
+    for (const indexName of indexNames) {
+      assert(
+        actualIndexNames.has(indexName),
+        `${tableName} is missing unique live proof index ${indexName}`,
+      );
+    }
+  }
+}
 
 const runSmoke = db.transaction(() => {
+  assertUniqueLiveProofIndexes();
+
   db.prepare(
     `
     INSERT INTO users (id, wallet_address)
@@ -113,6 +146,13 @@ const runSmoke = db.transaction(() => {
     resourceCount,
     cleanedUp: db.prepare("SELECT COUNT(*) as count FROM events WHERE id = ?").get(eventId)
       .count === 0,
+    checks: [
+      "unique-live-proof-indexes",
+      "event-crud",
+      "collaborator-split-total",
+      "resource-crud",
+      "cascade-cleanup",
+    ],
   };
 });
 

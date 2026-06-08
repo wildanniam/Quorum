@@ -121,6 +121,8 @@ npm run readiness:audit
 
 The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
 The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
+The DB smoke verifies CRUD/cascade behavior and the unique live proof indexes
+that keep event IDs and transaction hashes from being replayed in SQLite.
 The wallet auth smoke verifies the real HTTP challenge, signature verification,
 session cookie, `/api/me`, and logout routes using a local test keypair without
 opening Freighter.

@@ -173,6 +173,10 @@ The live recording path also rejects replayed live proof transaction hashes
 across publish, pass, check-in, and withdrawal records. Withdrawal recording
 additionally rejects finality amounts that exceed the collaborator's DB
 withdrawable balance, so submit retries cannot inflate local proof totals.
+SQLite migrations enforce the same non-null uniqueness for core event IDs,
+publish transaction hashes, pass mint transaction hashes, and check-in
+transaction hashes; purchase and withdrawal transaction hashes are unique at
+table level from the initial schema.
 
 ## Contract Call Inputs
 
