@@ -2,10 +2,15 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 
 export const CHALLENGE_COOKIE = "quorum_challenge";
 export const SESSION_COOKIE = "quorum_session";
+export const CHALLENGE_MAX_AGE_SECONDS = 60 * 5;
+export const CHALLENGE_MAX_AGE_MS = CHALLENGE_MAX_AGE_SECONDS * 1000;
 export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 export const SESSION_MAX_AGE_MS = SESSION_MAX_AGE_SECONDS * 1000;
 
 const SESSION_CLOCK_SKEW_MS = 5 * 60 * 1000;
+const CHALLENGE_CLOCK_SKEW_MS = 60 * 1000;
+const CHALLENGE_HEADER = "Quorum wallet login";
+const CHALLENGE_NETWORK = "Network: Stellar Testnet";
 
 type SessionPayload = {
   walletAddress: string;
@@ -58,18 +63,42 @@ function sign(value: string) {
   );
 }
 
-export function createChallenge(walletAddress?: string) {
+export function createChallenge(walletAddress: string, issuedAt = new Date()) {
   const nonce = randomUUID();
-  const issuedAt = new Date().toISOString();
-  const addressLine = walletAddress ? `Wallet: ${walletAddress}` : "Wallet: pending";
 
   return [
-    "Quorum wallet login",
-    addressLine,
-    "Network: Stellar Testnet",
+    CHALLENGE_HEADER,
+    `Wallet: ${walletAddress}`,
+    CHALLENGE_NETWORK,
     `Nonce: ${nonce}`,
-    `Issued: ${issuedAt}`,
+    `Issued: ${issuedAt.toISOString()}`,
   ].join("\n");
+}
+
+export function isChallengeValidForWallet(
+  challenge: string,
+  walletAddress: string,
+  now = Date.now(),
+) {
+  const lines = challenge.split("\n");
+
+  if (lines.length !== 5) return false;
+  if (lines[0] !== CHALLENGE_HEADER) return false;
+  if (lines[1] !== `Wallet: ${walletAddress}`) return false;
+  if (lines[2] !== CHALLENGE_NETWORK) return false;
+  if (!/^Nonce: [0-9a-f-]{36}$/.test(lines[3] ?? "")) return false;
+
+  const issuedAtValue = lines[4]?.startsWith("Issued: ")
+    ? lines[4].slice("Issued: ".length)
+    : "";
+  const issuedAt = Date.parse(issuedAtValue);
+
+  if (Number.isNaN(issuedAt)) return false;
+
+  return (
+    issuedAt <= now + CHALLENGE_CLOCK_SKEW_MS &&
+    now - issuedAt <= CHALLENGE_MAX_AGE_MS
+  );
 }
 
 export function createSessionToken(walletAddress: string, issuedAt = Date.now()) {

@@ -199,6 +199,11 @@ const requiredDeployEnvCoverage = [
   "accept-valid-production-session-secret",
   "reject-expired-session-token",
   "reject-future-session-token",
+  "accept-current-wallet-bound-challenge",
+  "reject-expired-wallet-challenge",
+  "reject-future-wallet-challenge",
+  "reject-wallet-mismatched-challenge",
+  "reject-malformed-wallet-challenge",
 ];
 
 const requiredLiveHandoffTerms = [

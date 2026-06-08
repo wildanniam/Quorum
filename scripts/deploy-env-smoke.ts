@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import {
+  CHALLENGE_MAX_AGE_MS,
   SESSION_MAX_AGE_MS,
+  createChallenge,
   createSessionToken,
+  isChallengeValidForWallet,
   readSessionToken,
   resolveSessionSecret,
 } from "../src/lib/auth/session";
@@ -49,6 +52,21 @@ const futureToken = createSessionToken(walletAddress, now + 60 * 60 * 1000);
 assert.equal(readSessionToken(expiredToken, now), null);
 assert.equal(readSessionToken(futureToken, now), null);
 
+const challenge = createChallenge(walletAddress, new Date(now));
+const expiredChallenge = createChallenge(
+  walletAddress,
+  new Date(now - CHALLENGE_MAX_AGE_MS - 1),
+);
+const futureChallenge = createChallenge(walletAddress, new Date(now + 5 * 60 * 1000));
+assert.equal(isChallengeValidForWallet(challenge, walletAddress, now), true);
+assert.equal(isChallengeValidForWallet(expiredChallenge, walletAddress, now), false);
+assert.equal(isChallengeValidForWallet(futureChallenge, walletAddress, now), false);
+assert.equal(
+  isChallengeValidForWallet(challenge, "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH", now),
+  false,
+);
+assert.equal(isChallengeValidForWallet("Quorum wallet login", walletAddress, now), false);
+
 console.log(
   JSON.stringify(
     {
@@ -62,6 +80,11 @@ console.log(
         "local-session-token-roundtrip",
         "reject-expired-session-token",
         "reject-future-session-token",
+        "accept-current-wallet-bound-challenge",
+        "reject-expired-wallet-challenge",
+        "reject-future-wallet-challenge",
+        "reject-wallet-mismatched-challenge",
+        "reject-malformed-wallet-challenge",
       ],
     },
     null,

@@ -5,6 +5,7 @@ import {
   SESSION_COOKIE,
   SESSION_MAX_AGE_SECONDS,
   createSessionToken,
+  isChallengeValidForWallet,
 } from "@/lib/auth/session";
 import {
   decodeStellarSignature,
@@ -48,6 +49,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       { error: "Invalid signature encoding." },
       { status: 400 },
+    );
+  }
+
+  if (!isChallengeValidForWallet(challenge, walletAddress)) {
+    return NextResponse.json(
+      { error: "Challenge expired or does not match wallet." },
+      { status: 401 },
     );
   }
 
