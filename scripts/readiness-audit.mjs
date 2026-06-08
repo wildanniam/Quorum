@@ -159,6 +159,18 @@ const requiredLiveFlowCoverage = [
   "reject-finality-failure-without-persistence",
 ];
 
+const requiredLivePersistenceCoverage = [
+  "record-live-publish",
+  "record-live-pass",
+  "record-live-check-in",
+  "record-live-withdrawal",
+  "reject-stub-live-hash",
+  "reject-duplicate-live-check-in",
+  "reject-live-withdrawal-overdraw",
+  "reject-duplicate-live-withdrawal-tx",
+  "no-stub-live-records",
+];
+
 const requiredLivePolicyCoverage = [
   "preflight-route-invalid-request",
   "submit-invalid-signed-xdr-no-persistence",
@@ -441,6 +453,12 @@ function checkEvidence() {
   for (const coverage of requiredLiveFlowCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live flow coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLivePersistenceCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live persistence coverage: ${coverage}`);
     }
   }
 

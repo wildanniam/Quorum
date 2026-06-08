@@ -127,14 +127,46 @@ async function main() {
   assert.equal(checkInResult.pass.checkedIn, true);
   assert.equal(checkInResult.checkIn.txHash, txHash(15));
 
+  expectThrow(
+    () =>
+      repository.recordLiveWithdrawal({
+        amountUsdc: "1.5",
+        collaboratorWallet: speakerWallet,
+        eventId,
+        txHash: txHash(16),
+      }),
+    "exceeds withdrawable balance",
+  );
+
   const withdrawalResult = repository.recordLiveWithdrawal({
-    amountUsdc: "1.5",
+    amountUsdc: "1",
     collaboratorWallet: speakerWallet,
     eventId,
-    txHash: txHash(16),
+    txHash: txHash(17),
   });
-  assert.equal(withdrawalResult.withdrawal.amountUsdc, "1.5");
-  assert.equal(withdrawalResult.withdrawal.txHash, txHash(16));
+  assert.equal(withdrawalResult.withdrawal.amountUsdc, "1");
+  assert.equal(withdrawalResult.withdrawal.txHash, txHash(17));
+
+  expectThrow(
+    () =>
+      repository.recordLiveWithdrawal({
+        amountUsdc: "1",
+        collaboratorWallet: speakerWallet,
+        eventId,
+        txHash: txHash(17),
+      }),
+    "already recorded",
+  );
+  expectThrow(
+    () =>
+      repository.recordLiveWithdrawal({
+        amountUsdc: "0.1",
+        collaboratorWallet: speakerWallet,
+        eventId,
+        txHash: txHash(18),
+      }),
+    "exceeds withdrawable balance",
+  );
 
   expectThrow(
     () =>
@@ -185,6 +217,8 @@ async function main() {
           "record-live-withdrawal",
           "reject-stub-live-hash",
           "reject-duplicate-live-check-in",
+          "reject-live-withdrawal-overdraw",
+          "reject-duplicate-live-withdrawal-tx",
           "no-stub-live-records",
         ],
       },

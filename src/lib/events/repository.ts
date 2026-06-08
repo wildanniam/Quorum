@@ -969,6 +969,25 @@ export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
       throw new Error("Connected wallet is not a collaborator for this event.");
     }
 
+    const duplicateWithdrawal = db
+      .prepare("SELECT id FROM withdrawals WHERE tx_hash = ?")
+      .get(input.txHash.toLowerCase()) as { id: string } | undefined;
+
+    if (duplicateWithdrawal) {
+      throw new Error("Live withdrawal transaction hash is already recorded.");
+    }
+
+    const collaborator = toCollaboratorRecord(collaboratorRow);
+    const revenueUsdc = getEventRevenueUsdc(event.id);
+    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, input.collaboratorWallet);
+    const earnedUsdc = (revenueUsdc * collaborator.splitPercentage) / 100;
+    const availableUsdc = Math.max(earnedUsdc - withdrawnUsdc, 0);
+    const requestedUsdc = Number(input.amountUsdc);
+
+    if (requestedUsdc - availableUsdc > 0.000000001) {
+      throw new Error("Live withdrawal amount exceeds withdrawable balance.");
+    }
+
     const withdrawalId = createId("wdr");
 
     db.prepare(
@@ -991,7 +1010,7 @@ export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
       .get(withdrawalId) as WithdrawalRow;
 
     return {
-      collaborator: toCollaboratorRecord(collaboratorRow),
+      collaborator,
       event,
       withdrawal: toWithdrawalRecord(withdrawal),
     };
