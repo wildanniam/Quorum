@@ -77,6 +77,8 @@ The current read-only deployment evidence captured from testnet is recorded in
 `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. It covers the admin account,
 contract IDs, upload/deploy transaction window, initialization transactions,
 and decoded init/set-core parameters without performing any new signing.
+Run `npm run live:deployment:validate` to validate that evidence against
+Horizon, Soroban RPC events, and fetched contract interfaces.
 
 ## Current Boundary
 

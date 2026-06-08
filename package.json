@@ -27,6 +27,7 @@
     "live:evidence:template": "node scripts/live-evidence-audit.mjs",
     "live:evidence:audit": "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled",
     "live:evidence:audit:smoke": "node scripts/live-evidence-audit-smoke.mjs",
+    "live:deployment:validate": "node scripts/live-deployment-validate.mjs",
     "live:browser-flow:smoke": "tsx scripts/live-browser-flow-smoke.ts",
     "live:ui-wiring:smoke": "node scripts/live-ui-wiring-smoke.mjs",
     "evidence:local": "node scripts/collect-evidence.mjs",
