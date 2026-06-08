@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, RadioTower } from "lucide-react";
+import { ArrowUpRight, Sparkles } from "lucide-react";
 import {
   DesktopNavigation,
   MobileNavigation,
@@ -24,22 +24,24 @@ export function AppShell({ children }: AppShellProps) {
         Skip to content
       </a>
 
-      <header className="sticky top-0 z-20 border-b border-line/70 bg-background/82 backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-foreground/8 bg-background/72 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-5 lg:px-8">
           <Link
             href="/"
             className="group flex min-w-0 items-center gap-3"
             aria-label="Quorum marketplace"
           >
-            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-[8px] border border-accent/55 bg-accent text-accent-ink shadow-[0_0_32px_rgba(111,233,255,0.18)] transition group-hover:shadow-[0_0_42px_rgba(111,233,255,0.28)]">
-              <span className="font-mono text-sm font-black">Q</span>
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-accent/40 bg-accent/12 text-accent shadow-[0_0_38px_var(--event-glow)] transition group-hover:border-accent/70 group-hover:bg-accent/18">
+              <span className="font-display text-xl font-semibold leading-none">
+                Q
+              </span>
             </div>
             <div className="min-w-0">
-              <p className="truncate text-base font-semibold leading-none">
+              <p className="truncate text-base font-semibold leading-none tracking-tight">
                 Quorum
               </p>
-              <p className="mt-1 hidden truncate font-mono text-[11px] uppercase tracking-normal text-muted sm:block">
-                Stellar event checkout
+              <p className="mt-1 hidden truncate text-[11px] font-medium text-muted sm:block">
+                Events with wallet-native access
               </p>
             </div>
           </Link>
@@ -47,15 +49,15 @@ export function AppShell({ children }: AppShellProps) {
           <DesktopNavigation />
 
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-2 rounded-[8px] border border-line/70 bg-panel/58 px-3 py-2 text-xs text-muted backdrop-blur-xl xl:flex">
+            <div className="hidden min-h-10 items-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.045] px-3 text-xs text-muted backdrop-blur-xl xl:flex">
               <span
                 className={`h-2 w-2 rounded-full ${
                   liveConfigured ? "bg-success" : "bg-amber"
                 }`}
               />
-              <RadioTower size={14} />
+              <Sparkles size={14} />
               <span className="font-medium text-foreground">
-                {liveConfigured ? "Testnet ready" : "Local proof"}
+                {liveConfigured ? "Testnet live" : "Preview mode"}
               </span>
             </div>
             <WalletButton />
@@ -65,12 +67,12 @@ export function AppShell({ children }: AppShellProps) {
 
       <MobileNavigation />
       <main id="main-content">{children}</main>
-      <footer className="border-t border-line/70 bg-background/90">
+      <footer className="border-t border-foreground/8 bg-background/84">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 text-sm text-muted md:flex-row md:items-center md:justify-between lg:px-8">
           <p>
             {liveConfigured
-              ? "Live testnet contracts configured. Browser signing remains manual."
-              : "Local proof mode until live contract configuration is complete."}
+              ? "Quorum is running on Stellar testnet with explicit wallet approval."
+              : "Preview mode keeps the product flow available while live proofs are configured."}
           </p>
           <Link
             href="/dashboard/events/new"

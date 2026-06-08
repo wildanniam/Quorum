@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Compass,
-  LayoutDashboard,
+  PanelTop,
   PlusCircle,
   TicketCheck,
   type LucideIcon,
 } from "lucide-react";
+import { motion } from "motion/react";
 
 type NavItem = {
   href: string;
@@ -26,8 +27,8 @@ const navItems: NavItem[] = [
   },
   {
     href: "/dashboard",
-    icon: LayoutDashboard,
-    label: "Console",
+    icon: PanelTop,
+    label: "Studio",
     match: (pathname) =>
       pathname === "/dashboard" ||
       (pathname.startsWith("/dashboard/") &&
@@ -57,7 +58,7 @@ export function DesktopNavigation() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="hidden items-center gap-1 rounded-[8px] border border-line/70 bg-panel/54 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl md:flex"
+      className="hidden items-center gap-1 rounded-full border border-foreground/10 bg-foreground/[0.045] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl md:flex"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -67,17 +68,29 @@ export function DesktopNavigation() {
           <Link
             aria-current={active ? "page" : undefined}
             className={cn(
-              "inline-flex min-h-10 items-center gap-2 rounded-[6px] px-3 text-sm font-medium transition",
+              "relative inline-flex min-h-9 items-center gap-2 overflow-hidden rounded-full px-3.5 text-sm font-medium transition",
               active
-                ? "bg-foreground shadow-[0_8px_30px_rgba(247,242,232,0.12)]"
-                : "text-muted hover:bg-foreground/10 hover:text-foreground",
+                ? "text-foreground"
+                : "text-muted hover:bg-foreground/8 hover:text-foreground",
             )}
             href={item.href}
             key={item.href}
-            style={active ? { color: "var(--accent-ink)" } : undefined}
           >
-            <Icon size={15} strokeWidth={1.9} />
-            {item.label}
+            {active ? (
+              <motion.span
+                className="absolute inset-0 rounded-full bg-foreground/10"
+                layoutId="desktop-nav-active"
+                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              />
+            ) : null}
+            <span className="relative inline-flex items-center gap-2">
+              <Icon
+                className={active ? "text-accent" : undefined}
+                size={15}
+                strokeWidth={1.9}
+              />
+              {item.label}
+            </span>
           </Link>
         );
       })}
@@ -91,7 +104,7 @@ export function MobileNavigation() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="sticky top-[4.1rem] z-10 mx-3 mt-3 grid grid-cols-4 gap-1 rounded-[8px] border border-line/80 bg-background/88 p-1 shadow-[0_18px_60px_rgba(0,0,0,0.26)] backdrop-blur-xl md:hidden"
+      className="sticky top-[4.25rem] z-10 mx-3 mt-3 grid grid-cols-4 gap-1 rounded-full border border-foreground/10 bg-background/88 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:hidden"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -101,17 +114,27 @@ export function MobileNavigation() {
           <Link
             aria-current={active ? "page" : undefined}
             className={cn(
-              "grid min-h-12 place-items-center gap-0.5 rounded-[6px] px-1 text-[11px] font-medium transition",
+              "relative grid min-h-12 place-items-center gap-0.5 overflow-hidden rounded-full px-1 text-[11px] font-semibold transition",
               active
-                ? "bg-foreground"
-                : "text-muted hover:bg-foreground/10 hover:text-foreground",
+                ? "text-foreground"
+                : "text-muted hover:bg-foreground/8 hover:text-foreground",
             )}
             href={item.href}
             key={item.href}
-            style={active ? { color: "var(--accent-ink)" } : undefined}
           >
-            <Icon size={17} strokeWidth={1.9} />
-            <span>{item.label}</span>
+            {active ? (
+              <motion.span
+                className="absolute inset-0 rounded-full bg-foreground/10"
+                layoutId="mobile-nav-active"
+                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+              />
+            ) : null}
+            <Icon
+              className={cn("relative", active && "text-accent")}
+              size={17}
+              strokeWidth={1.9}
+            />
+            <span className="relative">{item.label}</span>
           </Link>
         );
       })}
