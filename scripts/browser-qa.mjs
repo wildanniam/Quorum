@@ -34,7 +34,7 @@ const pages = [
     path: "/events/apac-stellar-builder-meetup",
     requiredText: [
       "APAC Stellar Builder Meetup",
-      "Buy pass",
+      "Get pass",
       "70%",
       "20%",
       "10%",
@@ -43,14 +43,14 @@ const pages = [
   {
     label: "Locked resources",
     path: "/events/apac-stellar-builder-meetup/resources",
-    requiredText: ["Locked", "Connect the wallet", "Requires this event pass"],
+    requiredText: ["LOCKED", "Connect the wallet", "Get pass"],
   },
   {
     label: "Dashboard readiness",
     path: "/dashboard",
     requiredText: [
-      "Transparency console",
-      "Deployment pending",
+      "Event operations without losing the proof trail",
+      "CONTRACT READINESS",
       "Local proof mode",
       "USDC asset",
       "Missing",

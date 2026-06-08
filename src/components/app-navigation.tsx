@@ -91,7 +91,7 @@ export function MobileNavigation() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="fixed inset-x-3 bottom-3 z-30 grid grid-cols-4 gap-1 rounded-[8px] border border-line/80 bg-background/88 p-1 shadow-[0_18px_60px_rgba(0,0,0,0.42)] backdrop-blur-xl md:hidden"
+      className="sticky top-[4.1rem] z-10 mx-3 mt-3 grid grid-cols-4 gap-1 rounded-[8px] border border-line/80 bg-background/88 p-1 shadow-[0_18px_60px_rgba(0,0,0,0.26)] backdrop-blur-xl md:hidden"
     >
       {navItems.map((item) => {
         const Icon = item.icon;

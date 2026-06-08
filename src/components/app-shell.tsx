@@ -16,7 +16,7 @@ export function AppShell({ children }: AppShellProps) {
   const liveConfigured = readiness.proofMode === "live";
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-background pb-20 text-foreground quorum-grid md:pb-0">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground quorum-grid">
       <a
         className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-[8px] focus:bg-accent focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-accent-ink"
         href="#main-content"
@@ -63,9 +63,8 @@ export function AppShell({ children }: AppShellProps) {
         </div>
       </header>
 
-      <main id="main-content">{children}</main>
       <MobileNavigation />
-
+      <main id="main-content">{children}</main>
       <footer className="border-t border-line/70 bg-background/90">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 text-sm text-muted md:flex-row md:items-center md:justify-between lg:px-8">
           <p>

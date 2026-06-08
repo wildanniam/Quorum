@@ -87,7 +87,7 @@ export default async function CheckInPage({ params }: CheckInPageProps) {
             <div className="grid gap-5">
               <CheckInPanel eventId={event.id} />
 
-              <div className="grid gap-4 pt-28 md:grid-cols-[0.72fr_1.28fr] md:pt-0">
+              <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr]">
                 <div className="grid min-h-56 place-items-center rounded-[8px] border border-line bg-panel">
                   <QrCode
                     className="text-event-accent"
