@@ -35,6 +35,7 @@ const requiredFiles = [
   "scripts/live-ui-wiring-smoke.mjs",
   "scripts/live-xdr-smoke.ts",
   "scripts/wallet-auth-smoke.mjs",
+  "scripts/contracts/contract-cli-output.mjs",
   "scripts/contracts/live-signing-approval.mjs",
   "scripts/contracts/live-signing-approval-smoke.mjs",
   "scripts/contracts/testnet-network-guard.mjs",
@@ -251,6 +252,8 @@ const requiredContractCoverage = [
 const requiredContractApprovalCoverage = [
   "approval-helper-default-deny",
   "approval-helper-exact-phrase",
+  "parse-contract-id-from-cli-output",
+  "reject-invalid-contract-deploy-output",
   "deploy-script-denies-without-live-approval",
   "init-script-denies-without-live-approval",
   "deploy-script-denies-non-testnet-network",

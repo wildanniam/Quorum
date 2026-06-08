@@ -1,6 +1,7 @@
 import { spawnSync } from "node:child_process";
 import assert from "node:assert/strict";
 import { StrKey } from "@stellar/stellar-sdk";
+import { extractContractIdFromOutput } from "./contract-cli-output.mjs";
 import {
   hasLiveSigningApproval,
   liveSigningApprovalEnv,
@@ -50,6 +51,17 @@ assert.equal(
   true,
 );
 assert.match(liveSigningApprovalMessage(), /explicit approval/);
+assert.equal(
+  extractContractIdFromOutput(
+    `stellar output\nContract deployed: ${fakeCoreContractId}\n`,
+    "fake deploy",
+  ),
+  fakeCoreContractId,
+);
+assert.throws(
+  () => extractContractIdFromOutput("stellar output without a contract id", "fake deploy"),
+  /valid Soroban contract ID/,
+);
 
 const deployWithoutApproval = runNode("scripts/contracts/deploy-testnet.mjs", {});
 assert.equal(deployWithoutApproval.status, 1);
@@ -102,6 +114,8 @@ console.log(
       checks: [
         "approval-helper-default-deny",
         "approval-helper-exact-phrase",
+        "parse-contract-id-from-cli-output",
+        "reject-invalid-contract-deploy-output",
         "deploy-script-denies-without-live-approval",
         "init-script-denies-without-live-approval",
         "deploy-script-denies-non-testnet-network",

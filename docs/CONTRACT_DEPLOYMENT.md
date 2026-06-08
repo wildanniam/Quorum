@@ -38,6 +38,9 @@ The deploy script prints:
 - `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID`
 - `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`
 
+Those IDs are parsed from Stellar CLI output and validated as Soroban contract
+IDs before they are printed for app env configuration.
+
 Copy those values into `.env.local` for app integration.
 
 ## Initialization

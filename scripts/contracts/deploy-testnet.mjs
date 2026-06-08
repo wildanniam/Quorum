@@ -1,4 +1,5 @@
 import { execFileSync } from "node:child_process";
+import { extractContractIdFromOutput } from "./contract-cli-output.mjs";
 import { requireLiveSigningApproval } from "./live-signing-approval.mjs";
 import { requireTestnetDeploymentNetwork } from "./testnet-network-guard.mjs";
 
@@ -21,7 +22,7 @@ function run(args, options = {}) {
   });
 }
 
-function deployContract({ alias, wasm }) {
+function deployContract({ alias, label, wasm }) {
   const output = run(
     [
       "contract",
@@ -38,17 +39,19 @@ function deployContract({ alias, wasm }) {
     { capture: true },
   ).trim();
 
-  return output.split(/\s+/).at(-1);
+  return extractContractIdFromOutput(output, label);
 }
 
 run(["contract", "build"]);
 
 const passContractId = deployContract({
   alias: "quorum-pass-nft",
+  label: "QuorumPassNFT deploy",
   wasm: "target/wasm32v1-none/release/quorum_pass_nft.wasm",
 });
 const coreContractId = deployContract({
   alias: "quorum-core",
+  label: "QuorumCore deploy",
   wasm: "target/wasm32v1-none/release/quorum_core.wasm",
 });
 

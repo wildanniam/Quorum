@@ -82,6 +82,9 @@ npm run contracts:init:testnet
 `contracts:deploy:testnet` and `contracts:init:testnet` refuse to run unless
 `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is present. Set it only
 after the user explicitly approves live testnet signing for the current run.
+The deploy script validates printed Stellar CLI contract IDs before surfacing
+them as `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID` and
+`NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`.
 
 Record the pass deploy, core deploy, pass init, core init, and pass `set_core`
 transaction hashes, plus contract IDs, network, WASM hashes, and admin address
