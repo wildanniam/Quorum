@@ -150,7 +150,9 @@ return value decoding for purchase token IDs and withdraw amounts. Before any
 RPC submit, it checks the signed transaction source plus the invoked contract
 ID, function name, and argument XDR against the prepared action. The route
 submit path rejects invalid signed XDR before persistence and still requires a
-real RPC-confirmed finality result before writing live proof data.
+real RPC-confirmed finality result before writing live proof data. RPC
+`DUPLICATE` submission responses are treated as retry-friendly pending
+submissions and are still polled to finality before any local proof write.
 `POST /api/events/[eventId]/contract-action/preflight` exposes the non-signing
 RPC preflight boundary over HTTP and fails invalid requests before touching RPC.
 `src/lib/stellar/live-browser-flow.ts` is the browser-side orchestration helper:

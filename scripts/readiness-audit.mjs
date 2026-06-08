@@ -198,6 +198,7 @@ const requiredLiveSigningCoverage = [
 ];
 
 const requiredLiveSubmissionCoverage = [
+  "accept-duplicate-submission-status",
   "reject-source-mismatch-before-rpc",
   "reject-function-mismatch-before-rpc",
   "reject-contract-mismatch-before-rpc",

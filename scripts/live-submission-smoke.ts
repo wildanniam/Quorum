@@ -34,6 +34,7 @@ const metadataHashHex =
   "84aa0f60f0db1e95387b09ace00af75db46d7e7f2ea2ae0b499f7f94045fd7a8";
 const txHash = Buffer.alloc(32, 19).toString("hex");
 const withdrawTxHash = Buffer.alloc(32, 20).toString("hex");
+const duplicateTxHash = Buffer.alloc(32, 21).toString("hex");
 
 const preparedAction: PreparedLiveContractAction = {
   action: "checkout_pass",
@@ -182,6 +183,41 @@ async function main() {
   assert.deepEqual(result.returnValue, {
     kind: "token_id",
     value: "9001",
+  });
+
+  let duplicatePollCalls = 0;
+
+  const duplicateResult = await submitSignedLiveTransaction({
+    options: {
+      pollIntervalMs: 1,
+      rpcServer: {
+        async sendTransaction(transaction) {
+          assert("source" in transaction);
+          assert.equal(transaction.source, attendeeWallet);
+          return {
+            hash: duplicateTxHash,
+            latestLedger: 1,
+            latestLedgerCloseTime: Date.now(),
+            status: "DUPLICATE",
+          };
+        },
+        async getTransaction(hash) {
+          duplicatePollCalls += 1;
+          assert.equal(hash, duplicateTxHash);
+          return getSuccess(hash, nativeToScVal(BigInt("9003"), { type: "u64" }));
+        },
+      },
+      timeoutMs: 100,
+    },
+    signedTransaction,
+  });
+
+  assert.equal(duplicatePollCalls, 1);
+  assert.equal(duplicateResult.status, "SUCCESS");
+  assert.equal(duplicateResult.txHash, duplicateTxHash);
+  assert.deepEqual(duplicateResult.returnValue, {
+    kind: "token_id",
+    value: "9003",
   });
 
   let sourceMismatchSendCalls = 0;
@@ -552,6 +588,7 @@ async function main() {
         checks: [
           "submit-signed-transaction",
           "poll-until-success",
+          "accept-duplicate-submission-status",
           "decode-purchase-token-id",
           "decode-withdraw-amount",
           "reject-source-mismatch-before-rpc",
