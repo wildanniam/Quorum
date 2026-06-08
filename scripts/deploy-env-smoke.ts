@@ -45,6 +45,7 @@ assert.equal(
 const token = createSessionToken(walletAddress);
 const session = readSessionToken(token);
 assert.equal(session?.walletAddress, walletAddress);
+assert.equal(readSessionToken(`${token}.extra`), null);
 assert.throws(
   () => createSessionToken("not-a-stellar-wallet"),
   /valid Stellar public key/,
@@ -82,6 +83,7 @@ console.log(
         "reject-short-production-session-secret",
         "accept-valid-production-session-secret",
         "local-session-token-roundtrip",
+        "reject-extra-segment-session-token",
         "reject-invalid-session-wallet",
         "reject-expired-session-token",
         "reject-future-session-token",

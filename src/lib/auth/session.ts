@@ -121,7 +121,10 @@ export function readSessionToken(
 ): SessionPayload | null {
   if (!token) return null;
 
-  const [encodedPayload, signature] = token.split(".");
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+
+  const [encodedPayload, signature] = parts;
   if (!encodedPayload || !signature) return null;
 
   const expected = sign(encodedPayload);

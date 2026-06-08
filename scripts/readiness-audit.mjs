@@ -197,6 +197,7 @@ const requiredDeployEnvCoverage = [
   "reject-local-fallback-production-session-secret",
   "reject-short-production-session-secret",
   "accept-valid-production-session-secret",
+  "reject-extra-segment-session-token",
   "reject-invalid-session-wallet",
   "reject-expired-session-token",
   "reject-future-session-token",
