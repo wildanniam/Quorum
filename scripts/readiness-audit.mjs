@@ -15,9 +15,12 @@ const requiredFiles = [
   "docs/CONTRACT_DEPLOYMENT.md",
   "docs/DEMO_EVIDENCE.md",
   "docs/HACKATHON_DEMO_RUNBOOK.md",
+  "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_SIGNING_HANDOFF.md",
+  "docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md",
   "docs/LIVE_TESTNET_EVIDENCE.example.json",
   "docs/MVP_READINESS.md",
+  "docs/PRODUCTION_ENV_HANDOFF.md",
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
   "db/migrations/0002_live_proof_uniqueness.sql",
@@ -26,7 +29,9 @@ const requiredFiles = [
   "scripts/live-browser-flow-smoke.ts",
   "scripts/live-evidence-audit.mjs",
   "scripts/live-evidence-audit-smoke.mjs",
+  "scripts/live-deployment-validate.mjs",
   "scripts/live-flow-smoke.ts",
+  "scripts/hosted-deployment-preflight.ts",
   "scripts/live-persistence-smoke.ts",
   "scripts/live-preflight-smoke.ts",
   "scripts/live-readiness-smoke.ts",
@@ -69,6 +74,8 @@ const requiredPackageScripts = [
   "demo:live-policy",
   "demo:smoke",
   "deploy:env:smoke",
+  "deploy:hosted:preflight",
+  "deploy:hosted:preflight:smoke",
   "browser:qa",
   "evidence:local",
   "lint",
@@ -77,6 +84,7 @@ const requiredPackageScripts = [
   "live:evidence:audit",
   "live:evidence:audit:smoke",
   "live:evidence:template",
+  "live:deployment:validate",
   "live:flow:smoke",
   "live:persistence:smoke",
   "live:preflight:smoke",
@@ -102,8 +110,10 @@ const requiredEvidenceChecks = [
   "Live policy smoke",
   "Browser QA",
   "Deploy env smoke",
+  "Deploy hosted preflight smoke",
   "Live args smoke",
   "Live browser flow smoke",
+  "Live deployment validation",
   "Live evidence audit smoke",
   "Live evidence template",
   "Live flow smoke",
@@ -291,6 +301,31 @@ const requiredLiveEvidenceAuditCoverage = [
   "reject-filled-live-evidence-token-mismatch",
   "reject-filled-live-evidence-origin-mismatch",
   "reject-filled-live-evidence-zero-withdraw",
+];
+
+const requiredHostedPreflightCoverage = [
+  "hosted-url-public-https",
+  "production-session-secret-present",
+  "runtime-env-matches-deployment-evidence",
+  "operator-signing-env-absent",
+  "contract-status-live-proof-mode",
+  "contract-status-rpc-reachable",
+  "contract-status-actions-live-required",
+  "reject-localhost-hosted-url",
+  "reject-contract-id-mismatch",
+  "reject-operator-signing-env",
+  "reject-invalid-production-session-secret",
+  "reject-local-contract-status",
+  "reject-non-live-action-policy",
+];
+
+const requiredLiveDeploymentValidationCoverage = [
+  "static-evidence-shape",
+  "horizon-admin-transaction-window",
+  "decoded-init-and-set-core-parameters",
+  "rpc-set-core-event",
+  "stellar-cli-contract-interfaces",
+  "recorded-read-only-validation-evidence",
 ];
 
 const requiredLiveHandoffTerms = [
@@ -578,6 +613,18 @@ function checkEvidence() {
     }
   }
 
+  for (const coverage of requiredHostedPreflightCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing hosted preflight coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveDeploymentValidationCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live deployment validation coverage: ${coverage}`);
+    }
+  }
+
   if (!evidence.includes("- Payment asset configured: `false`")) {
     fail("DEMO_EVIDENCE does not record local payment asset readiness.");
   }
@@ -612,6 +659,8 @@ function checkEvidence() {
 
 function checkLiveBoundaries() {
   const handoff = readFile("docs/LIVE_SIGNING_HANDOFF.md");
+  const manualRunbook = readFile("docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md");
+  const productionHandoff = readFile("docs/PRODUCTION_ENV_HANDOFF.md");
   const readiness = readFile("docs/MVP_READINESS.md");
   const templateAudit = runJson("node", ["scripts/live-evidence-audit.mjs"]);
 
@@ -631,6 +680,7 @@ function checkLiveBoundaries() {
     "Signed transaction submission boundary polls finality and decodes return values",
     "Wallet auth HTTP flow issues signed sessions",
     "Live mode requires Stellar testnet network config",
+    "Hosted deployment preflight is fail-safe",
     "Mock live transaction flow persists only after success",
     "Verified live transaction results can be recorded",
     "Unsigned Soroban XDR templates are parseable",
@@ -642,6 +692,33 @@ function checkLiveBoundaries() {
 
   if (!readiness.includes("not yet a complete live testnet submission")) {
     fail("MVP_READINESS does not preserve the live submission boundary.");
+  }
+
+  for (const term of [
+    "Manual Freighter Signing Runbook",
+    "Stop immediately",
+    "QuorumCore.create_event",
+    "QuorumCore.purchase",
+    "QuorumCore.check_in",
+    "QuorumCore.withdraw",
+    "docs/LIVE_TESTNET_EVIDENCE.json",
+    "npm run live:evidence:audit",
+  ]) {
+    if (!manualRunbook.includes(term)) {
+      fail(`MANUAL_FREIGHTER_SIGNING_RUNBOOK is missing term: ${term}`);
+    }
+  }
+
+  for (const term of [
+    "npm run deploy:hosted:preflight",
+    "Do not add them to the normal hosted app runtime",
+    "production storage",
+    "persistent disk",
+    "public HTTPS",
+  ]) {
+    if (!productionHandoff.includes(term)) {
+      fail(`PRODUCTION_ENV_HANDOFF is missing term: ${term}`);
+    }
   }
 
   if (!templateAudit.ok || templateAudit.mode !== "template") {

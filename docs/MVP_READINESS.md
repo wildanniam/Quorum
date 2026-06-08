@@ -1,6 +1,6 @@
 # Quorum MVP Readiness Matrix
 
-Last updated: 2026-06-08.
+Last updated: 2026-06-09.
 
 This matrix maps the final definition of done in `DEVELOPMENT_PLAN.md` to the
 current proof available in the repository. It separates locally verified MVP
@@ -21,8 +21,8 @@ Quorum is considered locally demo-ready when these criteria pass:
 8. Local DB, lint, build, audit, API origin smoke, demo smoke, live policy
    smoke, browser QA, deploy env smoke, live args smoke, live flow smoke,
    live persistence smoke, live preflight smoke, live signing smoke, live
-   submission smoke, live XDR smoke, contract tests, contract build,
-   contract approval smoke, and
+   submission smoke, live XDR smoke, hosted preflight smoke, live deployment
+   validation, contract tests, contract build, contract approval smoke, and
    deployment doctor checks pass with live signing exceptions documented.
 9. The non-signing readiness audit passes after evidence is refreshed.
 
@@ -81,35 +81,34 @@ The live hackathon acceptance criteria add two gated requirements:
 
 ## Live Testnet Gate
 
-The only remaining critical gate for the full final definition of done is live
-deployment and signing:
+The contracts are already deployed on Stellar testnet and read-only validated in
+`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. The remaining critical gate for
+the full final definition of done is hosted app readiness plus manual
+Freighter-signed app-flow evidence:
 
-1. Configure a funded Stellar testnet identity through `STELLAR_ACCOUNT`.
-2. Run `npm run contracts:doctor`.
-3. Set `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` after explicit
-   approval for the current live testnet signing run.
-4. Run `npm run contracts:deploy:testnet`.
-5. Export the printed `NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID` and
-   `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID`.
-6. Run `npm run contracts:init:testnet`.
-7. Confirm and export `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID`.
-8. Configure the hosted app environment, including a non-placeholder
-   `QUORUM_SESSION_SECRET` of at least 32 characters, and verify Freighter
-   signing on the deployed URL.
-9. Record pass deploy, core deploy, pass init, core init, pass `set_core`, and
-   app flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
+1. Choose the production storage path described in
+   `docs/PRODUCTION_ENV_HANDOFF.md`.
+2. Configure the hosted runtime env with the recorded testnet contract IDs, the
+   confirmed USDC contract ID, and a non-placeholder `QUORUM_SESSION_SECRET` of
+   at least 32 characters.
+3. Run `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
+4. After explicit approval for the current live testnet wallet session, follow
+   `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md`.
+5. Record hosted URLs, deployment transaction hashes, and Freighter-signed app
+   flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
    `npm run live:evidence:audit`.
 
 Until those steps are intentionally approved and executed, Quorum is demo-ready
-in local proof mode and contract-ready for live testnet deployment.
-Use `docs/LIVE_SIGNING_HANDOFF.md` for the endpoint-by-endpoint live signing
-handoff and required transaction evidence.
+in local proof mode, live-contract deployed, and app-live-signing ready.
+Use `docs/LIVE_SIGNING_HANDOFF.md` for the endpoint-by-endpoint signing
+architecture and `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the human
+approval sequence.
 
 ## Current Submission State
 
 The current repository is suitable for a local hackathon demo and technical
 review. It is not yet a complete live testnet submission because funded signing
-credentials, deployed contract IDs, hosted environment variables, and real
-transaction hashes are intentionally outside the local repo state. The
+hosted environment variables, production storage confirmation, and real app
+flow transaction hashes are intentionally outside the local repo state. The
 machine-readable template for that future live proof is
 `docs/LIVE_TESTNET_EVIDENCE.example.json`.
