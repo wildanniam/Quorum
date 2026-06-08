@@ -27,6 +27,7 @@ const requiredFiles = [
   "scripts/live-flow-smoke.ts",
   "scripts/live-persistence-smoke.ts",
   "scripts/live-preflight-smoke.ts",
+  "scripts/live-readiness-smoke.ts",
   "scripts/live-signing-smoke.ts",
   "scripts/live-submission-smoke.ts",
   "scripts/live-ui-wiring-smoke.mjs",
@@ -71,6 +72,7 @@ const requiredPackageScripts = [
   "live:flow:smoke",
   "live:persistence:smoke",
   "live:preflight:smoke",
+  "live:readiness:smoke",
   "live:signing:smoke",
   "live:submission:smoke",
   "live:ui-wiring:smoke",
@@ -96,6 +98,7 @@ const requiredEvidenceChecks = [
   "Live flow smoke",
   "Live persistence smoke",
   "Live preflight smoke",
+  "Live readiness smoke",
   "Live signing smoke",
   "Live submission smoke",
   "Live UI wiring smoke",
@@ -164,6 +167,12 @@ const requiredLiveSubmissionCoverage = [
   "reject-argument-mismatch-before-rpc",
 ];
 
+const requiredLiveReadinessCoverage = [
+  "accept-testnet-live-readiness",
+  "reject-non-testnet-live-readiness",
+  "reject-mismatched-testnet-passphrase",
+];
+
 const requiredLiveBrowserCoverage = [
   "browser-live-preflight-sign-submit",
   "browser-live-signer-options",
@@ -224,6 +233,7 @@ const requiredLiveHandoffTerms = [
   "I_APPROVE_TESTNET_SIGNING",
   "Freighter",
   "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
+  "non-testnet",
   "Acceptance Evidence For Live Mode",
   "Partial live mode must not mix live IDs with local proof writes",
   "sourceSequence",
@@ -351,6 +361,7 @@ function checkEnvExample() {
     "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
     "STELLAR_NETWORK",
     "STELLAR_ACCOUNT",
+    "QUORUM_LIVE_SIGNING_APPROVED",
     "ADMIN_ADDRESS",
     "QUORUM_PLATFORM_FEE_BPS",
   ];
@@ -429,6 +440,12 @@ function checkEvidence() {
   for (const coverage of requiredLiveSubmissionCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live submission coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredLiveReadinessCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing live readiness coverage: ${coverage}`);
     }
   }
 
@@ -519,6 +536,7 @@ function checkLiveBoundaries() {
     "Live RPC preflight can prepare transaction XDR for signing",
     "Freighter signing boundary validates signed transaction output",
     "Signed transaction submission boundary polls finality and decodes return values",
+    "Live mode requires Stellar testnet network config",
     "Mock live transaction flow persists only after success",
     "Verified live transaction results can be recorded",
     "Unsigned Soroban XDR templates are parseable",

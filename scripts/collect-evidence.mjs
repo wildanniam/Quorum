@@ -20,6 +20,7 @@ const checks = [
   { label: "Live flow smoke", command: "npm", args: ["run", "live:flow:smoke"] },
   { label: "Live persistence smoke", command: "npm", args: ["run", "live:persistence:smoke"] },
   { label: "Live preflight smoke", command: "npm", args: ["run", "live:preflight:smoke"] },
+  { label: "Live readiness smoke", command: "npm", args: ["run", "live:readiness:smoke"] },
   { label: "Live signing smoke", command: "npm", args: ["run", "live:signing:smoke"] },
   { label: "Live submission smoke", command: "npm", args: ["run", "live:submission:smoke"] },
   { label: "Live XDR smoke", command: "npm", args: ["run", "live:xdr:smoke"] },

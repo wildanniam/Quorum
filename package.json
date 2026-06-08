@@ -18,6 +18,7 @@
     "live:flow:smoke": "tsx scripts/live-flow-smoke.ts",
     "live:persistence:smoke": "tsx scripts/live-persistence-smoke.ts",
     "live:preflight:smoke": "tsx scripts/live-preflight-smoke.ts",
+    "live:readiness:smoke": "tsx scripts/live-readiness-smoke.ts",
     "live:signing:smoke": "tsx scripts/live-signing-smoke.ts",
     "live:submission:smoke": "tsx scripts/live-submission-smoke.ts",
     "live:xdr:smoke": "tsx scripts/live-xdr-smoke.ts",

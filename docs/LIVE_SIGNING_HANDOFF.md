@@ -62,6 +62,9 @@ the current Stellar testnet asset/token source. Do not use the dummy local
 currency address from tests for deployment.
 `QUORUM_SESSION_SECRET` must also be replaced for hosted production; the app
 rejects missing, placeholder, local fallback, or short production secrets.
+Live action policy also requires the app network name and passphrase to remain
+Stellar testnet; non-testnet or mismatched network env keeps the app in local
+proof mode even when contract IDs are valid.
 
 ## Contract Deployment Sequence
 

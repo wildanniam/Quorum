@@ -6,6 +6,7 @@ export type ContractReadiness = {
   network: string;
   rpcUrl: string;
   networkPassphrase: string;
+  networkConfigured: boolean;
   coreContractId: string | null;
   passContractId: string | null;
   usdcContractId: string | null;
@@ -25,6 +26,21 @@ function isValidContractId(value: string | null) {
   return Boolean(value && StrKey.isValidContract(value));
 }
 
+function isTestnetNetworkName(network: string) {
+  return network.trim().toUpperCase() === "TESTNET";
+}
+
+function isTestnetNetworkPassphrase(networkPassphrase: string) {
+  return networkPassphrase.trim() === Networks.TESTNET;
+}
+
+function isTestnetNetwork(network: string, networkPassphrase: string) {
+  return (
+    isTestnetNetworkName(network) &&
+    isTestnetNetworkPassphrase(networkPassphrase)
+  );
+}
+
 export function getContractReadiness(): ContractReadiness {
   const coreContractId = optionalEnv(process.env.NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID);
   const passContractId = optionalEnv(process.env.NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID);
@@ -41,6 +57,12 @@ export function getContractReadiness(): ContractReadiness {
     usdcContractId ? null : "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID",
   ].filter((item): item is string => Boolean(item));
   const invalid = [
+    !isTestnetNetworkName(network)
+      ? "NEXT_PUBLIC_STELLAR_NETWORK"
+      : null,
+    !isTestnetNetworkPassphrase(networkPassphrase)
+      ? "NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE"
+      : null,
     coreContractId && !isValidContractId(coreContractId)
       ? "NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID"
       : null,
@@ -51,6 +73,7 @@ export function getContractReadiness(): ContractReadiness {
       ? "NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID"
       : null,
   ].filter((item): item is string => Boolean(item));
+  const networkConfigured = isTestnetNetwork(network, networkPassphrase);
   const contractsConfigured =
     Boolean(coreContractId && passContractId) &&
     !invalid.includes("NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID") &&
@@ -64,11 +87,12 @@ export function getContractReadiness(): ContractReadiness {
     network,
     rpcUrl,
     networkPassphrase,
+    networkConfigured,
     coreContractId,
     passContractId,
     usdcContractId,
-    proofMode: configured ? "live" : "local",
-    configured,
+    proofMode: configured && networkConfigured ? "live" : "local",
+    configured: configured && networkConfigured,
     contractsConfigured,
     paymentAssetConfigured,
     missing,

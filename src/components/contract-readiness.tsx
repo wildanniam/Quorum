@@ -62,9 +62,9 @@ export function ContractReadiness() {
     },
     {
       icon: RadioTower,
-      label: readiness.network,
-      value: readiness.rpcUrl.replace(/^https?:\/\//, ""),
-      active: true,
+      label: "Network",
+      value: readiness.networkConfigured ? readiness.network : "Invalid",
+      active: readiness.networkConfigured,
     },
   ];
 
@@ -79,7 +79,7 @@ export function ContractReadiness() {
       <p className="mt-3 text-sm leading-6 text-muted">
         {readiness.configured
           ? "Live Stellar contract and payment asset IDs are configured for proof surfaces."
-          : "Using local proof records until valid Stellar testnet contract and payment asset IDs are configured."}
+          : "Using local proof records until valid Stellar testnet network, contract, and payment asset IDs are configured."}
       </p>
 
       <div className="mt-5 grid gap-3">
