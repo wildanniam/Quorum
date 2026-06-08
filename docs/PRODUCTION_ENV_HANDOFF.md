@@ -92,6 +92,7 @@ hosted live transaction demo:
 
 ```bash
 npm run deploy:env:smoke
+npm run deploy:hosted:preflight:smoke
 npm run live:readiness:smoke
 npm run live:deployment:validate
 npm run lint
@@ -101,13 +102,15 @@ npm run build
 After deployment, verify the hosted app:
 
 1. Open the hosted app over public HTTPS.
-2. Confirm `/api/contracts/status` returns `proofMode: "live"`.
-3. Confirm publish, checkout, check-in, and withdraw policies report
+2. Run the hosted preflight against the deployed origin and pulled hosted env:
+   `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
+3. Confirm `/api/contracts/status` returns `proofMode: "live"`.
+4. Confirm publish, checkout, check-in, and withdraw policies report
    `live_required`.
-4. Run browser QA against the hosted origin or capture equivalent screenshots.
-5. Record hosted URLs and signed transaction hashes in
+5. Run browser QA against the hosted origin or capture equivalent screenshots.
+6. Record hosted URLs and signed transaction hashes in
    `docs/LIVE_TESTNET_EVIDENCE.json`.
-6. Run `npm run live:evidence:audit` only after the filled evidence file has no
+7. Run `npm run live:evidence:audit` only after the filled evidence file has no
    placeholders.
 
 ## Handoff Status

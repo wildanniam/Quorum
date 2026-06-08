@@ -73,6 +73,7 @@ npm run demo:smoke
 npm run demo:live-policy
 npm run browser:qa
 npm run deploy:env:smoke
+npm run deploy:hosted:preflight:smoke
 npm run live:args:smoke
 npm run live:flow:smoke
 npm run live:persistence:smoke
@@ -158,6 +159,13 @@ output.
 `npm run deploy:env:smoke` verifies hosted-session guardrails without using
 cloud credentials: production rejects missing, placeholder, local fallback, and
 short `QUORUM_SESSION_SECRET` values.
+
+`npm run deploy:hosted:preflight:smoke` verifies the hosted deployment
+preflight rules without cloud credentials or signing: public HTTPS URL,
+production session secret, exact contract/env match against
+`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`, absence of operator signing env,
+and live `/api/contracts/status` action policies. For a real hosted target, run
+`npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
 
 Live testnet deployment signs transactions and is intentionally gated by funded
 wallet approval:

@@ -16,6 +16,8 @@
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "browser:qa": "node scripts/browser-qa.mjs",
     "deploy:env:smoke": "tsx scripts/deploy-env-smoke.ts",
+    "deploy:hosted:preflight": "tsx scripts/hosted-deployment-preflight.ts",
+    "deploy:hosted:preflight:smoke": "tsx scripts/hosted-deployment-preflight.ts --smoke",
     "live:args:smoke": "tsx scripts/live-args-smoke.ts",
     "live:flow:smoke": "tsx scripts/live-flow-smoke.ts",
     "live:persistence:smoke": "tsx scripts/live-persistence-smoke.ts",
