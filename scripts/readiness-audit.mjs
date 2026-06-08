@@ -266,6 +266,10 @@ const requiredLiveEvidenceAuditCoverage = [
   "accept-filled-live-evidence",
   "reject-filled-live-evidence-placeholder",
   "reject-filled-live-evidence-local-url",
+  "reject-filled-live-evidence-duplicate-tx",
+  "reject-filled-live-evidence-token-mismatch",
+  "reject-filled-live-evidence-origin-mismatch",
+  "reject-filled-live-evidence-zero-withdraw",
 ];
 
 const requiredLiveHandoffTerms = [

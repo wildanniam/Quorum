@@ -77,6 +77,31 @@ const requiredFields = [
   ["approval.notes", "string"],
 ];
 
+const transactionHashFields = [
+  "deploymentTransactions.passDeployTxHash",
+  "deploymentTransactions.coreDeployTxHash",
+  "deploymentTransactions.passInitTxHash",
+  "deploymentTransactions.coreInitTxHash",
+  "deploymentTransactions.passSetCoreTxHash",
+  "liveFlows.publishPaidEvent.txHash",
+  "liveFlows.paidCheckout.txHash",
+  "liveFlows.freeClaim.txHash",
+  "liveFlows.checkIn.txHash",
+  "liveFlows.collaboratorWithdraw.txHash",
+];
+
+const hostedProofUrlFields = [
+  "liveFlows.publishPaidEvent.eventUrl",
+  "browserProof.contractStatusUrl",
+  "browserProof.paidResourceUnlockedUrl",
+];
+
+const contractIdFields = [
+  "contracts.coreContractId",
+  "contracts.passContractId",
+  "contracts.usdcContractId",
+];
+
 const failures = [];
 
 function fail(message) {
@@ -172,6 +197,62 @@ function isIsoDate(value) {
   return hasText(value) && !Number.isNaN(Date.parse(value));
 }
 
+function originFor(value) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function assertUniqueValues(source, fieldPaths, label) {
+  const seen = new Map();
+
+  for (const fieldPath of fieldPaths) {
+    const value = getPath(source, fieldPath);
+
+    if (!hasText(value)) continue;
+
+    const normalized = value.toLowerCase();
+    const previous = seen.get(normalized);
+
+    if (previous) {
+      fail(`${fieldPath} must be unique; it duplicates ${previous} (${label}).`);
+    } else {
+      seen.set(normalized, fieldPath);
+    }
+  }
+}
+
+function validateFilledEvidenceConsistency(source) {
+  assertUniqueValues(source, transactionHashFields, "transaction hash");
+  assertUniqueValues(source, contractIdFields, "contract ID");
+
+  const paidTokenId = getPath(source, "liveFlows.paidCheckout.tokenId");
+  const freeTokenId = getPath(source, "liveFlows.freeClaim.tokenId");
+  const checkInTokenId = getPath(source, "liveFlows.checkIn.tokenId");
+
+  if (paidTokenId && checkInTokenId && paidTokenId !== checkInTokenId) {
+    fail("liveFlows.checkIn.tokenId must match liveFlows.paidCheckout.tokenId.");
+  }
+
+  if (paidTokenId && freeTokenId && paidTokenId === freeTokenId) {
+    fail("liveFlows.freeClaim.tokenId must be distinct from liveFlows.paidCheckout.tokenId.");
+  }
+
+  const hostedOrigin = originFor(getPath(source, "hostedAppUrl"));
+
+  if (hostedOrigin) {
+    for (const fieldPath of hostedProofUrlFields) {
+      const proofOrigin = originFor(getPath(source, fieldPath));
+
+      if (proofOrigin && proofOrigin !== hostedOrigin) {
+        fail(`${fieldPath} must use the same origin as hostedAppUrl.`);
+      }
+    }
+  }
+}
+
 function validateType(fieldPath, value, type) {
   if (type.startsWith("literal:")) {
     const expected = type.slice("literal:".length);
@@ -230,8 +311,11 @@ function validateType(fieldPath, value, type) {
       }
       break;
     case "positiveDecimalString":
-      if (!/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value ?? "")) {
-        fail(`${fieldPath} must be a non-negative decimal string.`);
+      if (
+        !/^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(value ?? "") ||
+        Number(value) <= 0
+      ) {
+        fail(`${fieldPath} must be a positive decimal string.`);
       }
       break;
     case "positiveIntegerString":
@@ -279,6 +363,10 @@ if (evidence) {
     }
 
     validateType(fieldPath, value, type);
+  }
+
+  if (requireFilled) {
+    validateFilledEvidenceConsistency(evidence);
   }
 }
 

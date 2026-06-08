@@ -162,6 +162,44 @@ assert.match(
   /public HTTPS URL/,
 );
 
+const duplicateTxEvidence = buildEvidence();
+duplicateTxEvidence.liveFlows.paidCheckout.txHash =
+  duplicateTxEvidence.liveFlows.publishPaidEvent.txHash;
+const duplicateTxResult = runAudit("duplicate-tx.json", duplicateTxEvidence);
+assert.notEqual(duplicateTxResult.status, 0);
+assert.match(
+  `${duplicateTxResult.stdout}${duplicateTxResult.stderr}`,
+  /must be unique/,
+);
+
+const tokenMismatchEvidence = buildEvidence();
+tokenMismatchEvidence.liveFlows.checkIn.tokenId = "999";
+const tokenMismatchResult = runAudit("token-mismatch.json", tokenMismatchEvidence);
+assert.notEqual(tokenMismatchResult.status, 0);
+assert.match(
+  `${tokenMismatchResult.stdout}${tokenMismatchResult.stderr}`,
+  /must match liveFlows\.paidCheckout\.tokenId/,
+);
+
+const originMismatchEvidence = buildEvidence();
+originMismatchEvidence.browserProof.paidResourceUnlockedUrl =
+  "https://other-quorum.example.com/events/paid/resources";
+const originMismatchResult = runAudit("origin-mismatch.json", originMismatchEvidence);
+assert.notEqual(originMismatchResult.status, 0);
+assert.match(
+  `${originMismatchResult.stdout}${originMismatchResult.stderr}`,
+  /same origin as hostedAppUrl/,
+);
+
+const zeroWithdrawEvidence = buildEvidence();
+zeroWithdrawEvidence.liveFlows.collaboratorWithdraw.withdrawAmountUsdc = "0";
+const zeroWithdrawResult = runAudit("zero-withdraw.json", zeroWithdrawEvidence);
+assert.notEqual(zeroWithdrawResult.status, 0);
+assert.match(
+  `${zeroWithdrawResult.stdout}${zeroWithdrawResult.stderr}`,
+  /positive decimal string/,
+);
+
 fs.rmSync(tmpDir, { recursive: true, force: true });
 
 console.log(
@@ -172,6 +210,10 @@ console.log(
         "accept-filled-live-evidence",
         "reject-filled-live-evidence-placeholder",
         "reject-filled-live-evidence-local-url",
+        "reject-filled-live-evidence-duplicate-tx",
+        "reject-filled-live-evidence-token-mismatch",
+        "reject-filled-live-evidence-origin-mismatch",
+        "reject-filled-live-evidence-zero-withdraw",
       ],
     },
     null,

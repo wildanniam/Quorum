@@ -244,7 +244,10 @@ Live mode is not complete until the evidence packet includes:
 Filled live evidence must use public HTTPS URLs for the hosted app, contract
 status, event, and unlocked resource proof. Localhost, private network, or
 non-HTTPS URLs are rejected so local proof cannot be mistaken for hosted live
-deployment evidence.
+deployment evidence. The audit also rejects reused transaction hashes,
+duplicate contract IDs, mismatched check-in token evidence, reused paid/free
+token IDs, proof URLs outside the hosted app origin, and zero-value withdrawal
+evidence.
 
 Until this evidence exists, Quorum should be described as locally demo-ready and
 contract-ready, not fully live-testnet complete.
