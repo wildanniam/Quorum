@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowUpRight,
+  ArrowRight,
   BadgeCheck,
   FileKey2,
   Fingerprint,
@@ -45,34 +45,37 @@ export default async function PassPage({ params }: PassPageProps) {
 
   return (
     <AppShell>
-      <section className="border-b border-line/70" style={eventThemeStyle(event)}>
+      <section
+        className="border-b border-foreground/8"
+        style={eventThemeStyle(event)}
+      >
         <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
           <Link
-            href={`/events/${event.slug}`}
-            className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-event-accent"
+            href="/passes"
+            className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-accent"
           >
-            <ArrowLeft size={15} /> Back to event
+            <ArrowLeft size={15} /> Back to passes
           </Link>
 
           <div className="mt-6 grid gap-5 lg:grid-cols-[390px_minmax(0,1fr)] lg:items-start">
-            <aside className="rounded-[8px] border border-line bg-panel/90 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.3)] backdrop-blur-xl">
-              <p className="eyebrow">QuorumPassNFT</p>
-              <h1 className="mt-3 text-4xl font-semibold leading-tight">
+            <aside className="rounded-[8px] border border-foreground/10 bg-background/84 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+              <p className="eyebrow">Event access</p>
+              <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight">
                 Attendee pass
               </h1>
               <p className="mt-4 text-sm leading-6 text-muted">{event.title}</p>
 
               <div className="mt-6 grid gap-3">
-                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
-                  <WalletCards className="text-event-accent" size={17} />
+                <div className="flex items-center gap-3 rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3 text-sm text-muted">
+                  <WalletCards className="text-accent" size={17} />
                   {shorten(pass.ownerWallet)}
                 </div>
-                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
-                  <ShieldCheck className="text-event-accent" size={17} />
+                <div className="flex items-center gap-3 rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3 text-sm text-muted">
+                  <ShieldCheck className="text-accent" size={17} />
                   {sourceLabel(pass.source)}
                 </div>
-                <div className="flex items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 text-sm text-muted">
-                  <Fingerprint className="text-event-accent" size={17} />
+                <div className="flex items-center gap-3 rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3 text-sm text-muted">
+                  <Fingerprint className="text-accent" size={17} />
                   {pass.checkedIn ? "Checked in" : "Not checked in"}
                 </div>
               </div>
@@ -80,36 +83,36 @@ export default async function PassPage({ params }: PassPageProps) {
               <div className="mt-5 grid gap-3">
                 <Link
                   href={`/events/${event.slug}/resources`}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-event-accent px-4 text-sm font-semibold text-event-ink transition hover:bg-foreground"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
                 >
-                  Open resources <ArrowUpRight size={16} />
+                  Open resources <ArrowRight size={16} />
                 </Link>
                 <Link
                   href={`/check-in/${event.id}`}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-line bg-panel-strong px-4 text-sm font-semibold transition hover:border-event-accent hover:text-event-accent"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.045] px-4 text-sm font-semibold transition hover:border-accent/45 hover:text-accent"
                 >
                   <QrCode size={16} /> Verify check-in
                 </Link>
               </div>
             </aside>
 
-            <article className="rounded-[8px] border border-line bg-panel p-5">
+            <article className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
               <div
                 className="event-cover min-h-[500px] p-5 lg:p-6"
                 style={eventCoverStyle(event)}
               >
                 <div className="flex h-full flex-col justify-between gap-10">
                   <div className="flex items-start justify-between gap-4">
-                    <span className="rounded-[6px] bg-event-accent px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-normal text-event-ink">
+                    <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">
                       Unique pass
                     </span>
-                    <BadgeCheck className="text-event-accent" size={28} />
+                    <BadgeCheck className="text-accent" size={28} />
                   </div>
                   <div>
-                    <p className="max-w-2xl break-all font-mono text-xs uppercase tracking-normal text-event-accent">
+                    <p className="max-w-2xl break-all font-mono text-xs text-accent">
                       {pass.tokenId}
                     </p>
-                    <h2 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight md:text-6xl">
+                    <h2 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
                       {event.title}
                     </h2>
                   </div>
@@ -126,12 +129,12 @@ export default async function PassPage({ params }: PassPageProps) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
-        <div className="rounded-[8px] border border-line bg-panel p-5">
+      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
           <div className="grid gap-4 md:grid-cols-[0.7fr_1.3fr] md:items-start">
             <div>
               <p className="eyebrow">Included resources</p>
-              <h2 className="mt-3 text-2xl font-semibold">
+              <h2 className="mt-3 text-2xl font-semibold tracking-tight">
                 This pass unlocks the event material.
               </h2>
               <p className="mt-3 text-sm leading-6 text-muted">
@@ -142,12 +145,12 @@ export default async function PassPage({ params }: PassPageProps) {
             <div className="grid gap-3 md:grid-cols-3">
               {resources.map((resource) => (
                 <div
-                  className="rounded-[8px] border border-line bg-background/32 p-4"
+                  className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
                   key={resource.id}
                 >
-                  <FileKey2 className="text-event-accent" size={18} />
+                  <FileKey2 className="text-accent" size={18} />
                   <p className="mt-3 font-medium">{resource.title}</p>
-                  <p className="mt-2 font-mono text-xs uppercase tracking-normal text-muted">
+                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
                     {resource.type}
                   </p>
                   {resource.description ? (
