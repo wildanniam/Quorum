@@ -20,10 +20,11 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    href: "/",
+    href: "/discover",
     icon: Compass,
     label: "Discover",
-    match: (pathname) => pathname === "/" || pathname.startsWith("/events/"),
+    match: (pathname) =>
+      pathname === "/discover" || pathname.startsWith("/events/"),
   },
   {
     href: "/dashboard",
