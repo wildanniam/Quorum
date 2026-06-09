@@ -296,24 +296,103 @@ Acceptance criteria:
   evidence demo;
 - app data survives a normal restart.
 
-### Option B: Migrate DB Adapter To Hosted Database
+### Option B: Migrate DB Adapter To Supabase Postgres
 
 Use this if the app must run on serverless or scale beyond a single instance.
+This is the planned handoff path if Quorum will use Supabase.
 
-Likely work:
+Important:
+
+This is **not** only an env change. The current code rejects non-`file:`
+database URLs in `src/lib/db/client.ts`, and the current migration runner uses
+`better-sqlite3`. Supabase requires a real DB adapter migration.
+
+Supabase setup tasks:
+
+1. Create a Supabase project.
+2. Save the database password in a password manager.
+3. Get the Postgres connection string from Supabase project settings.
+4. Decide which connection string is used by the app runtime:
+   - pooled connection string for serverless-style hosting;
+   - direct connection string for a single long-running host or migration
+     runner if needed.
+5. Keep all DB credentials server-only. Do not expose the database password,
+   service-role key, or Postgres URL to the browser.
+6. Do not add `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   unless the frontend is intentionally changed to use Supabase client APIs.
+   The current app only needs server-side database access.
+
+Recommended env shape after Supabase migration:
+
+```bash
+DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require"
+DIRECT_DATABASE_URL="postgresql://<user>:<password>@<direct-host>:<port>/<database>?sslmode=require"
+```
+
+`DIRECT_DATABASE_URL` is optional but useful if the runtime uses pooled
+connections and migrations need a direct connection. If the migration runner can
+use the same pooled connection safely, keep only `DATABASE_URL`.
+
+Code migration tasks:
 
 - replace `better-sqlite3` assumptions in `src/lib/db/client.ts`;
-- migrate repository queries in `src/lib/events/repository.ts`;
-- update migration scripts;
-- update smoke tests;
+- replace sync DB calls with an async Postgres client, for example `pg` or
+  another Postgres driver;
+- update `src/lib/events/repository.ts` from sync functions to async functions;
+- update all call sites that read/write events, passes, check-ins, purchases,
+  withdrawals, and users to `await` repository calls;
+- update API routes and server components that currently assume synchronous DB
+  reads;
+- update smoke scripts that import DB/repository helpers;
+- update migration scripts to run against Postgres;
+- update DB smoke tests to verify Postgres indexes/constraints instead of
+  SQLite PRAGMA checks;
 - update `DATABASE_URL` docs.
+
+Migration SQL conversion notes:
+
+- `datetime('now')` becomes `now()`.
+- `TEXT` timestamps should become `timestamptz` where practical.
+- SQLite `INTEGER` booleans can become Postgres `boolean`.
+- `julianday(end_date_time) > julianday(start_date_time)` becomes direct
+  timestamp comparison, for example `end_date_time > start_date_time`.
+- SQLite triggers need a Postgres `plpgsql` trigger function.
+- Query placeholders change from `?` to `$1`, `$2`, etc.
+- `INSERT OR IGNORE` patterns should become `ON CONFLICT DO NOTHING`.
+- Preserve all uniqueness constraints for:
+  - `events.core_event_id`;
+  - `events.publish_tx_hash`;
+  - `passes.mint_tx_hash`;
+  - `purchases.tx_hash`;
+  - `check_ins.tx_hash`;
+  - `withdrawals.tx_hash`;
+  - `passes(event_id, owner_wallet)`.
+
+Security notes:
+
+- Use Supabase as Postgres, not as browser-side table API, unless a separate
+  Supabase API/RLS design is intentionally added.
+- If tables are exposed through Supabase APIs, configure RLS policies before
+  exposing anon keys. The current app auth is wallet-cookie based and lives in
+  Next.js routes, so the safest path is server-only DB access.
+- Never commit Supabase passwords or service-role keys.
 
 Acceptance criteria:
 
 - all existing DB smoke and demo smoke commands pass;
 - live result persistence still rejects duplicate/replayed transaction hashes;
 - hosted app can persist events, passes, purchases, check-ins, and withdrawals;
+- live publish, checkout, check-in, and withdraw flows still persist confirmed
+  transaction hashes exactly once;
 - production env docs are updated.
+
+Stop if:
+
+- any local proof path silently writes local records while live contracts are
+  configured;
+- Postgres migration drops a uniqueness guard for live transaction evidence;
+- browser code needs Supabase service credentials;
+- Supabase table access works without the intended server-side auth boundary.
 
 ### Option C: UI-Only Hosted Demo
 
@@ -338,7 +417,7 @@ Acceptance criteria for this phase:
 Required hosted runtime env vars:
 
 ```bash
-DATABASE_URL="file:<persistent-path>"
+DATABASE_URL="<file: persistent path before Supabase, or postgresql://... after Supabase migration>"
 QUORUM_SESSION_SECRET="<32+ random chars>"
 NEXT_PUBLIC_STELLAR_NETWORK="TESTNET"
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
@@ -346,6 +425,21 @@ NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID="CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH"
 NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID="CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV"
 NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
+```
+
+If Supabase migration is complete, hosted env should use:
+
+```bash
+DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require"
+DIRECT_DATABASE_URL="postgresql://<user>:<password>@<direct-host>:<port>/<database>?sslmode=require"
+```
+
+Only add Supabase public env vars if the frontend intentionally uses Supabase
+client APIs:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL="<only if frontend Supabase client is introduced>"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="<only if frontend Supabase client is introduced and RLS is configured>"
 ```
 
 Generate session secret:
@@ -744,17 +838,21 @@ source.
 3. Run `npm run lint` and `npm run build`.
 4. Run `npm run evidence:local`.
 5. Run `npm run readiness:audit`.
-6. Decide storage strategy.
-7. Deploy hosted app.
-8. Configure hosted env vars exactly.
-9. Run hosted preflight.
-10. Prepare Freighter testnet wallets.
-11. Fund/confirm paid attendee testnet USDC.
-12. Run manual Freighter signing sequence.
-13. Fill `docs/LIVE_TESTNET_EVIDENCE.json`.
-14. Run `npm run live:evidence:audit`.
-15. Run final verification commands.
-16. Commit all evidence/docs/code changes.
+6. Create the Supabase project and collect the server-only Postgres connection
+   string.
+7. Migrate the DB adapter from SQLite to Supabase Postgres.
+8. Convert migrations and DB smoke tests to Postgres.
+9. Run the full local smoke suite against Supabase.
+10. Deploy hosted app.
+11. Configure hosted env vars exactly.
+12. Run hosted preflight.
+13. Prepare Freighter testnet wallets.
+14. Fund/confirm paid attendee testnet USDC.
+15. Run manual Freighter signing sequence.
+16. Fill `docs/LIVE_TESTNET_EVIDENCE.json`.
+17. Run `npm run live:evidence:audit`.
+18. Run final verification commands.
+19. Commit all evidence/docs/code changes.
 
 ## Commit Guidance
 
