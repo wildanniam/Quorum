@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import {
   Activity,
+  ArrowRight,
   ArrowUpRight,
   BadgeCheck,
   BanknoteArrowUp,
@@ -95,50 +96,50 @@ export default async function DashboardPage() {
   const cards = [
     {
       icon: CalendarDays,
-      label: "Organizer events",
+      label: "Hosted events",
       value: String(organizerEvents.length),
       detail: `${organizerEvents.filter((event) => event.status === "published").length} published`,
       tone: "text-accent",
     },
     {
       icon: Handshake,
-      label: "Collaborator roles",
+      label: "Collaborations",
       value: String(collaborations.length),
       detail: `${formatUsdc(withdrawableUsdc)} USDC withdrawable`,
       tone: "text-cyan",
     },
     {
       icon: TicketCheck,
-      label: "Owned passes",
+      label: "Attendee passes",
       value: String(attendeePasses.length),
       detail: `${attendeePasses.filter(({ pass }) => pass.checkedIn).length} checked in`,
       tone: "text-success",
     },
     {
       icon: BanknoteArrowUp,
-      label: "Organizer routed",
+      label: "Revenue routed",
       value: `${formatUsdc(organizerRevenue)} USDC`,
-      detail: "from local proof records",
+      detail: "from completed checkouts",
       tone: "text-amber",
     },
   ];
   const proofRows = [
     {
-      label: "Wallet session",
+      label: "Wallet",
       status: session ? "ready" : "connect",
     },
     {
-      label: "Event publish",
+      label: "Publish",
       status: organizerEvents.some((event) => event.status === "published")
         ? "ready"
         : "pending",
     },
     {
-      label: "Checkout + mint",
+      label: "Checkout",
       status: attendeePasses.length > 0 || organizerRevenue > 0 ? "ready" : "pending",
     },
     {
-      label: "Resource unlock",
+      label: "Resources",
       status: attendeePasses.length > 0 ? "ready" : "pending",
     },
     {
@@ -153,40 +154,41 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
-        <div className="rounded-[8px] border border-line bg-panel/88 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:p-6">
+      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-[8px] border border-accent/45 bg-accent/10 px-3 font-mono text-xs font-semibold uppercase tracking-normal text-accent">
+                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
                   <LayoutDashboard size={14} />
-                  Role console
+                  Studio
                 </span>
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-[8px] border border-line bg-background/42 px-3 font-mono text-xs text-muted">
+                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-foreground/10 bg-background/42 px-3 text-xs text-muted">
                   <WalletCards size={14} />
                   {walletLabel}
                 </span>
               </div>
-              <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight md:text-6xl">
-                Event operations without losing the proof trail.
+              <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
+                Run your events from one calm workspace.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                Resolve organizer events, collaborator balances, attendee passes,
-                wallet readiness, and contract policy from one place.
+                Track hosted events, collaborator payouts, attendee passes, and
+                wallet readiness without turning the product into a transaction
+                monitor.
               </p>
             </div>
             <Link
               href="/dashboard/events/new"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
             >
-              Create event <ArrowUpRight size={16} />
+              Create event <ArrowRight size={16} />
             </Link>
           </div>
 
           <div className="mt-6 grid gap-2 sm:grid-cols-3">
             {roleBadges.map((role) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-[8px] border border-line bg-background/32 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-full border border-foreground/10 bg-background/32 px-4 py-3"
                 key={role.label}
               >
                 <span className="text-sm text-muted">{role.label}</span>
@@ -207,7 +209,7 @@ export default async function DashboardPage() {
             const Icon = card.icon;
             return (
               <div
-                className="rounded-[8px] border border-line bg-panel p-5"
+                className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5"
                 key={card.label}
               >
                 <div className="flex items-center justify-between gap-4">
@@ -226,15 +228,17 @@ export default async function DashboardPage() {
 
         <div className="mt-5 grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1.18fr)_0.82fr]">
           <div className="grid gap-5">
-            <section className="rounded-[8px] border border-line bg-panel p-5">
+            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="eyebrow">Organizer workspace</p>
-                  <h2 className="mt-2 text-2xl font-semibold">Events you control</h2>
+                  <p className="eyebrow">Hosted events</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Events you control
+                  </h2>
                 </div>
                 <Link
                   href="/dashboard/events/new"
-                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-[8px] border border-line px-3 text-sm text-muted transition hover:border-accent hover:text-accent"
+                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm text-muted transition hover:border-accent/45 hover:text-accent"
                 >
                   New event <ArrowUpRight size={13} />
                 </Link>
@@ -260,7 +264,7 @@ export default async function DashboardPage() {
 
                     return (
                       <article
-                        className="rounded-[8px] border border-line bg-background/32 p-4"
+                        className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
                         key={event.id}
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -276,7 +280,7 @@ export default async function DashboardPage() {
                                 ? `/dashboard/events/new?eventId=${event.id}`
                                 : `/events/${event.slug}`
                             }
-                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-[8px] border border-line px-3 text-sm transition hover:border-accent hover:text-accent"
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm transition hover:border-accent/45 hover:text-accent"
                           >
                             {event.status === "draft" ? "Edit" : "Open"}
                             <ArrowUpRight size={13} />
@@ -285,7 +289,7 @@ export default async function DashboardPage() {
                         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {metricCards.map((metric) => (
                             <div
-                              className="rounded-[8px] border border-line bg-panel/72 p-3"
+                              className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3"
                               key={metric.label}
                             >
                               <p className={`font-mono text-xl ${metric.tone}`}>
@@ -301,17 +305,17 @@ export default async function DashboardPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[8px] border border-line bg-background/32 p-4 text-sm leading-6 text-muted">
+                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
                     No organizer events for the connected wallet yet.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[8px] border border-line bg-panel p-5">
+            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
               <div>
-                <p className="eyebrow">Collaborator earnings</p>
-                <h2 className="mt-2 text-2xl font-semibold">
+                <p className="eyebrow">Collaborator payouts</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                   Balances ready for withdrawal
                 </h2>
               </div>
@@ -347,7 +351,7 @@ export default async function DashboardPage() {
 
                     return (
                       <article
-                        className="grid gap-4 rounded-[8px] border border-line bg-background/32 p-4 lg:grid-cols-[1fr_auto]"
+                        className="grid gap-4 rounded-[8px] border border-foreground/10 bg-background/32 p-4 lg:grid-cols-[1fr_auto]"
                         key={entry.collaborator.id}
                       >
                         <div>
@@ -359,7 +363,7 @@ export default async function DashboardPage() {
                           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             {balanceRows.map((row) => (
                               <div
-                                className="rounded-[8px] border border-line bg-panel/72 p-3"
+                                className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3"
                                 key={row.label}
                               >
                                 <p className={`font-mono text-lg ${row.tone}`}>
@@ -382,7 +386,7 @@ export default async function DashboardPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[8px] border border-line bg-background/32 p-4 text-sm leading-6 text-muted">
+                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
                     No collaborator roles for the connected wallet yet.
                   </div>
                 )}
@@ -394,13 +398,13 @@ export default async function DashboardPage() {
             <WalletReadiness />
             <ContractReadiness />
 
-            <section className="rounded-[8px] border border-line bg-panel p-5">
+            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
               <p className="eyebrow">Attendee passes</p>
               <div className="mt-5 grid gap-3">
                 {attendeePasses.length > 0 ? (
                   attendeePasses.map(({ event, pass }) => (
                     <Link
-                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3 transition hover:border-accent"
+                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3 transition hover:border-accent/45"
                       href={pass.tokenId ? `/passes/${pass.tokenId}` : "/passes"}
                       key={pass.id}
                     >
@@ -417,19 +421,19 @@ export default async function DashboardPage() {
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-[8px] border border-line bg-background/32 p-4 text-sm leading-6 text-muted">
+                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
                     No owned passes for the connected wallet yet.
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[8px] border border-line bg-panel p-5">
-              <p className="eyebrow">Proof queue</p>
-              <div className="mt-5 overflow-hidden rounded-[8px] border border-line">
+            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+              <p className="eyebrow">Launch checklist</p>
+              <div className="mt-5 overflow-hidden rounded-[8px] border border-foreground/10">
                 {proofRows.map((item, index) => (
                   <div
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-line bg-background/32 p-3 last:border-b-0"
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-foreground/10 bg-background/32 p-3 last:border-b-0"
                     key={item.label}
                   >
                     <span className="font-mono text-xs text-muted">
@@ -452,12 +456,12 @@ export default async function DashboardPage() {
               </div>
             </section>
 
-            <section className="rounded-[8px] border border-line bg-panel p-5">
+            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
               <div className="flex items-start gap-3 text-muted">
                 <CheckCircle2 className="mt-0.5 text-accent" size={18} />
                 <p className="text-sm leading-6">
-                  Local proof records mirror the contract flow until live
-                  testnet contract IDs are configured.
+                  Studio keeps the product flow visible while wallet approval
+                  remains explicit on Stellar testnet.
                 </p>
               </div>
             </section>

@@ -69,15 +69,15 @@ export function ContractReadiness() {
   ];
 
   return (
-    <div className="rounded-[8px] border border-line bg-panel p-5">
-      <p className="eyebrow">Contract readiness</p>
+    <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+      <p className="eyebrow">Live setup</p>
       <p className="mt-2 text-xl font-semibold">
-        {readiness.configured ? "Contracts configured" : "Deployment pending"}
+        {readiness.configured ? "Testnet configured" : "Setup pending"}
       </p>
       <p className="mt-3 text-sm leading-6 text-muted">
         {readiness.configured
-          ? "Live Stellar contract and payment asset IDs are configured for proof surfaces."
-          : "Using local proof records until valid Stellar testnet network, contract, and payment asset IDs are configured."}
+          ? "Stellar testnet contracts and payment asset settings are ready for wallet-approved actions."
+          : "Preview records keep the product flow visible until Stellar testnet settings are complete."}
       </p>
 
       <div className="mt-5 grid gap-3">
@@ -86,7 +86,7 @@ export function ContractReadiness() {
 
           return (
             <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3"
               key={row.label}
             >
               <Icon className={row.active ? "text-accent" : "text-muted"} size={17} />
@@ -99,21 +99,21 @@ export function ContractReadiness() {
         })}
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-[8px] border border-line bg-background/25">
-        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-line p-3">
+      <div className="mt-5 overflow-hidden rounded-[8px] border border-foreground/10 bg-background/25">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-foreground/10 p-3">
           <ListChecks className="text-accent" size={17} />
           <div>
-            <p className="text-sm font-medium">Action execution</p>
+            <p className="text-sm font-medium">Wallet actions</p>
             <p className="mt-1 text-xs leading-5 text-muted">
               {readiness.configured
-                ? "Live transaction submission is required."
-                : "Local proof execution is active."}
+                ? "Freighter approval is required before submission."
+                : "Preview flow is active."}
             </p>
           </div>
         </div>
         {actions.map((action) => (
           <div
-            className="grid grid-cols-[1fr_auto] gap-3 border-b border-line p-3 last:border-b-0"
+            className="grid grid-cols-[1fr_auto] gap-3 border-b border-foreground/10 p-3 last:border-b-0"
             key={action.action}
           >
             <span className="text-sm text-muted">

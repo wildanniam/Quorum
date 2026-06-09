@@ -32,12 +32,12 @@ export function WalletReadiness() {
   ];
 
   return (
-    <div className="rounded-[8px] border border-line bg-panel p-5">
+    <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="eyebrow">Wallet readiness</p>
+          <p className="eyebrow">Wallet</p>
           <p className="mt-2 text-xl font-semibold">
-            {status === "checking" ? "Checking wallet" : "Freighter first"}
+            {status === "checking" ? "Checking wallet" : "Freighter status"}
           </p>
         </div>
         {error ? (
@@ -52,7 +52,7 @@ export function WalletReadiness() {
           const Icon = row.icon;
           return (
             <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-line bg-background/32 p-3"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3"
               key={row.label}
             >
               <Icon className={row.active ? "text-accent" : "text-muted"} size={17} />
