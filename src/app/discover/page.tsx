@@ -1,34 +1,40 @@
 import Link from "next/link";
 import {
-  ArrowUpRight,
+  ArrowRight,
   CalendarDays,
-  ChevronRight,
   CircleDollarSign,
-  FileKey2,
-  Handshake,
   MapPin,
+  Search,
   ShieldCheck,
+  Sparkles,
   TicketCheck,
   Users,
   WalletCards,
+  X,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import {
-  countMintedPasses,
+  FeaturedEventsCarousel,
+  type FeaturedEventSlide,
+} from "@/components/discover/featured-events-carousel";
+import { HoverCard } from "@/components/motion/hover-card";
+import {
   countPassesForEvent,
-  getSucceededPurchaseTotalUsdc,
   listCollaborators,
   listPublishedEvents,
-  listResources,
 } from "@/lib/events/repository";
 import { eventCoverStyle, eventThemeStyle } from "@/lib/events/theme";
-import type { CollaboratorRecord, EventRecord } from "@/lib/db/models";
+import type { EventRecord } from "@/lib/db/models";
 
 export const dynamic = "force-dynamic";
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-});
+type DiscoverPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+function firstParam(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function priceLabel(event: EventRecord) {
   return event.isFree ? "Free" : `${event.priceUsdc} USDC`;
@@ -38,7 +44,6 @@ function formatDate(event: EventRecord) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
     day: "numeric",
-    year: "numeric",
     timeZone: event.timezone,
   }).format(new Date(event.startDateTime));
 }
@@ -52,304 +57,312 @@ function formatTime(event: EventRecord) {
 }
 
 function locationLabel(event: EventRecord) {
-  return event.locationText ?? (event.locationType === "virtual" ? "Virtual" : "Venue to be announced");
+  return event.locationText ?? (event.locationType === "virtual" ? "Virtual" : "Venue TBA");
 }
 
-function splitLabel(collaborators: CollaboratorRecord[]) {
-  return collaborators.map((split) => `${split.splitPercentage}`).join(" / ");
+function seatsLabel(event: EventRecord) {
+  const minted = countPassesForEvent(event.id);
+  return `${Math.max(event.capacity - minted, 0)} seats left`;
 }
 
-function formatUsdc(value: number) {
-  return value > 0 ? `${numberFormatter.format(value)} USDC` : "0 USDC";
+function splitLabel(event: EventRecord) {
+  const collaborators = listCollaborators(event.id);
+  return collaborators.length > 0
+    ? collaborators.map((split) => split.splitPercentage).join(" / ")
+    : "100";
 }
 
-export default function Home() {
+function eventMatchesQuery(event: EventRecord, query: string) {
+  if (!query) {
+    return true;
+  }
+
+  const haystack = [
+    event.title,
+    event.shortDescription,
+    event.eventType,
+    event.locationText,
+    event.locationType,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return haystack.includes(query.toLowerCase());
+}
+
+function slideForEvent(event: EventRecord): FeaturedEventSlide {
+  return {
+    coverStyle: eventCoverStyle(event),
+    dateLabel: formatDate(event),
+    location: locationLabel(event),
+    priceLabel: priceLabel(event),
+    seatsLabel: seatsLabel(event),
+    shortDescription: event.shortDescription,
+    slug: event.slug,
+    themeStyle: eventThemeStyle(event),
+    timeLabel: formatTime(event),
+    title: event.title,
+  };
+}
+
+export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const query = (firstParam(params.q) ?? "").trim();
   const publishedEvents = listPublishedEvents();
-  const featuredEvent = publishedEvents[0] ?? null;
-  const featuredResources = featuredEvent ? listResources(featuredEvent.id) : [];
-  const mintedPasses = countMintedPasses();
-  const routedUsdc = getSucceededPurchaseTotalUsdc();
-  const collaboratorCount = publishedEvents.reduce(
-    (total, event) => total + listCollaborators(event.id).length,
-    0,
+  const filteredEvents = publishedEvents.filter((event) =>
+    eventMatchesQuery(event, query),
   );
-
-  const trustLoop = [
-    {
-      icon: WalletCards,
-      label: "Wallet signs",
-      value: "Freighter keeps approval explicit.",
-    },
-    {
-      icon: CircleDollarSign,
-      label: "USDC routes",
-      value: "Checkout value follows the published split.",
-    },
-    {
-      icon: TicketCheck,
-      label: "Pass mints",
-      value: "One non-transferable proof pass per wallet.",
-    },
-    {
-      icon: FileKey2,
-      label: "Access unlocks",
-      value: "Resources open only from the owned pass.",
-    },
-  ];
-
-  const stats = [
-    { label: "Published", value: String(publishedEvents.length) },
-    { label: "Split wallets", value: String(collaboratorCount) },
-    { label: "Passes minted", value: String(mintedPasses) },
-    { label: "USDC routed", value: formatUsdc(routedUsdc) },
-  ];
+  const featuredSlides = filteredEvents.slice(0, 3).map(slideForEvent);
+  const eventTypes = Array.from(
+    new Set(publishedEvents.map((event) => event.eventType)),
+  ).slice(0, 6);
 
   return (
     <AppShell>
-      <section
-        className="border-b border-line/70"
-        style={featuredEvent ? eventThemeStyle(featuredEvent) : undefined}
-      >
-        <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
-          <div className="grid gap-5 lg:items-start lg:grid-cols-[minmax(0,1fr)_430px]">
-            <article className="overflow-hidden rounded-[8px] border border-line bg-panel shadow-[0_20px_90px_rgba(0,0,0,0.34)]">
-              <div
-                className="event-cover min-h-[520px] p-5 sm:p-6 lg:p-8"
-                style={featuredEvent ? eventCoverStyle(featuredEvent) : undefined}
-              >
-                <div className="flex h-full flex-col justify-between gap-10">
-                  <div className="flex flex-wrap gap-2">
-                    <span className="rounded-[6px] bg-event-accent px-2.5 py-1 font-mono text-xs font-semibold uppercase tracking-normal text-event-ink">
-                      Featured event
-                    </span>
-                    <span className="rounded-[6px] border border-foreground/20 bg-background/72 px-2.5 py-1 font-mono text-xs uppercase tracking-normal text-foreground">
-                      One pass / wallet
-                    </span>
-                    <span className="rounded-[6px] border border-foreground/20 bg-background/72 px-2.5 py-1 font-mono text-xs uppercase tracking-normal text-foreground">
-                      Split-ready
-                    </span>
-                  </div>
-
-                  <div className="max-w-3xl">
-                    <p className="eyebrow">
-                      {featuredEvent ? locationLabel(featuredEvent) : "Quorum marketplace"}
-                    </p>
-                    <h1 className="mt-4 max-w-3xl text-5xl font-semibold leading-[1.02] text-foreground md:text-7xl">
-                      {featuredEvent?.title ?? "Publish the next proof-ready event"}
-                    </h1>
-                    <p className="mt-5 max-w-2xl text-lg leading-8 text-foreground/84">
-                      {featuredEvent
-                        ? `${featuredEvent.shortDescription} Payments, split payouts, passes, check-in, and gated resources stay connected in one flow.`
-                        : "Create a published event with transparent collaborators, wallet-based checkout, pass access, and check-in proof."}
-                    </p>
-
-                    {featuredEvent ? (
-                      <div className="mt-6 grid gap-2 text-sm text-foreground sm:grid-cols-3">
-                        <div className="flex min-h-11 items-center gap-2 rounded-[8px] border border-foreground/16 bg-background/68 px-3">
-                          <CalendarDays className="text-event-accent" size={16} />
-                          <span>
-                            {formatDate(featuredEvent)}, {formatTime(featuredEvent)}
-                          </span>
-                        </div>
-                        <div className="flex min-h-11 items-center gap-2 rounded-[8px] border border-foreground/16 bg-background/68 px-3">
-                          <CircleDollarSign className="text-event-accent" size={16} />
-                          <span>{priceLabel(featuredEvent)}</span>
-                        </div>
-                        <div className="flex min-h-11 items-center gap-2 rounded-[8px] border border-foreground/16 bg-background/68 px-3">
-                          <Users className="text-event-accent" size={16} />
-                          <span>{featuredEvent.capacity} seats</span>
-                        </div>
-                      </div>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            </article>
-
-            <aside className="rounded-[8px] border border-line bg-panel/86 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:p-6">
-              <p className="eyebrow">Live event ledger</p>
-              <h2 className="mt-3 text-2xl font-semibold leading-tight">
-                Choose an event, keep the money trail readable.
-              </h2>
-              <p className="mt-3 text-sm leading-6 text-muted">
-                Quorum makes the event page, checkout, collaborator split, and
-                pass utility feel like one product instead of scattered Web3 steps.
+      <section className="border-b border-foreground/8">
+        <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+          <div className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr] lg:items-end">
+            <div>
+              <p className="eyebrow">Discover</p>
+              <h1 className="mt-4 max-w-2xl text-5xl font-semibold leading-[1.02] tracking-tight md:text-7xl">
+                Find events worth showing up for.
+              </h1>
+              <p className="mt-5 max-w-xl text-base leading-7 text-muted">
+                Browse workshops, meetups, and community sessions with clear
+                pricing, available seats, and wallet-based access before you
+                open the event page.
               </p>
+            </div>
 
-              <div className="mt-6 grid grid-cols-2 gap-px overflow-hidden rounded-[8px] border border-line bg-line">
-                {stats.map((stat) => (
-                  <div className="bg-background/78 p-4" key={stat.label}>
-                    <p className="font-mono text-2xl font-semibold text-event-accent">
-                      {stat.value}
-                    </p>
-                    <p className="mt-1 text-xs text-muted">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-6 grid gap-3">
-                {trustLoop.map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <div
-                      className="grid grid-cols-[auto_1fr] gap-3 rounded-[8px] border border-line bg-background/42 p-4"
-                      key={item.label}
+            <form
+              action="/discover"
+              className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-2 shadow-[0_20px_80px_rgba(0,0,0,0.2)]"
+            >
+              <label className="sr-only" htmlFor="discover-search">
+                Search events
+              </label>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <div className="flex min-h-12 flex-1 items-center gap-3 rounded-full border border-foreground/10 bg-background/58 px-4">
+                  <Search className="text-muted" size={18} />
+                  <input
+                    className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+                    defaultValue={query}
+                    id="discover-search"
+                    name="q"
+                    placeholder="Search by event, city, or format"
+                  />
+                  {query ? (
+                    <Link
+                      aria-label="Clear search"
+                      className="text-muted transition hover:text-foreground"
+                      href="/discover"
                     >
-                      <Icon className="mt-0.5 text-event-accent" size={18} />
-                      <div>
-                        <p className="text-sm font-semibold">{item.label}</p>
-                        <p className="mt-1 text-xs leading-5 text-muted">
-                          {item.value}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                {featuredEvent ? (
-                  <Link
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] bg-event-accent px-4 text-sm font-semibold text-event-ink transition hover:bg-foreground"
-                    href={`/events/${featuredEvent.slug}`}
-                  >
-                    Open event <ArrowUpRight size={16} />
-                  </Link>
-                ) : null}
-                <Link
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-[8px] border border-line bg-panel-strong px-4 text-sm font-semibold transition hover:border-event-accent hover:text-event-accent"
-                  href="/dashboard/events/new"
+                      <X size={16} />
+                    </Link>
+                  ) : null}
+                </div>
+                <button
+                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
+                  type="submit"
                 >
-                  Create event <ChevronRight size={16} />
-                </Link>
+                  Search <ArrowRight size={15} />
+                </button>
               </div>
-            </aside>
+            </form>
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-2">
+            <Link
+              className="rounded-full border border-accent/40 bg-accent/12 px-3 py-1.5 text-xs font-semibold text-accent"
+              href="/discover"
+            >
+              All events
+            </Link>
+            {eventTypes.map((type) => (
+              <Link
+                className="rounded-full border border-foreground/10 bg-foreground/[0.035] px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent/40 hover:text-accent"
+                href={`/discover?q=${encodeURIComponent(type)}`}
+                key={type}
+              >
+                {type}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
-        <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
-          <div>
-            <p className="eyebrow">Marketplace</p>
-            <h2 className="mt-2 text-3xl font-semibold tracking-normal">
-              Upcoming proof-ready events
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-              Browse published events with visible price, capacity, collaborator
-              split, and pass utility before a wallet ever signs.
-            </p>
-          </div>
-          <Link
-            href="/dashboard/events/new"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-[8px] border border-line bg-panel/70 px-4 text-sm font-semibold transition hover:border-accent hover:text-accent"
-          >
-            Create event <ArrowUpRight size={14} />
-          </Link>
-        </div>
-
-        {featuredEvent ? (
-          <div className="mt-6 grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="grid gap-4">
-              {publishedEvents.map((event) => {
-                const collaborators = listCollaborators(event.id);
-                const minted = countPassesForEvent(event.id);
-                const remaining = Math.max(event.capacity - minted, 0);
-
-                return (
-                  <Link
-                    className="group grid overflow-hidden rounded-[8px] border border-line bg-panel transition hover:border-event-accent hover:shadow-[0_18px_70px_rgba(0,0,0,0.28)] md:grid-cols-[0.88fr_1.12fr]"
-                    href={`/events/${event.slug}`}
-                    key={event.id}
-                    style={eventThemeStyle(event)}
-                  >
-                    <div
-                      className="event-cover min-h-64 border-b border-line md:border-b-0 md:border-r"
-                      style={eventCoverStyle(event)}
-                    />
-                    <div className="p-5">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="rounded-[6px] border border-line px-2.5 py-1 font-mono text-xs text-muted">
-                          {priceLabel(event)}
-                        </span>
-                        <span className="rounded-[6px] border border-line px-2.5 py-1 font-mono text-xs text-muted">
-                          {remaining} seats left
-                        </span>
-                        <span className="rounded-[6px] border border-line px-2.5 py-1 font-mono text-xs text-muted">
-                          {formatDate(event)}
-                        </span>
-                      </div>
-                      <h3 className="mt-5 text-3xl font-semibold leading-tight group-hover:text-event-accent">
-                        {event.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-6 text-muted">
-                        {event.shortDescription}
-                      </p>
-
-                      <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-[8px] border border-line bg-background/32 p-3">
-                          <MapPin className="text-event-accent" size={17} />
-                          <p className="mt-2 text-xs leading-5 text-muted">
-                            {locationLabel(event)}
-                          </p>
-                        </div>
-                        <div className="rounded-[8px] border border-line bg-background/32 p-3">
-                          <Handshake className="text-event-accent" size={17} />
-                          <p className="mt-2 font-mono text-xs text-muted">
-                            {splitLabel(collaborators) || "100"} split
-                          </p>
-                        </div>
-                        <div className="rounded-[8px] border border-line bg-background/32 p-3">
-                          <ShieldCheck className="text-event-accent" size={17} />
-                          <p className="mt-2 text-xs leading-5 text-muted">
-                            NFT pass + check-in
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-
-            <aside className="rounded-[8px] border border-line bg-panel p-5 lg:sticky lg:top-24 lg:self-start">
-              <p className="eyebrow">Pass utility</p>
-              <h3 className="mt-3 text-xl font-semibold">
-                What a holder can unlock
-              </h3>
-              <div className="mt-5 grid gap-3">
-                {featuredResources.map((resource) => (
-                  <div
-                    className="rounded-[8px] border border-line bg-background/32 p-4"
-                    key={resource.id}
-                  >
-                    <p className="font-mono text-xs uppercase tracking-normal text-event-accent">
-                      {resource.type}
-                    </p>
-                    <p className="mt-2 font-medium">{resource.title}</p>
-                    {resource.description ? (
-                      <p className="mt-2 text-xs leading-5 text-muted">
-                        {resource.description}
-                      </p>
-                    ) : null}
-                  </div>
-                ))}
+      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+        {featuredSlides.length > 0 ? (
+          <>
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <p className="eyebrow">Featured</p>
+                <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                  Happening soon
+                </h2>
               </div>
-              <p className="mt-5 text-sm leading-6 text-muted">
-                Resources stay locked until the connected wallet owns the event
-                pass. That keeps access tied to proof, not screenshots.
+              <p className="hidden max-w-sm text-right text-sm leading-6 text-muted md:block">
+                Event visuals lead. Proof details stay readable when they help
+                someone decide.
               </p>
-            </aside>
-          </div>
+            </div>
+            <FeaturedEventsCarousel events={featuredSlides} />
+          </>
         ) : (
-          <div className="mt-6 rounded-[8px] border border-line bg-panel p-6">
-            <p className="text-sm leading-6 text-muted">
-              No published events yet. Draft events stay private until they are
-              ready for checkout.
+          <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-8">
+            <p className="eyebrow">No matches</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight">
+              Nothing matched “{query}”.
+            </h2>
+            <p className="mt-3 max-w-lg text-sm leading-6 text-muted">
+              Try a broader search, or clear the search to browse every
+              published event.
             </p>
+            <Link
+              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink"
+              href="/discover"
+            >
+              Clear search <ArrowRight size={15} />
+            </Link>
           </div>
         )}
+      </section>
+
+      <section className="border-t border-foreground/8">
+        <div className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+          <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-end">
+            <div>
+              <p className="eyebrow">All events</p>
+              <h2 className="mt-2 text-3xl font-semibold tracking-tight">
+                {query ? `Results for “${query}”` : "Upcoming events"}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+                Compare the essentials quickly: when it happens, where it is,
+                how much it costs, and what the pass unlocks.
+              </p>
+            </div>
+            <Link
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.045] px-4 text-sm font-semibold transition hover:border-accent/45 hover:text-accent"
+              href="/dashboard/events/new"
+            >
+              Create event <ArrowRight size={15} />
+            </Link>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredEvents.map((event) => (
+              <HoverCard
+                className="overflow-hidden rounded-[8px] border border-foreground/10 bg-foreground/[0.045]"
+                key={event.id}
+                style={eventThemeStyle(event)}
+              >
+                <Link className="group block h-full" href={`/events/${event.slug}`}>
+                  <div
+                    className="event-cover min-h-64"
+                    style={eventCoverStyle(event)}
+                  />
+                  <div className="p-5">
+                    <div className="flex flex-wrap gap-2 text-xs text-muted">
+                      <span className="rounded-full border border-foreground/10 px-2.5 py-1">
+                        {priceLabel(event)}
+                      </span>
+                      <span className="rounded-full border border-foreground/10 px-2.5 py-1">
+                        {seatsLabel(event)}
+                      </span>
+                    </div>
+
+                    <h3 className="mt-4 text-2xl font-semibold leading-tight tracking-tight group-hover:text-accent">
+                      {event.title}
+                    </h3>
+                    <p className="mt-3 line-clamp-2 text-sm leading-6 text-muted">
+                      {event.shortDescription}
+                    </p>
+
+                    <div className="mt-5 grid gap-2 text-sm text-muted">
+                      <span className="inline-flex items-center gap-2">
+                        <CalendarDays className="text-accent" size={15} />
+                        {formatDate(event)}, {formatTime(event)}
+                      </span>
+                      <span className="inline-flex items-center gap-2">
+                        <MapPin className="text-accent" size={15} />
+                        {locationLabel(event)}
+                      </span>
+                    </div>
+
+                    <div className="mt-6 grid grid-cols-3 gap-2">
+                      {[
+                        {
+                          icon: Users,
+                          label: `${splitLabel(event)} split`,
+                        },
+                        {
+                          icon: WalletCards,
+                          label: "Wallet pay",
+                        },
+                        {
+                          icon: ShieldCheck,
+                          label: "Pass gate",
+                        },
+                      ].map((item) => {
+                        const Icon = item.icon;
+
+                        return (
+                          <div
+                            className="rounded-[8px] border border-foreground/10 bg-background/32 p-3"
+                            key={item.label}
+                          >
+                            <Icon className="text-accent" size={15} />
+                            <p className="mt-2 text-xs leading-4 text-muted">
+                              {item.label}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </Link>
+              </HoverCard>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-foreground/8">
+        <div className="mx-auto grid max-w-7xl gap-3 px-5 py-10 lg:grid-cols-3 lg:px-8">
+          {[
+            {
+              icon: Sparkles,
+              label: "Event-first pages",
+              body: "The event stays the hero. Blockchain proof stays supportive.",
+            },
+            {
+              icon: CircleDollarSign,
+              label: "Readable money flow",
+              body: "Prices and splits are visible before anyone signs.",
+            },
+            {
+              icon: TicketCheck,
+              label: "Access after purchase",
+              body: "Pass ownership unlocks resources and check-in proof.",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <article
+                className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-5"
+                key={item.label}
+              >
+                <Icon className="text-accent" size={18} />
+                <h3 className="mt-5 text-xl font-semibold tracking-tight">
+                  {item.label}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-muted">{item.body}</p>
+              </article>
+            );
+          })}
+        </div>
       </section>
     </AppShell>
   );
