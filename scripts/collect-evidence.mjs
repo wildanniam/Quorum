@@ -49,6 +49,7 @@ function run(command, args, options = {}) {
     encoding: "utf8",
     env: { ...process.env, NEXT_TELEMETRY_DISABLED: "1" },
     maxBuffer: 1024 * 1024 * 12,
+    shell: process.platform === "win32" && command === "npm",
     ...options,
   });
 

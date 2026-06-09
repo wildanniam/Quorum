@@ -2,34 +2,31 @@
 
 Last updated: 2026-06-09.
 
-This handoff records the environment variables and verification steps required
-before Quorum is exposed as a hosted app. It does not perform deployment,
-Freighter signing, faucet work, or cloud configuration.
+This handoff records the Supabase Postgres and Vercel environment required
+before Quorum is exposed as a hosted live app. It does not create cloud
+resources, run Freighter, sign transactions, or store secrets in the repo.
 
 ## Current Deployment Boundary
 
-Quorum is live-contract configured and local-demo ready, but the hosted app is
-not yet production-storage ready.
+Quorum now uses Postgres for app persistence. Local development, smoke tests,
+and hosted deployments use the same migration path, with `QUORUM_DB_SCHEMA`
+available for isolated schemas. The intended hosted storage target is Supabase
+used only as a Postgres database behind Next.js server routes.
 
-The current application database client uses `better-sqlite3` with a
-`file:`-based `DATABASE_URL`. That is acceptable for local demos or a single
-host with persistent disk. It is not a durable production setup for typical
-serverless hosting where the filesystem is ephemeral. Before a public hosted
-demo that must persist organizer events, passes, purchases, check-ins, and
-withdrawals, choose one of these paths:
-
-1. Run on an environment with persistent disk and a single app instance.
-2. Migrate the repository DB adapter to a hosted database before deployment.
-3. Treat the hosted app as a read-only/UI demo and avoid claiming persistence.
+The hosted app is not complete until a real Supabase project, Vercel project,
+hosted migrations, hosted preflight, and Freighter-signed testnet evidence are
+completed.
 
 ## Runtime Variables
 
-Set these in the hosted runtime environment.
+Set these in the Vercel runtime environment.
 
 | Variable | Scope | Production value | Notes |
 |---|---|---|---|
-| `DATABASE_URL` | Server-only | `file:<persistent-path>` until DB migration exists | Must remain `file:` with the current DB client. Do not use Postgres URLs until a DB adapter migration is implemented. |
-| `QUORUM_SESSION_SECRET` | Server-only secret | 32+ random characters | Must not be the placeholder, local fallback, or a short value. Verified by `npm run deploy:env:smoke`. |
+| `DATABASE_URL` | Server-only secret | Supabase pooled Postgres URL with `sslmode=require` | Used by the app runtime. Never expose it to the browser. |
+| `DIRECT_DATABASE_URL` | Server-only secret | Supabase direct Postgres URL with `sslmode=require` | Optional, but preferred for migrations when runtime uses a pooler. |
+| `QUORUM_DB_SCHEMA` | Server-only | `public` unless an isolated schema is intentionally used | Must be a simple Postgres identifier. |
+| `QUORUM_SESSION_SECRET` | Server-only secret | 32+ random characters | Must not be the placeholder, local fallback, or a short value. |
 | `NEXT_PUBLIC_STELLAR_NETWORK` | Browser public | `TESTNET` | Public because the browser needs network context. |
 | `NEXT_PUBLIC_STELLAR_RPC_URL` | Browser public | `https://soroban-testnet.stellar.org` | Public RPC endpoint used by readiness surfaces and live flow preparation. |
 | `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE` | Browser public | `Test SDF Network ; September 2015` | Must match Stellar testnet. |
@@ -37,7 +34,11 @@ Set these in the hosted runtime environment.
 | `NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID` | Browser public | `CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV` | Read-only validated in `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. |
 | `NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID` | Browser public | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` | Testnet payment asset configured for checkout readiness. |
 
-Generate a session secret locally before adding it to the host:
+Do not add `NEXT_PUBLIC_SUPABASE_*`. Quorum does not use the browser Supabase
+client or anon key. Also do not add `SUPABASE_SERVICE_ROLE_KEY`; the app only
+needs Postgres credentials.
+
+Generate a session secret locally before adding it to Vercel:
 
 ```bash
 openssl rand -base64 48
@@ -45,35 +46,52 @@ openssl rand -base64 48
 
 ## Operator-Only Variables
 
-These are for contract deployment or intentionally approved live signing from a
-local operator shell. Do not add them to the normal hosted app runtime unless a
-separate, explicit server-side signing design has been approved.
+These are for contract deployment or intentionally approved local signing.
+They must be omitted from the normal hosted runtime because the hosted app flow
+uses Freighter in the browser.
 
 | Variable | Use |
 |---|---|
 | `STELLAR_NETWORK` | Must be `testnet` for deploy/init scripts. |
-| `STELLAR_ACCOUNT` | Funded Stellar CLI identity, secret, or seed phrase used by deploy/init scripts. Keep out of browser and routine hosted runtime. |
+| `STELLAR_ACCOUNT` | Funded Stellar CLI identity, secret, or seed phrase used by deploy/init scripts. Keep out of browser and hosted runtime. |
 | `QUORUM_LIVE_SIGNING_APPROVED` | Must be `I_APPROVE_TESTNET_SIGNING` only for an approved signing run. Leave blank otherwise. |
 | `ADMIN_ADDRESS` | Admin public account used by contract init. |
 | `QUORUM_PLATFORM_FEE_BPS` | Demo is `0`. Non-zero values require explicit fee approval. |
 | `QUORUM_NONZERO_PLATFORM_FEE_APPROVED` | Required only when product owner approves a non-zero fee. |
 
+## Supabase Setup
+
+1. Create a Supabase project.
+2. Save the database password in a password manager.
+3. Copy the pooled Postgres URL to Vercel as `DATABASE_URL`.
+4. Copy the direct Postgres URL to Vercel as `DIRECT_DATABASE_URL` when
+   migrations should bypass the pooler.
+5. Add `sslmode=require` to both URLs.
+6. Run migrations before hosted live testing:
+
+```bash
+DATABASE_URL="<pooled-url>" DIRECT_DATABASE_URL="<direct-url>" npm run db:migrate
+```
+
+Use `QUORUM_DB_SCHEMA` only when you intentionally want a non-`public` schema.
+
 ## Vercel Setup Pattern
 
-If Vercel is used, add public runtime variables to Production, Preview, and
-Development as appropriate. Add `QUORUM_SESSION_SECRET` as a sensitive
-Production/Preview secret.
+Add the server-only secrets as sensitive Vercel env vars and the public Stellar
+values as normal env vars for the deployment environments you use.
 
 Examples:
 
 ```bash
+echo "<supabase-pooled-postgres-url?sslmode=require>" | vercel env add DATABASE_URL production preview --sensitive
+echo "<supabase-direct-postgres-url?sslmode=require>" | vercel env add DIRECT_DATABASE_URL production preview --sensitive
+echo "<32-plus-character-secret>" | vercel env add QUORUM_SESSION_SECRET production preview --sensitive
 echo "TESTNET" | vercel env add NEXT_PUBLIC_STELLAR_NETWORK production preview
 echo "https://soroban-testnet.stellar.org" | vercel env add NEXT_PUBLIC_STELLAR_RPC_URL production preview
 echo "Test SDF Network ; September 2015" | vercel env add NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE production preview
 echo "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH" | vercel env add NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID production preview
 echo "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV" | vercel env add NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID production preview
 echo "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA" | vercel env add NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID production preview
-echo "<32-plus-character-secret>" | vercel env add QUORUM_SESSION_SECRET production preview --sensitive
 ```
 
 Pull the configured environment back into local development only when needed:
@@ -87,8 +105,8 @@ pulling if they are not present in the Vercel project.
 
 ## Verification Checklist
 
-Run these locally after environment variables are configured and before any
-hosted live transaction demo:
+Run these locally after Supabase and Vercel env vars are configured and before
+any hosted live transaction demo:
 
 ```bash
 npm run deploy:env:smoke
@@ -102,15 +120,17 @@ npm run build
 After deployment, verify the hosted app:
 
 1. Open the hosted app over public HTTPS.
-2. Run the hosted preflight against the deployed origin and pulled hosted env:
+2. Run migrations against Supabase.
+3. Run the hosted preflight against the deployed origin and pulled hosted env:
    `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
-3. Confirm `/api/contracts/status` returns `proofMode: "live"`.
-4. Confirm publish, checkout, check-in, and withdraw policies report
+4. Confirm `/api/contracts/status` returns `proofMode: "live"`.
+5. Confirm publish, checkout, check-in, and withdraw policies report
    `live_required`.
-5. Run browser QA against the hosted origin or capture equivalent screenshots.
-6. Record hosted URLs and signed transaction hashes in
+6. Restart/redeploy the hosted app and confirm records persist in Supabase.
+7. Run browser QA against the hosted origin or capture equivalent screenshots.
+8. Record hosted URLs and signed transaction hashes in
    `docs/LIVE_TESTNET_EVIDENCE.json`.
-7. Run `npm run live:evidence:audit` only after the filled evidence file has no
+9. Run `npm run live:evidence:audit` only after the filled evidence file has no
    placeholders.
 
 ## Handoff Status
@@ -119,7 +139,9 @@ After deployment, verify the hosted app:
 |---|---|
 | Testnet contract IDs | Recorded and read-only validated. |
 | Browser live action wiring | Verified locally with mocked signer/RPC boundaries. |
+| Postgres persistence adapter | Implemented for app, migrations, seed, and smoke scripts. |
 | Production session secret guard | Verified locally. |
 | Hosted app URL | Not configured in repo. |
-| Production database | Not production-ready until persistent storage or a DB adapter migration exists. |
+| Supabase project | External setup still required. |
+| Vercel project | External setup still required. |
 | Real Freighter-signed live flows | Not run in this phase. Requires explicit user approval and manual wallet interaction. |

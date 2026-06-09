@@ -60,13 +60,11 @@ function locationLabel(event: EventRecord) {
   return event.locationText ?? (event.locationType === "virtual" ? "Virtual" : "Venue TBA");
 }
 
-function seatsLabel(event: EventRecord) {
-  const minted = countPassesForEvent(event.id);
+function seatsLabel(event: EventRecord, minted: number) {
   return `${Math.max(event.capacity - minted, 0)} seats left`;
 }
 
-function splitLabel(event: EventRecord) {
-  const collaborators = listCollaborators(event.id);
+function splitLabel(collaborators: Awaited<ReturnType<typeof listCollaborators>>) {
   return collaborators.length > 0
     ? collaborators.map((split) => split.splitPercentage).join(" / ")
     : "100";
@@ -91,13 +89,19 @@ function eventMatchesQuery(event: EventRecord, query: string) {
   return haystack.includes(query.toLowerCase());
 }
 
-function slideForEvent(event: EventRecord): FeaturedEventSlide {
+function slideForEvent({
+  event,
+  minted,
+}: {
+  event: EventRecord;
+  minted: number;
+}): FeaturedEventSlide {
   return {
     coverStyle: eventCoverStyle(event),
     dateLabel: formatDate(event),
     location: locationLabel(event),
     priceLabel: priceLabel(event),
-    seatsLabel: seatsLabel(event),
+    seatsLabel: seatsLabel(event, minted),
     shortDescription: event.shortDescription,
     slug: event.slug,
     themeStyle: eventThemeStyle(event),
@@ -109,11 +113,30 @@ function slideForEvent(event: EventRecord): FeaturedEventSlide {
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
   const params = searchParams ? await searchParams : {};
   const query = (firstParam(params.q) ?? "").trim();
-  const publishedEvents = listPublishedEvents();
+  const publishedEvents = await listPublishedEvents();
+  const eventStats = new Map(
+    await Promise.all(
+      publishedEvents.map(
+        async (event) =>
+          [
+            event.id,
+            {
+              collaborators: await listCollaborators(event.id),
+              minted: await countPassesForEvent(event.id),
+            },
+          ] as const,
+      ),
+    ),
+  );
   const filteredEvents = publishedEvents.filter((event) =>
     eventMatchesQuery(event, query),
   );
-  const featuredSlides = filteredEvents.slice(0, 3).map(slideForEvent);
+  const featuredSlides = filteredEvents.slice(0, 3).map((event) =>
+    slideForEvent({
+      event,
+      minted: eventStats.get(event.id)?.minted ?? 0,
+    }),
+  );
   const eventTypes = Array.from(
     new Set(publishedEvents.map((event) => event.eventType)),
   ).slice(0, 6);
@@ -268,7 +291,7 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                         {priceLabel(event)}
                       </span>
                       <span className="rounded-full border border-foreground/10 px-2.5 py-1">
-                        {seatsLabel(event)}
+                        {seatsLabel(event, eventStats.get(event.id)?.minted ?? 0)}
                       </span>
                     </div>
 
@@ -294,7 +317,9 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                       {[
                         {
                           icon: Users,
-                          label: `${splitLabel(event)} split`,
+                          label: `${splitLabel(
+                            eventStats.get(event.id)?.collaborators ?? [],
+                          )} split`,
                         },
                         {
                           icon: WalletCards,

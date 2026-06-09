@@ -19,9 +19,9 @@ type CheckInPageProps = {
 
 export const dynamic = "force-dynamic";
 
-function getEventOrNull(eventId: string) {
+async function getEventOrNull(eventId: string) {
   try {
-    return getEventById(eventId);
+    return await getEventById(eventId);
   } catch {
     return null;
   }
@@ -34,14 +34,14 @@ function shorten(value: string) {
 
 export default async function CheckInPage({ params }: CheckInPageProps) {
   const { eventId } = await params;
-  const event = getEventOrNull(eventId);
+  const event = await getEventOrNull(eventId);
 
   if (!event || event.status !== "published") {
     notFound();
   }
 
-  const metrics = getEventDashboardMetrics(event.id);
-  const recentCheckIns = listCheckInsForEvent(event.id).slice(0, 5);
+  const metrics = await getEventDashboardMetrics(event.id);
+  const recentCheckIns = (await listCheckInsForEvent(event.id)).slice(0, 5);
 
   return (
     <AppShell>

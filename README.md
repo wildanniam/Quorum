@@ -6,9 +6,9 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-The local hackathon demo flow is implemented and verified. The app can create, update, publish, publicly list local paid/free events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
+The local hackathon demo flow is implemented and verified on Postgres. The app can create, update, publish, publicly list local paid/free events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
 
-The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Testnet contract IDs and the USDC contract ID are recorded and read-only validated. Live on-chain publish/checkout/withdraw/check-in from the hosted app still needs hosted environment configuration, a production storage decision, and explicit wallet signing approval.
+The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Testnet contract IDs and the USDC contract ID are recorded and read-only validated. Live on-chain publish/checkout/withdraw/check-in from the hosted app still needs Supabase/Vercel configuration, hosted migrations, and explicit wallet signing approval.
 
 Implemented in the app shell:
 
@@ -23,7 +23,7 @@ Implemented in the app shell:
 - organizer check-in page;
 - Freighter-first wallet auth foundation;
 - signed wallet session API routes;
-- local SQLite migration foundation;
+- Postgres migration foundation for local, Supabase, and isolated smoke schemas;
 - draft event create/update API routes;
 - publish-to-marketplace DB stub;
 - collaborator percentage split setup;
@@ -37,12 +37,11 @@ Implemented in the app shell:
 - collaborator local withdrawal API route;
 - dashboard metrics for organizer revenue, collaborator balances, attendee passes, and proof queue.
 
-Not implemented yet:
+Not completed yet:
 
-- live on-chain checkout transaction signing;
-- live NFT mint transaction submission from the app;
-- live on-chain withdraw transaction submission from the app;
-- live on-chain check-in transaction submission from the app.
+- Vercel project/env configuration;
+- Supabase project/env configuration;
+- real Freighter-signed hosted publish, checkout, free claim, check-in, and withdraw evidence.
 
 ## Local Development
 
@@ -55,10 +54,14 @@ npm run dev
 
 Open `http://localhost:3000`.
 
-Copy `.env.example` to `.env.local` when you need local secrets. The default database path is `file:./data/quorum.db`.
+Copy `.env.example` to `.env.local` when you need local secrets. The default database URL is `postgresql://postgres:postgres@127.0.0.1:5432/quorum`; set `DATABASE_URL` to your local Postgres or Supabase pooled URL. Set `DIRECT_DATABASE_URL` only when migrations need a separate direct connection. `QUORUM_DB_SCHEMA` defaults to `public`.
 Hosted or production deployments must set `QUORUM_SESSION_SECRET` to a
 non-placeholder value of at least 32 characters; local development can use the
 fallback secret.
+
+Supabase is used only as server-side Postgres. Do not add
+`NEXT_PUBLIC_SUPABASE_*` variables or service-role keys to the browser/runtime
+env.
 
 ## Verification
 
@@ -91,7 +94,7 @@ stellar contract build
 npm run contracts:doctor
 ```
 
-`npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary SQLite database, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
+`npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary Postgres schema, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
 `npm run demo:live-policy` starts an isolated local Next.js dev server with fake
 valid contract IDs, verifies non-signing live action preparation, confirms the
@@ -113,7 +116,7 @@ submitting to testnet.
 
 `npm run live:persistence:smoke` verifies the DB path for recording verified
 live publish, pass, check-in, and withdrawal transaction results while rejecting
-stub hashes.
+stub hashes and replayed hashes through the global live proof registry.
 
 `npm run live:preflight:smoke` verifies the pre-signing RPC orchestration with a
 mock server: fetch signer sequence, prepare/simulate the Soroban transaction,
@@ -162,9 +165,10 @@ short `QUORUM_SESSION_SECRET` values.
 
 `npm run deploy:hosted:preflight:smoke` verifies the hosted deployment
 preflight rules without cloud credentials or signing: public HTTPS URL,
-production session secret, exact contract/env match against
-`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`, absence of operator signing env,
-and live `/api/contracts/status` action policies. For a real hosted target, run
+production session secret, Postgres `DATABASE_URL`, exact contract/env match
+against `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`, absence of operator
+signing env and browser Supabase env, and live `/api/contracts/status` action
+policies. For a real hosted target, run
 `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
 
 Live testnet deployment signs transactions and is intentionally gated by funded

@@ -267,124 +267,58 @@ Stop if:
 - generated evidence shows failed lint/build/smoke checks;
 - local DB migration or seed fails.
 
-## Phase 2: Choose Hosted Storage Strategy
+## Phase 2: Supabase Postgres Persistence
 
-Current constraint:
+Decision:
 
-The app uses `better-sqlite3` with a `file:` database URL. This is fine for
-local demos or a single host with persistent disk, but it is not durable on
-typical serverless hosting with ephemeral filesystem.
+Supabase Postgres is the hosted persistence path. The repository now uses an
+async Postgres adapter, Postgres migrations, server-only DB credentials, and
+temporary Postgres schemas for smoke tests. Supabase must be used only as
+Postgres behind Next.js server routes.
 
-Choose one strategy:
+Implemented code path:
 
-### Option A: Single Host With Persistent Disk
+- `DATABASE_URL` points at the runtime Postgres URL.
+- `DIRECT_DATABASE_URL` is optional and preferred for migrations when runtime
+  uses a pooler.
+- `QUORUM_DB_SCHEMA` defaults to `public` and is used by smoke scripts for
+  isolated schemas.
+- Live proof transaction hashes are guarded by table constraints and the global
+  `live_proof_hashes` registry.
+- Publish, pass recording, check-in, and withdrawal persistence use
+  transactions and row locks where state is derived before writing.
 
-Use this if speed matters most and the hosting environment can keep a persistent
-SQLite file.
+External setup still required:
 
-Requirements:
-
-- one app instance;
-- persistent disk path for `DATABASE_URL`;
-- writable filesystem for migrations and live proof records;
-- deployment process runs `npm run db:migrate`.
-
-Acceptance criteria:
-
-- hosted app can create event records;
-- hosted app can persist session-related app records long enough for the live
-  evidence demo;
-- app data survives a normal restart.
-
-### Option B: Migrate DB Adapter To Supabase Postgres
-
-Use this if the app must run on serverless or scale beyond a single instance.
-This is the planned handoff path if Quorum will use Supabase.
-
-Important:
-
-This is **not** only an env change. The current code rejects non-`file:`
-database URLs in `src/lib/db/client.ts`, and the current migration runner uses
-`better-sqlite3`. Supabase requires a real DB adapter migration.
-
-Supabase setup tasks:
-
-1. Create a Supabase project.
+1. Create the Supabase project.
 2. Save the database password in a password manager.
-3. Get the Postgres connection string from Supabase project settings.
-4. Decide which connection string is used by the app runtime:
-   - pooled connection string for serverless-style hosting;
-   - direct connection string for a single long-running host or migration
-     runner if needed.
-5. Keep all DB credentials server-only. Do not expose the database password,
-   service-role key, or Postgres URL to the browser.
-6. Do not add `NEXT_PUBLIC_SUPABASE_URL` or `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   unless the frontend is intentionally changed to use Supabase client APIs.
-   The current app only needs server-side database access.
-
-Recommended env shape after Supabase migration:
-
-```bash
-DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require"
-DIRECT_DATABASE_URL="postgresql://<user>:<password>@<direct-host>:<port>/<database>?sslmode=require"
-```
-
-`DIRECT_DATABASE_URL` is optional but useful if the runtime uses pooled
-connections and migrations need a direct connection. If the migration runner can
-use the same pooled connection safely, keep only `DATABASE_URL`.
-
-Code migration tasks:
-
-- replace `better-sqlite3` assumptions in `src/lib/db/client.ts`;
-- replace sync DB calls with an async Postgres client, for example `pg` or
-  another Postgres driver;
-- update `src/lib/events/repository.ts` from sync functions to async functions;
-- update all call sites that read/write events, passes, check-ins, purchases,
-  withdrawals, and users to `await` repository calls;
-- update API routes and server components that currently assume synchronous DB
-  reads;
-- update smoke scripts that import DB/repository helpers;
-- update migration scripts to run against Postgres;
-- update DB smoke tests to verify Postgres indexes/constraints instead of
-  SQLite PRAGMA checks;
-- update `DATABASE_URL` docs.
-
-Migration SQL conversion notes:
-
-- `datetime('now')` becomes `now()`.
-- `TEXT` timestamps should become `timestamptz` where practical.
-- SQLite `INTEGER` booleans can become Postgres `boolean`.
-- `julianday(end_date_time) > julianday(start_date_time)` becomes direct
-  timestamp comparison, for example `end_date_time > start_date_time`.
-- SQLite triggers need a Postgres `plpgsql` trigger function.
-- Query placeholders change from `?` to `$1`, `$2`, etc.
-- `INSERT OR IGNORE` patterns should become `ON CONFLICT DO NOTHING`.
-- Preserve all uniqueness constraints for:
-  - `events.core_event_id`;
-  - `events.publish_tx_hash`;
-  - `passes.mint_tx_hash`;
-  - `purchases.tx_hash`;
-  - `check_ins.tx_hash`;
-  - `withdrawals.tx_hash`;
-  - `passes(event_id, owner_wallet)`.
+3. Add the pooled Postgres URL to Vercel as server-only `DATABASE_URL`.
+4. Add the direct Postgres URL to Vercel as server-only
+   `DIRECT_DATABASE_URL` when migrations should bypass the pooler.
+5. Add `sslmode=require` to hosted Postgres URLs.
+6. Run `npm run db:migrate` against Supabase before hosted live testing.
 
 Security notes:
 
-- Use Supabase as Postgres, not as browser-side table API, unless a separate
-  Supabase API/RLS design is intentionally added.
-- If tables are exposed through Supabase APIs, configure RLS policies before
-  exposing anon keys. The current app auth is wallet-cookie based and lives in
-  Next.js routes, so the safest path is server-only DB access.
-- Never commit Supabase passwords or service-role keys.
+- Do not expose Postgres URLs, database passwords, service-role keys, or seed
+  phrases to the browser.
+- Do not add `NEXT_PUBLIC_SUPABASE_*`; the frontend does not use Supabase
+  client APIs.
+- Do not add `SUPABASE_SERVICE_ROLE_KEY`; the app only needs Postgres
+  credentials.
+- Never commit Supabase passwords or pulled Vercel env files.
 
 Acceptance criteria:
 
-- all existing DB smoke and demo smoke commands pass;
-- live result persistence still rejects duplicate/replayed transaction hashes;
-- hosted app can persist events, passes, purchases, check-ins, and withdrawals;
-- live publish, checkout, check-in, and withdraw flows still persist confirmed
-  transaction hashes exactly once;
-- production env docs are updated.
+- `npm run db:migrate`, `npm run db:seed`, and `npm run db:smoke` pass on
+  Postgres.
+- `npm run demo:smoke`, `npm run live:flow:smoke`, and
+  `npm run live:persistence:smoke` pass with temporary Postgres schemas.
+- live result persistence rejects duplicate/replayed transaction hashes across
+  all proof tables.
+- hosted app can persist events, passes, purchases, check-ins, and withdrawals
+  through a restart/redeploy.
+- production env docs and hosted preflight reject browser-exposed Supabase env.
 
 Stop if:
 
@@ -392,32 +326,16 @@ Stop if:
   configured;
 - Postgres migration drops a uniqueness guard for live transaction evidence;
 - browser code needs Supabase service credentials;
-- Supabase table access works without the intended server-side auth boundary.
-
-### Option C: UI-Only Hosted Demo
-
-Use this only if live transaction evidence is postponed.
-
-This option does not satisfy the full live testnet goal because the app must
-record live proof. Only use it for visual demo.
-
-Recommended path:
-
-- Option A if this is a near-term hackathon handoff.
-- Option B if this needs production credibility.
-
-Acceptance criteria for this phase:
-
-- storage choice is documented in this TODO or a new handoff note;
-- `DATABASE_URL` plan is clear;
-- the deploy target is known.
+- hosted persistence loses records after restart.
 
 ## Phase 3: Configure Hosted Environment
 
 Required hosted runtime env vars:
 
 ```bash
-DATABASE_URL="<file: persistent path before Supabase, or postgresql://... after Supabase migration>"
+DATABASE_URL="postgresql://<user>:<password>@<pooled-host>:<port>/<database>?sslmode=require"
+DIRECT_DATABASE_URL="postgresql://<user>:<password>@<direct-host>:<port>/<database>?sslmode=require"
+QUORUM_DB_SCHEMA="public"
 QUORUM_SESSION_SECRET="<32+ random chars>"
 NEXT_PUBLIC_STELLAR_NETWORK="TESTNET"
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
@@ -427,20 +345,9 @@ NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID="CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WX
 NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID="CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA"
 ```
 
-If Supabase migration is complete, hosted env should use:
-
-```bash
-DATABASE_URL="postgresql://<user>:<password>@<host>:<port>/<database>?sslmode=require"
-DIRECT_DATABASE_URL="postgresql://<user>:<password>@<direct-host>:<port>/<database>?sslmode=require"
-```
-
-Only add Supabase public env vars if the frontend intentionally uses Supabase
-client APIs:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL="<only if frontend Supabase client is introduced>"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="<only if frontend Supabase client is introduced and RLS is configured>"
-```
+`DIRECT_DATABASE_URL` is optional when the migration runner can safely use the
+same URL as the runtime. Do not add `NEXT_PUBLIC_SUPABASE_*` or
+`SUPABASE_SERVICE_ROLE_KEY`; Quorum uses Supabase only as server-side Postgres.
 
 Generate session secret:
 
@@ -470,6 +377,7 @@ Acceptance criteria:
 
 - hosted app has a public HTTPS URL;
 - `QUORUM_SESSION_SECRET` is not placeholder/local/short;
+- hosted `DATABASE_URL` is a Postgres URL with `sslmode=require`;
 - public Stellar env vars match the testnet deployment evidence;
 - `/api/contracts/status` on the hosted app reports live proof mode;
 - publish, checkout, check-in, and withdraw action policies report live actions.
@@ -492,6 +400,7 @@ Stop if:
 - `/api/contracts/status` reports local proof mode;
 - hosted preflight says env does not match deployment evidence;
 - hosted runtime includes operator signing secrets by accident.
+- hosted runtime includes browser Supabase env or a service-role key.
 
 ## Phase 4: Prepare Wallets And Testnet USDC
 
@@ -621,11 +530,42 @@ Evidence:
 - `liveFlows.paidCheckout.paymentAsset`;
 - pass detail URL/screenshot.
 
-### 5.4 Free Claim
+### 5.4 Publish Free Event
 
 Page:
 
-- hosted free event detail or checkout.
+- hosted create event flow;
+- then publish a separate free event.
+
+Signer:
+
+- organizer wallet.
+
+Contract method:
+
+- `QuorumCore.create_event`.
+
+Expected:
+
+- source wallet is organizer;
+- contract is `CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV`;
+- event ID is distinct from the paid event;
+- price is `0`;
+- pass contract is `CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH`;
+- split total is `10000` bps;
+- Freighter shows Stellar testnet.
+
+Evidence:
+
+- `liveFlows.publishFreeEvent.txHash`;
+- `liveFlows.publishFreeEvent.eventUrl`;
+- free event title/slug.
+
+### 5.5 Free Claim
+
+Page:
+
+- hosted live-published free event detail or checkout.
 
 Signer:
 
@@ -639,6 +579,8 @@ Expected:
 
 - amount is `0`;
 - no payment asset movement;
+- the free event was published through the live app flow, not seeded local
+  proof data;
 - token ID is minted;
 - duplicate claim by same wallet is rejected.
 
@@ -648,7 +590,7 @@ Evidence:
 - `liveFlows.freeClaim.tokenId`;
 - free pass detail URL/screenshot.
 
-### 5.5 Resource Unlock
+### 5.6 Resource Unlock
 
 Page:
 
@@ -669,7 +611,7 @@ Evidence:
 - `browserProof.paidResourceUnlockedUrl`;
 - screenshot/note showing paid attendee session.
 
-### 5.6 Organizer Check-In
+### 5.7 Organizer Check-In
 
 Page:
 
@@ -696,7 +638,7 @@ Evidence:
 - `liveFlows.checkIn.tokenId`;
 - pass detail screenshot showing checked-in status.
 
-### 5.7 Collaborator Withdraw
+### 5.8 Collaborator Withdraw
 
 Page:
 
@@ -772,8 +714,9 @@ Final acceptance criteria:
 
 - hosted app is public HTTPS;
 - hosted `/api/contracts/status` reports live mode;
-- real publish tx hash exists;
+- real paid event publish tx hash exists;
 - real paid checkout tx hash exists;
+- real free event publish tx hash exists;
 - real free claim tx hash exists;
 - real check-in tx hash exists;
 - real collaborator withdraw tx hash exists;
@@ -811,9 +754,10 @@ npm run readiness:audit
 
 ### Hosted Storage
 
-The biggest technical product gap is not Stellar; it is hosted persistence.
-Without reliable storage, the app may sign real transactions but lose the local
-records that connect event/pass/check-in/withdrawal state in the UI.
+The remaining storage gap is cloud provisioning and verification. Without a
+real Supabase project, migrations, and a restart/redeploy persistence check, the
+app may sign real transactions but lose the records that connect
+event/pass/check-in/withdrawal state in the UI.
 
 ### Paid Testnet USDC
 
@@ -834,15 +778,15 @@ source.
 ## Suggested Work Order For The Next Developer
 
 1. Pull latest repo and confirm clean state.
-2. Run `npm install` if dependencies are missing.
-3. Run `npm run lint` and `npm run build`.
-4. Run `npm run evidence:local`.
-5. Run `npm run readiness:audit`.
-6. Create the Supabase project and collect the server-only Postgres connection
+2. Run `npm ci` if dependencies are missing.
+3. Point `DATABASE_URL` at local Postgres or Supabase.
+4. Run `npm run db:migrate`, `npm run db:seed`, and `npm run db:smoke`.
+5. Run `npm run lint` and `npm run build`.
+6. Run `npm run evidence:local`.
+7. Run `npm run readiness:audit`.
+8. Create the Supabase project and collect the server-only Postgres connection
    string.
-7. Migrate the DB adapter from SQLite to Supabase Postgres.
-8. Convert migrations and DB smoke tests to Postgres.
-9. Run the full local smoke suite against Supabase.
+9. Run migrations against Supabase.
 10. Deploy hosted app.
 11. Configure hosted env vars exactly.
 12. Run hosted preflight.

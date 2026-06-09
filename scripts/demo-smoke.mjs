@@ -1,16 +1,15 @@
 import { spawn } from "node:child_process";
 import { createHmac, randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Keypair } from "@stellar/stellar-sdk";
+import { withClient } from "./postgres-utils.mjs";
 
 const projectRoot = process.cwd();
 const port = Number(process.env.DEMO_SMOKE_PORT ?? 3035);
 const baseUrl = `http://127.0.0.1:${port}`;
-const databaseUrl =
-  process.env.DEMO_SMOKE_DATABASE_URL ??
-  `file:./data/quorum-demo-smoke-${randomUUID()}.db`;
+const databaseSchema =
+  process.env.DEMO_SMOKE_DB_SCHEMA ??
+  `quorum_demo_smoke_${randomUUID().replaceAll("-", "_")}`;
 const eventId = "evt_apac_stellar_builder_meetup";
 const eventSlug = "apac-stellar-builder-meetup";
 const freeEventId = "evt_stellar_open_office_hours";
@@ -20,14 +19,6 @@ const organizerWallet =
 const speakerWallet =
   "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const smokeSessionSecret = "quorum-local-dev-session-secret";
-
-function resolveDatabasePath() {
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error("demo smoke expects a file: SQLite DATABASE_URL");
-  }
-
-  return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
-}
 
 function encodeBase64Url(value) {
   return Buffer.from(value)
@@ -58,6 +49,7 @@ function runCommand(command, args, env = {}) {
     const child = spawn(command, args, {
       cwd: projectRoot,
       env: { ...process.env, ...env },
+      shell: process.platform === "win32" && command === "npm",
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -118,6 +110,21 @@ async function waitForServer(child) {
   throw new Error(`Timed out waiting for ${baseUrl}: ${lastError}`);
 }
 
+async function stopServer(child) {
+  if (process.platform === "win32" && child.pid) {
+    await new Promise((resolve) => {
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+      killer.on("close", resolve);
+      killer.on("error", resolve);
+    });
+    return;
+  }
+
+  child.kill("SIGTERM");
+}
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -166,28 +173,28 @@ function createDraftPayload({
 }
 
 async function main() {
-  const databasePath = resolveDatabasePath();
-  fs.rmSync(databasePath, { force: true });
-  fs.rmSync(`${databasePath}-shm`, { force: true });
-  fs.rmSync(`${databasePath}-wal`, { force: true });
-
   const env = {
-    DATABASE_URL: databaseUrl,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: "",
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
     NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
+    QUORUM_DB_SCHEMA: databaseSchema,
     QUORUM_SESSION_SECRET: process.env.DEMO_SMOKE_SESSION_SECRET ?? smokeSessionSecret,
   };
 
   await runCommand("node", ["scripts/db-migrate.mjs"], env);
   await runCommand("node", ["scripts/db-seed.mjs"], env);
 
-  const server = spawn("npm", ["run", "dev", "--", "--port", String(port)], {
+  const server = spawn(
+    "npm",
+    ["run", "dev", "--", "--port", String(port)],
+    {
     cwd: projectRoot,
     env: { ...process.env, ...env },
+    shell: process.platform === "win32",
     stdio: ["ignore", "pipe", "pipe"],
-  });
+    },
+  );
   let serverOutput = "";
 
   server.stdout.on("data", (chunk) => {
@@ -555,7 +562,7 @@ async function main() {
       "dashboard should show missing USDC payment asset before live signing",
     );
     assert(
-      dashboardHtml.includes("Action execution"),
+      dashboardHtml.includes("Wallet actions"),
       "dashboard should show contract action execution policy",
     );
     assert(
@@ -569,7 +576,7 @@ async function main() {
         {
           ok: true,
           baseUrl,
-          databasePath,
+          databaseSchema,
           eventId,
           tokenId,
           checks: [
@@ -614,11 +621,14 @@ async function main() {
     );
     process.exitCode = 1;
   } finally {
-    server.kill("SIGTERM");
+    await stopServer(server);
     await delay(500);
-    fs.rmSync(databasePath, { force: true });
-    fs.rmSync(`${databasePath}-shm`, { force: true });
-    fs.rmSync(`${databasePath}-wal`, { force: true });
+    await withClient(
+      async (client) => {
+        await client.query(`DROP SCHEMA IF EXISTS "${databaseSchema}" CASCADE`);
+      },
+      { migration: true },
+    );
   }
 }
 

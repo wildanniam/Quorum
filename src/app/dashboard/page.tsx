@@ -48,20 +48,33 @@ export default async function DashboardPage() {
   const cookieStore = await cookies();
   const session = readSessionToken(cookieStore.get(SESSION_COOKIE)?.value);
   const organizerEvents = session
-    ? listOrganizerEvents(session.walletAddress)
+    ? await listOrganizerEvents(session.walletAddress)
     : [];
   const collaborations = session
-    ? listCollaborationsByWallet(session.walletAddress)
+    ? await listCollaborationsByWallet(session.walletAddress)
     : [];
   const attendeePasses = session
-    ? listPassesByOwner(session.walletAddress).map((pass) => ({
-        event: getEventById(pass.eventId),
-        pass,
-      }))
+    ? await Promise.all(
+        (await listPassesByOwner(session.walletAddress)).map(async (pass) => ({
+          event: await getEventById(pass.eventId),
+          pass,
+        })),
+      )
     : [];
-  const organizerRevenue = organizerEvents.reduce(
-    (total, event) => total + getEventRevenueUsdc(event.id),
+  const organizerRevenueParts = await Promise.all(
+    organizerEvents.map((event) => getEventRevenueUsdc(event.id)),
+  );
+  const organizerRevenue = organizerRevenueParts.reduce(
+    (total, revenue) => total + revenue,
     0,
+  );
+  const organizerEventMetrics = new Map(
+    await Promise.all(
+      organizerEvents.map(
+        async (event) =>
+          [event.id, await getEventDashboardMetrics(event.id)] as const,
+      ),
+    ),
   );
   const withdrawableUsdc = collaborations.reduce((total, collaboration) => {
     const available = Math.max(
@@ -246,7 +259,12 @@ export default async function DashboardPage() {
               <div className="mt-5 grid gap-3">
                 {organizerEvents.length > 0 ? (
                   organizerEvents.map((event) => {
-                    const metrics = getEventDashboardMetrics(event.id);
+                    const metrics = organizerEventMetrics.get(event.id) ?? {
+                      capacityRemaining: event.capacity,
+                      checkedInCount: 0,
+                      passCount: 0,
+                      revenueUsdc: 0,
+                    };
                     const metricCards = [
                       { label: "passes", value: metrics.passCount, tone: "text-accent" },
                       { label: "left", value: metrics.capacityRemaining, tone: "text-cyan" },

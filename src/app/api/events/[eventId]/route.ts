@@ -45,7 +45,7 @@ export async function PATCH(request: NextRequest, context: EventRouteContext) {
   const { collaborators, resources, ...eventInput } = parsed.data;
 
   try {
-    const eventDraft = updateDraftEventWithSetup({
+    const eventDraft = await updateDraftEventWithSetup({
       eventId,
       organizerWallet: session.walletAddress,
       input: {

@@ -17,10 +17,10 @@ function getSession(request: NextRequest) {
   return readSessionToken(request.cookies.get(SESSION_COOKIE)?.value);
 }
 
-function createUniqueSlug(title: string) {
+async function createUniqueSlug(title: string) {
   const baseSlug = slugifyEventTitle(title);
 
-  if (!getEventBySlug(baseSlug)) return baseSlug;
+  if (!(await getEventBySlug(baseSlug))) return baseSlug;
 
   return `${baseSlug}-${randomUUID().slice(0, 8)}`;
 }
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    events: listOrganizerEvents(session.walletAddress),
+    events: await listOrganizerEvents(session.walletAddress),
   });
 }
 
@@ -65,13 +65,13 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    upsertUser(session.walletAddress);
+    await upsertUser(session.walletAddress);
 
     const { collaborators, resources, ...eventInput } = parsed.data;
-    const eventDraft = createDraftEventWithSetup(
+    const eventDraft = await createDraftEventWithSetup(
       {
         ...eventInput,
-        slug: createUniqueSlug(parsed.data.title),
+        slug: await createUniqueSlug(parsed.data.title),
         organizerWallet: session.walletAddress,
         priceUsdc: parsed.data.isFree ? "0" : parsed.data.priceUsdc,
       },

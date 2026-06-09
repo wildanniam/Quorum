@@ -49,15 +49,15 @@ function locationLabel(event: EventRecord) {
 
 export default async function EventPage({ params }: EventPageProps) {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getEventBySlug(slug);
 
   if (!event || event.status !== "published") {
     notFound();
   }
 
-  const collaborators = listCollaborators(event.id);
-  const resources = listResources(event.id);
-  const mintedPasses = countPassesForEvent(event.id);
+  const collaborators = await listCollaborators(event.id);
+  const resources = await listResources(event.id);
+  const mintedPasses = await countPassesForEvent(event.id);
   const remainingCapacity = Math.max(event.capacity - mintedPasses, 0);
   const checkoutHref = `/events/${event.slug}/checkout`;
   const primaryAction = event.isFree ? "Claim pass" : "Get pass";

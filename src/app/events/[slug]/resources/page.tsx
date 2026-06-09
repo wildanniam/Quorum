@@ -28,7 +28,7 @@ export const dynamic = "force-dynamic";
 
 export default async function ResourcesPage({ params }: ResourcesPageProps) {
   const { slug } = await params;
-  const event = getEventBySlug(slug);
+  const event = await getEventBySlug(slug);
 
   if (!event || event.status !== "published") {
     notFound();
@@ -37,10 +37,10 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
   const cookieStore = await cookies();
   const session = readSessionToken(cookieStore.get(SESSION_COOKIE)?.value);
   const pass = session
-    ? getPassByEventAndOwner(event.id, session.walletAddress)
+    ? await getPassByEventAndOwner(event.id, session.walletAddress)
     : null;
   const hasAccess = Boolean(pass);
-  const resources = listResources(event.id);
+  const resources = await listResources(event.id);
 
   return (
     <AppShell>
