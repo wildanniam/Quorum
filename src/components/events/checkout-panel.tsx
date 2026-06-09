@@ -73,7 +73,7 @@ export function CheckoutPanel({
     ? "Sold out"
     : isBusy
       ? isSubmitting
-        ? "Preparing transaction"
+        ? "Preparing pass"
         : "Checking wallet"
       : !isConnected
         ? "Connect wallet"
@@ -84,7 +84,7 @@ export function CheckoutPanel({
   const steps = [
     {
       icon: WalletCards,
-      label: "Wallet session",
+      label: "Connect wallet",
       value: sessionWalletAddress
         ? `${shorten(sessionWalletAddress)}${network ? ` on ${network}` : ""}`
         : "Connect Freighter to start.",
@@ -92,14 +92,14 @@ export function CheckoutPanel({
     },
     {
       icon: ShieldCheck,
-      label: "Manual approval",
-      value: "Freighter will ask before any live transaction is submitted.",
+      label: "Approve in Freighter",
+      value: "You stay in control before anything is submitted.",
       state: isConnected ? "active" : "pending",
     },
     {
       icon: TicketCheck,
-      label: "Pass issued",
-      value: "The pass opens resource access and check-in proof.",
+      label: "Receive pass",
+      value: "Your pass opens resources and check-in.",
       state: "pending",
     },
   ];
@@ -163,16 +163,18 @@ export function CheckoutPanel({
   }
 
   return (
-    <div className="rounded-[8px] border border-line bg-panel/90 p-5 shadow-[0_20px_90px_rgba(0,0,0,0.3)] backdrop-blur-xl">
+    <div className="rounded-[8px] border border-foreground/10 bg-background/84 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28)] backdrop-blur-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">Checkout</p>
-          <p className="mt-3 text-4xl font-semibold">{priceLabel}</p>
+          <p className="eyebrow">Your pass</p>
+          <p className="mt-3 text-4xl font-semibold tracking-tight">
+            {priceLabel}
+          </p>
           <p className="mt-2 text-sm text-muted">
             {remainingCapacity} of {capacity} seats left
           </p>
         </div>
-        <div className="grid h-12 w-12 place-items-center rounded-[8px] border border-event-accent/45 bg-event-accent/10 text-event-accent">
+        <div className="grid h-12 w-12 place-items-center rounded-full border border-accent/45 bg-accent/10 text-accent">
           <TicketCheck size={23} />
         </div>
       </div>
@@ -188,17 +190,17 @@ export function CheckoutPanel({
               className={cn(
                 "grid grid-cols-[auto_1fr] gap-3 rounded-[8px] border p-4",
                 isDone || isActive
-                  ? "border-event-accent/45 bg-event-accent/10"
-                  : "border-line bg-background/32",
+                  ? "border-accent/45 bg-accent/10"
+                  : "border-foreground/10 bg-foreground/[0.035]",
               )}
               key={step.label}
             >
               <div
                 className={cn(
-                  "mt-0.5 grid h-7 w-7 place-items-center rounded-[6px] border",
+                  "mt-0.5 grid h-7 w-7 place-items-center rounded-full border",
                   isDone || isActive
-                    ? "border-event-accent/45 text-event-accent"
-                    : "border-line text-muted",
+                    ? "border-accent/45 text-accent"
+                    : "border-foreground/10 text-muted",
                 )}
               >
                 {isDone ? <CheckCircle2 size={15} /> : <Icon size={15} />}
@@ -238,7 +240,7 @@ export function CheckoutPanel({
 
       <button
         aria-busy={isBusy}
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[8px] bg-event-accent px-4 text-sm font-semibold text-event-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
         disabled={isBusy || isSoldOut}
         onClick={handleCheckout}
         type="button"
@@ -249,7 +251,7 @@ export function CheckoutPanel({
       </button>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
-        Live testnet transactions still require explicit Freighter approval.
+        Live testnet actions still ask for explicit Freighter approval.
       </p>
     </div>
   );
