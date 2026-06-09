@@ -58,7 +58,7 @@ type ResourceFormRow = {
 };
 
 const inputClass =
-  "min-h-11 w-full border border-line bg-background/60 px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent";
+  "min-h-11 w-full rounded-[8px] border border-foreground/10 bg-background/60 px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-accent focus:bg-background/80";
 const labelClass = "text-sm font-medium text-foreground";
 const sampleCollaboratorWallets = [
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF",
@@ -154,6 +154,10 @@ export function CreateEventForm() {
   );
   const splitReady = Math.abs(splitTotal - 100) < 0.001;
   const canSubmit = Boolean(sessionWalletAddress) && !submitting && splitReady;
+  const organizerCopy = sessionWalletAddress
+    ? sessionWalletAddress
+    : "Connect wallet to save drafts and publish.";
+  const organizerState = sessionWalletAddress ? "Wallet ready" : "Wallet required";
   const issueText = useMemo(() => {
     if (!result?.issues?.length) return null;
     return result.issues.map((issue) => issue.message).join(" ");
@@ -239,23 +243,23 @@ export function CreateEventForm() {
       savedEventId ? `/api/events/${savedEventId}` : "/api/events",
       {
         method: savedEventId ? "PATCH" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        ...form,
-        startDateTime: toIsoDateTime(form.startDateTime),
-        endDateTime: toIsoDateTime(form.endDateTime),
-        isFree: mode === "free",
-        priceUsdc: mode === "free" ? "0" : form.priceUsdc,
-        capacity: Number(form.capacity),
-        collaborators: collaboratorRows.map((collaborator) => ({
-          ...collaborator,
-          splitPercentage: Number(collaborator.splitPercentage),
-        })),
-        resources: resources.map((resource, index) => ({
-          ...resource,
-          sortOrder: Number(resource.sortOrder || index + 1),
-        })),
-      }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...form,
+          startDateTime: toIsoDateTime(form.startDateTime),
+          endDateTime: toIsoDateTime(form.endDateTime),
+          isFree: mode === "free",
+          priceUsdc: mode === "free" ? "0" : form.priceUsdc,
+          capacity: Number(form.capacity),
+          collaborators: collaboratorRows.map((collaborator) => ({
+            ...collaborator,
+            splitPercentage: Number(collaborator.splitPercentage),
+          })),
+          resources: resources.map((resource, index) => ({
+            ...resource,
+            sortOrder: Number(resource.sortOrder || index + 1),
+          })),
+        }),
       },
     );
     const payload = (await response.json()) as DraftResponse;
@@ -303,7 +307,7 @@ export function CreateEventForm() {
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
       <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-        <div className="border border-line bg-panel p-5">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
           <div className="grid gap-4">
             <label className="grid gap-2">
               <span className={labelClass}>Event title</span>
@@ -354,24 +358,28 @@ export function CreateEventForm() {
           </div>
         </div>
 
-        <div className="border border-line bg-panel p-5">
-          <p className="font-mono text-xs uppercase tracking-normal text-muted">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
             Organizer
           </p>
-          <div className="mt-4 border border-line bg-background/40 p-4">
+          <div className="mt-4 rounded-[8px] border border-accent/15 bg-accent/[0.055] p-4">
             <WalletCards className="text-accent" size={20} />
-            <p className="mt-3 font-mono text-xs leading-5 text-muted break-all">
-              {sessionWalletAddress ?? "Connect wallet to create draft"}
+            <p
+              className={`mt-3 text-xs leading-5 text-muted ${
+                sessionWalletAddress ? "break-all font-mono" : ""
+              }`}
+            >
+              {organizerCopy}
             </p>
-            <p className="mt-3 text-sm font-medium capitalize">
-              {sessionWalletAddress ? "Session signed" : status}
+            <p className="mt-3 inline-flex rounded-full border border-foreground/10 bg-background/50 px-2.5 py-1 text-xs font-medium text-foreground">
+              {status === "checking" ? "Checking wallet" : organizerState}
             </p>
           </div>
         </div>
       </div>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        <div className="border border-line bg-panel p-5 lg:col-span-2">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 lg:col-span-2">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="grid gap-2">
               <span className={labelClass}>Start</span>
@@ -441,15 +449,15 @@ export function CreateEventForm() {
           </div>
         </div>
 
-        <div className="border border-line bg-panel p-5">
-          <p className="font-mono text-xs uppercase tracking-normal text-muted">
+        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
             Access
           </p>
-          <div className="mt-4 grid grid-cols-2 border border-line">
+          <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-full border border-foreground/10 bg-background/40 p-1">
             {(["paid", "free"] as const).map((item) => (
               <button
-                className={`min-h-11 text-sm font-medium transition ${
-                  mode === item ? "bg-accent text-background" : "bg-background/40"
+                className={`min-h-10 rounded-full text-sm font-medium capitalize transition ${
+                  mode === item ? "bg-accent text-accent-ink" : "text-muted"
                 }`}
                 key={item}
                 onClick={() => setMode(item)}
@@ -489,27 +497,27 @@ export function CreateEventForm() {
         </div>
       </div>
 
-      <div className="border border-line bg-panel p-5">
+      <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-mono text-xs uppercase tracking-normal text-muted">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
               Collaborators
             </p>
             <p className="mt-2 text-2xl font-semibold">Split {splitTotal}%</p>
           </div>
           <div className="flex items-center gap-3">
             <div
-              className={`inline-flex min-h-10 items-center gap-2 border px-3 text-sm font-medium ${
+              className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm font-medium ${
                 splitReady
-                  ? "border-accent text-accent"
-                  : "border-coral text-coral"
+                  ? "border-accent/45 bg-accent/10 text-accent"
+                  : "border-coral/45 bg-coral/10 text-coral"
               }`}
             >
               <Percent size={16} />
               100% required
             </div>
             <button
-              className="inline-flex min-h-10 items-center gap-2 border border-line bg-background/40 px-3 text-sm font-medium transition hover:border-accent hover:text-accent"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-foreground/10 bg-background/40 px-3 text-sm font-medium transition hover:border-accent/45 hover:text-accent"
               onClick={addCollaboratorRow}
               type="button"
             >
@@ -522,11 +530,11 @@ export function CreateEventForm() {
         <div className="mt-5 grid gap-3">
           {collaboratorRows.map((collaborator, index) => (
             <div
-              className="grid gap-3 border border-line bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.5fr_0.45fr_auto]"
+              className="grid gap-3 rounded-[8px] border border-foreground/10 bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.5fr_0.45fr_auto]"
               key={`${collaborator.role}-${index}`}
             >
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Name
                 </span>
                 <input
@@ -539,7 +547,7 @@ export function CreateEventForm() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Role
                 </span>
                 <input
@@ -552,7 +560,7 @@ export function CreateEventForm() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Wallet
                 </span>
                 <input
@@ -566,7 +574,7 @@ export function CreateEventForm() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Split
                 </span>
                 <input
@@ -588,7 +596,7 @@ export function CreateEventForm() {
               <div className="flex items-end">
                 <button
                   aria-label="Remove collaborator"
-                  className="grid min-h-11 w-full place-items-center border border-line bg-panel text-muted transition hover:border-coral hover:text-coral lg:w-11"
+                  className="ml-auto grid h-11 w-11 place-items-center rounded-[8px] border border-foreground/10 bg-foreground/[0.045] text-muted transition hover:border-coral/45 hover:text-coral"
                   onClick={() => removeCollaboratorRow(index)}
                   type="button"
                 >
@@ -600,16 +608,16 @@ export function CreateEventForm() {
         </div>
       </div>
 
-      <div className="border border-line bg-panel p-5">
+      <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-mono text-xs uppercase tracking-normal text-muted">
+            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
               Resources
             </p>
             <p className="mt-2 text-2xl font-semibold">{resources.length} gated</p>
           </div>
           <button
-            className="inline-flex min-h-10 items-center gap-2 border border-line bg-background/40 px-3 text-sm font-medium transition hover:border-accent hover:text-accent"
+            className="inline-flex min-h-10 items-center gap-2 rounded-full border border-foreground/10 bg-background/40 px-3 text-sm font-medium transition hover:border-accent/45 hover:text-accent"
             onClick={addResourceRow}
             type="button"
           >
@@ -621,11 +629,11 @@ export function CreateEventForm() {
         <div className="mt-5 grid gap-3">
           {resources.map((resource, index) => (
             <div
-              className="grid gap-3 border border-line bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.3fr_0.4fr_auto]"
+              className="grid gap-3 rounded-[8px] border border-foreground/10 bg-background/35 p-3 lg:grid-cols-[1fr_0.8fr_1.3fr_0.4fr_auto]"
               key={`${resource.title}-${index}`}
             >
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Title
                 </span>
                 <input
@@ -638,7 +646,7 @@ export function CreateEventForm() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Type
                 </span>
                 <select
@@ -654,7 +662,7 @@ export function CreateEventForm() {
                 </select>
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   URL
                 </span>
                 <input
@@ -667,7 +675,7 @@ export function CreateEventForm() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Order
                 </span>
                 <input
@@ -683,7 +691,7 @@ export function CreateEventForm() {
               <div className="flex items-end">
                 <button
                   aria-label="Remove resource"
-                  className="grid min-h-11 w-full place-items-center border border-line bg-panel text-muted transition hover:border-coral hover:text-coral lg:w-11"
+                  className="ml-auto grid h-11 w-11 place-items-center rounded-[8px] border border-foreground/10 bg-foreground/[0.045] text-muted transition hover:border-coral/45 hover:text-coral"
                   onClick={() => removeResourceRow(index)}
                   type="button"
                 >
@@ -691,7 +699,7 @@ export function CreateEventForm() {
                 </button>
               </div>
               <label className="grid gap-2 lg:col-span-5">
-                <span className="font-mono text-[11px] uppercase tracking-normal text-muted">
+                <span className="text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">
                   Description
                 </span>
                 <input
@@ -708,7 +716,7 @@ export function CreateEventForm() {
       </div>
 
       {result?.event ? (
-        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border border-accent/60 bg-accent/10 p-4 text-sm">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-[8px] border border-accent/60 bg-accent/10 p-4 text-sm">
           <CheckCircle2 className="text-accent" size={20} />
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span>
@@ -736,7 +744,7 @@ export function CreateEventForm() {
       ) : null}
 
       {result?.error ? (
-        <div className="border border-coral/60 bg-coral/10 p-4 text-sm text-coral">
+        <div className="rounded-[8px] border border-coral/60 bg-coral/10 p-4 text-sm text-coral">
           {result.error} {issueText}
         </div>
       ) : null}
@@ -745,7 +753,7 @@ export function CreateEventForm() {
         <div className="flex flex-wrap justify-end gap-3">
           {savedEventId && result?.event?.status !== "published" ? (
             <button
-              className="inline-flex min-h-11 items-center gap-2 border border-line bg-panel px-5 text-sm font-semibold text-foreground transition hover:border-accent hover:text-accent disabled:cursor-wait disabled:opacity-70"
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.045] px-5 text-sm font-semibold text-foreground transition hover:border-accent/45 hover:text-accent disabled:cursor-wait disabled:opacity-70"
               disabled={publishing}
               onClick={publishDraft}
               type="button"
@@ -759,7 +767,7 @@ export function CreateEventForm() {
             </button>
           ) : null}
           <button
-            className="inline-flex min-h-11 items-center gap-2 border border-accent bg-accent px-5 text-sm font-semibold text-background transition hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:border-line disabled:bg-panel disabled:text-muted"
+            className="inline-flex min-h-11 items-center gap-2 rounded-full border border-accent bg-accent px-5 text-sm font-semibold text-accent-ink transition hover:bg-transparent hover:text-accent disabled:cursor-not-allowed disabled:border-foreground/10 disabled:bg-foreground/[0.045] disabled:text-muted"
             disabled={!canSubmit}
             type="submit"
           >
