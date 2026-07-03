@@ -1,17 +1,15 @@
 import { spawn } from "node:child_process";
 import { createHmac, randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import Database from "better-sqlite3";
 import { StrKey } from "@stellar/stellar-sdk";
+import { withClient } from "./postgres-utils.mjs";
 
 const projectRoot = process.cwd();
 const port = Number(process.env.LIVE_POLICY_SMOKE_PORT ?? 3036);
 const baseUrl = `http://127.0.0.1:${port}`;
-const databaseUrl =
-  process.env.LIVE_POLICY_SMOKE_DATABASE_URL ??
-  `file:./data/quorum-live-policy-smoke-${randomUUID()}.db`;
+const databaseSchema =
+  process.env.LIVE_POLICY_SMOKE_DB_SCHEMA ??
+  `quorum_live_policy_smoke_${randomUUID().replaceAll("-", "_")}`;
 const fakeCoreContractId =
   process.env.LIVE_POLICY_CORE_CONTRACT_ID ??
   StrKey.encodeContract(Buffer.alloc(32, 7));
@@ -28,14 +26,6 @@ const speakerWallet =
   "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
 const smokeSessionSecret = "quorum-local-dev-session-secret";
-
-function resolveDatabasePath() {
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error("live policy smoke expects a file: SQLite DATABASE_URL");
-  }
-
-  return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
-}
 
 function encodeBase64Url(value) {
   return Buffer.from(value)
@@ -66,6 +56,7 @@ function runCommand(command, args, env = {}) {
     const child = spawn(command, args, {
       cwd: projectRoot,
       env: { ...process.env, ...env },
+      shell: process.platform === "win32" && command === "npm",
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -124,6 +115,21 @@ async function waitForServer(child) {
   }
 
   throw new Error(`Timed out waiting for ${baseUrl}: ${lastError}`);
+}
+
+async function stopServer(child) {
+  if (process.platform === "win32" && child.pid) {
+    await new Promise((resolve) => {
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+      killer.on("close", resolve);
+      killer.on("error", resolve);
+    });
+    return;
+  }
+
+  child.kill("SIGTERM");
 }
 
 function assert(condition, message) {
@@ -230,33 +236,37 @@ function createDraftPayload() {
   };
 }
 
-function readMutationCounts(databasePath) {
-  const db = new Database(databasePath, { readonly: true });
+async function readMutationCounts() {
+  return withClient(async (client) => {
+    const { rows: checkIns } = await client.query(
+      "SELECT COUNT(*)::int AS count FROM check_ins",
+    );
+    const { rows: passes } = await client.query(
+      "SELECT COUNT(*)::int AS count FROM passes",
+    );
+    const { rows: purchases } = await client.query(
+      "SELECT COUNT(*)::int AS count FROM purchases",
+    );
+    const { rows: withdrawals } = await client.query(
+      "SELECT COUNT(*)::int AS count FROM withdrawals",
+    );
 
-  try {
     return {
-      checkIns: db.prepare("SELECT COUNT(*) AS count FROM check_ins").get().count,
-      passes: db.prepare("SELECT COUNT(*) AS count FROM passes").get().count,
-      purchases: db.prepare("SELECT COUNT(*) AS count FROM purchases").get().count,
-      withdrawals: db.prepare("SELECT COUNT(*) AS count FROM withdrawals").get().count,
+      checkIns: Number(checkIns[0].count),
+      passes: Number(passes[0].count),
+      purchases: Number(purchases[0].count),
+      withdrawals: Number(withdrawals[0].count),
     };
-  } finally {
-    db.close();
-  }
+  });
 }
 
 async function main() {
-  const databasePath = resolveDatabasePath();
-  fs.rmSync(databasePath, { force: true });
-  fs.rmSync(`${databasePath}-shm`, { force: true });
-  fs.rmSync(`${databasePath}-wal`, { force: true });
-
   const env = {
-    DATABASE_URL: databaseUrl,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: fakeCoreContractId,
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: fakePassContractId,
     NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: fakeUsdcContractId,
     NEXT_TELEMETRY_DISABLED: "1",
+    QUORUM_DB_SCHEMA: databaseSchema,
     QUORUM_SESSION_SECRET:
       process.env.LIVE_POLICY_SMOKE_SESSION_SECRET ?? smokeSessionSecret,
   };
@@ -264,11 +274,16 @@ async function main() {
   await runCommand("node", ["scripts/db-migrate.mjs"], env);
   await runCommand("node", ["scripts/db-seed.mjs"], env);
 
-  const server = spawn("npm", ["run", "dev", "--", "--port", String(port)], {
-    cwd: projectRoot,
-    env: { ...process.env, ...env },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const server = spawn(
+    "npm",
+    ["run", "dev", "--", "--port", String(port)],
+    {
+      cwd: projectRoot,
+      env: { ...process.env, ...env },
+      shell: process.platform === "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
   let serverOutput = "";
 
   server.stdout.on("data", (chunk) => {
@@ -304,11 +319,11 @@ async function main() {
     const dashboardHtml = await dashboard.text();
     assert(dashboard.status === 200, "dashboard should render in live policy mode");
     assert(
-      dashboardHtml.includes("Action execution"),
+      dashboardHtml.includes("Wallet actions"),
       "dashboard should show contract action policy rows",
     );
     assert(
-      dashboardHtml.includes("Live transaction submission is required.") &&
+      dashboardHtml.includes("Freighter approval is required before submission.") &&
         dashboardHtml.includes("live required"),
       "dashboard should show live-required action policy",
     );
@@ -513,7 +528,7 @@ async function main() {
       }),
     );
 
-    const counts = readMutationCounts(databasePath);
+    const counts = await readMutationCounts();
     assert(counts.passes === 0, "live policy should not create local passes");
     assert(counts.purchases === 0, "live policy should not create local purchases");
     assert(counts.checkIns === 0, "live policy should not create local check-ins");
@@ -565,11 +580,14 @@ async function main() {
     );
     process.exitCode = 1;
   } finally {
-    server.kill("SIGTERM");
+    await stopServer(server);
     await delay(500);
-    fs.rmSync(databasePath, { force: true });
-    fs.rmSync(`${databasePath}-shm`, { force: true });
-    fs.rmSync(`${databasePath}-wal`, { force: true });
+    await withClient(
+      async (client) => {
+        await client.query(`DROP SCHEMA IF EXISTS "${databaseSchema}" CASCADE`);
+      },
+      { migration: true },
+    );
   }
 }
 

@@ -58,7 +58,7 @@ Minimum hosted runtime expectations:
 | USDC contract | `CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA` |
 | Contract status | `/api/contracts/status` reports `proofMode: "live"` |
 | Action policy | Publish, checkout, check-in, and withdraw report live actions |
-| Storage | Persistent enough for the demo evidence you want to keep |
+| Storage | Supabase Postgres migrated and reachable from Vercel |
 
 ## Wallet Setup
 
@@ -217,7 +217,40 @@ Stop if:
 - the paid attendee has no valid testnet USDC balance;
 - the transaction succeeds but the app does not show a minted token ID.
 
-### 4. Free Claim
+### 4. Publish Free Event
+
+Page: create/edit event flow, then publish a separate free event.
+
+Signer: organizer wallet.
+
+Contract method: `QuorumCore.create_event`.
+
+Expected app summary before Freighter opens:
+
+| Field | Expected value |
+|---|---|
+| Source wallet | Organizer address |
+| Contract | Core contract ID |
+| Action | `create_event` |
+| Event ID | New free event proof ID, distinct from the paid event |
+| Price | `0` |
+| Currency | Configured USDC contract ID |
+| Pass contract | Configured pass contract ID |
+| Split total | `10000` bps |
+
+Evidence to record:
+
+- `liveFlows.publishFreeEvent.txHash`;
+- `liveFlows.publishFreeEvent.eventUrl`;
+- event title/slug used in the demo notes.
+
+Stop if:
+
+- the free event URL matches the paid event URL;
+- the app uses a seeded/local-proof event for the free claim;
+- the app succeeds without a real transaction hash.
+
+### 5. Free Claim
 
 Page: hosted free event detail or checkout.
 
@@ -247,7 +280,7 @@ Stop if:
 - the app allows the same wallet to claim the same free event twice;
 - the app records a local proof hash instead of a live transaction hash.
 
-### 5. Resource Unlock
+### 6. Resource Unlock
 
 Page: hosted paid event resources page.
 
@@ -271,7 +304,7 @@ Stop if:
 - the resource unlock works for a wallet without the pass;
 - the proof URL is localhost, private network, or a different origin.
 
-### 6. Organizer Check-In
+### 7. Organizer Check-In
 
 Page: hosted check-in page for the paid event.
 
@@ -307,7 +340,7 @@ Stop if:
 - a non-organizer wallet can check in the pass;
 - the app marks check-in complete without a live transaction hash.
 
-### 7. Collaborator Withdraw
+### 8. Collaborator Withdraw
 
 Page: hosted dashboard withdrawal action.
 
@@ -363,8 +396,8 @@ The signing session is complete only when:
 
 - the hosted app has a public HTTPS URL;
 - `/api/contracts/status` reports live proof mode and live action policies;
-- publish, paid checkout, free claim, check-in, and collaborator withdraw each
-  have real transaction hashes where expected;
+- publish paid event, paid checkout, publish free event, free claim, check-in,
+  and collaborator withdraw each have real transaction hashes where expected;
 - the paid checkout token ID matches the check-in token ID;
 - the paid resource unlock URL belongs to the hosted app origin;
 - `docs/LIVE_TESTNET_EVIDENCE.json` is filled with public evidence;

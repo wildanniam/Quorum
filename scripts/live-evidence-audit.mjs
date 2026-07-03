@@ -42,6 +42,8 @@ const requiredFields = [
   ["liveFlows.paidCheckout.txHash", "hex64"],
   ["liveFlows.paidCheckout.tokenId", "positiveIntegerString"],
   ["liveFlows.paidCheckout.paymentAsset", "literal:USDC"],
+  ["liveFlows.publishFreeEvent.txHash", "hex64"],
+  ["liveFlows.publishFreeEvent.eventUrl", "url"],
   ["liveFlows.freeClaim.txHash", "hex64"],
   ["liveFlows.freeClaim.tokenId", "positiveIntegerString"],
   ["liveFlows.checkIn.txHash", "hex64"],
@@ -85,6 +87,7 @@ const transactionHashFields = [
   "deploymentTransactions.passSetCoreTxHash",
   "liveFlows.publishPaidEvent.txHash",
   "liveFlows.paidCheckout.txHash",
+  "liveFlows.publishFreeEvent.txHash",
   "liveFlows.freeClaim.txHash",
   "liveFlows.checkIn.txHash",
   "liveFlows.collaboratorWithdraw.txHash",
@@ -92,6 +95,7 @@ const transactionHashFields = [
 
 const hostedProofUrlFields = [
   "liveFlows.publishPaidEvent.eventUrl",
+  "liveFlows.publishFreeEvent.eventUrl",
   "browserProof.contractStatusUrl",
   "browserProof.paidResourceUnlockedUrl",
 ];
@@ -238,6 +242,13 @@ function validateFilledEvidenceConsistency(source) {
 
   if (paidTokenId && freeTokenId && paidTokenId === freeTokenId) {
     fail("liveFlows.freeClaim.tokenId must be distinct from liveFlows.paidCheckout.tokenId.");
+  }
+
+  const paidEventUrl = getPath(source, "liveFlows.publishPaidEvent.eventUrl");
+  const freeEventUrl = getPath(source, "liveFlows.publishFreeEvent.eventUrl");
+
+  if (paidEventUrl && freeEventUrl && paidEventUrl === freeEventUrl) {
+    fail("liveFlows.publishFreeEvent.eventUrl must be distinct from liveFlows.publishPaidEvent.eventUrl.");
   }
 
   const hostedOrigin = originFor(getPath(source, "hostedAppUrl"));

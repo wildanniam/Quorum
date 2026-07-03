@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import { StrKey } from "@stellar/stellar-sdk";
+import { execute, query, quoteIdentifier } from "../src/lib/db/client";
 
 const projectRoot = process.cwd();
-const databaseUrl = `file:./data/quorum-live-persistence-smoke-${randomUUID()}.db`;
+const databaseSchema = `quorum_live_persistence_smoke_${randomUUID().replaceAll("-", "_")}`;
 const eventId = "evt_apac_stellar_builder_meetup";
 const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
@@ -14,14 +13,10 @@ const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH"
 const attendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 4));
 const freeAttendeeWallet = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 5));
 
-function databasePath() {
-  return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
-}
-
 function run(command: string, args: string[]) {
-  execFileSync(command, args, {
+  execFileSync(process.platform === "win32" && command === "npm" ? "npm.cmd" : command, args, {
     cwd: projectRoot,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
+    env: { ...process.env, QUORUM_DB_SCHEMA: databaseSchema },
     stdio: "pipe",
   });
 }
@@ -30,8 +25,8 @@ function txHash(seed: number) {
   return Buffer.alloc(32, seed).toString("hex");
 }
 
-function expectThrow(fn: () => unknown, message: string) {
-  assert.throws(fn, (error) => {
+async function expectReject(fn: () => Promise<unknown>, message: string) {
+  await assert.rejects(fn, (error) => {
     assert(error instanceof Error);
     assert.match(error.message, new RegExp(message));
     return true;
@@ -39,18 +34,14 @@ function expectThrow(fn: () => unknown, message: string) {
 }
 
 async function main() {
-  process.env.DATABASE_URL = databaseUrl;
-  fs.rmSync(databasePath(), { force: true });
-  fs.rmSync(`${databasePath()}-shm`, { force: true });
-  fs.rmSync(`${databasePath()}-wal`, { force: true });
+  process.env.QUORUM_DB_SCHEMA = databaseSchema;
 
   run("node", ["scripts/db-migrate.mjs"]);
   run("node", ["scripts/db-seed.mjs"]);
 
-  const dbModule = await import("../src/lib/db/client");
   const repository = await import("../src/lib/events/repository");
 
-  const draft = repository.createDraftEventWithSetup(
+  const draft = await repository.createDraftEventWithSetup(
     {
       slug: `live-persistence-${randomUUID().slice(0, 8)}`,
       title: "Live Persistence Smoke",
@@ -94,7 +85,7 @@ async function main() {
     ],
   );
 
-  const publishResult = repository.recordLivePublishedEvent({
+  const publishResult = await repository.recordLivePublishedEvent({
     coreEventId: txHash(10),
     eventId: draft.event.id,
     metadataHash: txHash(11),
@@ -106,7 +97,7 @@ async function main() {
   assert.equal(publishResult.event.publishTxHash, txHash(12));
   assert.equal(publishResult.event.metadataHash, `sha256:${txHash(11)}`);
 
-  const replayDraft = repository.createDraftEventWithSetup(
+  const replayDraft = await repository.createDraftEventWithSetup(
     {
       slug: `live-persistence-replay-${randomUUID().slice(0, 8)}`,
       title: "Live Persistence Replay Smoke",
@@ -149,7 +140,7 @@ async function main() {
       },
     ],
   );
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLivePublishedEvent({
         coreEventId: txHash(20),
@@ -161,7 +152,7 @@ async function main() {
     "already recorded",
   );
 
-  const passResult = repository.recordLivePass({
+  const passResult = await repository.recordLivePass({
     eventId,
     metadataHash: txHash(13),
     metadataUri: `quorum://events/apac-stellar-builder-meetup/passes/${attendeeWallet}`,
@@ -175,7 +166,7 @@ async function main() {
   assert.equal(passResult.purchase.txHash, txHash(14));
   assert.equal(passResult.purchase.status, "succeeded");
 
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLivePass({
         eventId: freeEventId,
@@ -188,7 +179,7 @@ async function main() {
     "already recorded",
   );
 
-  const freePassResult = repository.recordLivePass({
+  const freePassResult = await repository.recordLivePass({
     eventId: freeEventId,
     metadataHash: txHash(23),
     metadataUri: `quorum://events/stellar-open-office-hours/passes/${freeAttendeeWallet}`,
@@ -199,7 +190,7 @@ async function main() {
   assert.equal(freePassResult.pass.tokenId, "54321");
   assert.equal(freePassResult.purchase.amountUsdc, "0");
 
-  const checkInResult = repository.recordLiveCheckIn({
+  const checkInResult = await repository.recordLiveCheckIn({
     checkedInByWallet: organizerWallet,
     eventId,
     tokenId: "12345",
@@ -208,7 +199,7 @@ async function main() {
   assert.equal(checkInResult.pass.checkedIn, true);
   assert.equal(checkInResult.checkIn.txHash, txHash(15));
 
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLiveCheckIn({
         checkedInByWallet: organizerWallet,
@@ -219,7 +210,18 @@ async function main() {
     "already recorded",
   );
 
-  expectThrow(
+  await expectReject(
+    () =>
+      repository.recordLiveWithdrawal({
+        amountUsdc: "0.1",
+        collaboratorWallet: speakerWallet,
+        eventId,
+        txHash: txHash(14),
+      }),
+    "already recorded",
+  );
+
+  await expectReject(
     () =>
       repository.recordLiveWithdrawal({
         amountUsdc: "1.5",
@@ -230,7 +232,7 @@ async function main() {
     "exceeds withdrawable balance",
   );
 
-  const withdrawalResult = repository.recordLiveWithdrawal({
+  const withdrawalResult = await repository.recordLiveWithdrawal({
     amountUsdc: "1",
     collaboratorWallet: speakerWallet,
     eventId,
@@ -239,7 +241,7 @@ async function main() {
   assert.equal(withdrawalResult.withdrawal.amountUsdc, "1");
   assert.equal(withdrawalResult.withdrawal.txHash, txHash(17));
 
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLiveWithdrawal({
         amountUsdc: "1",
@@ -249,7 +251,7 @@ async function main() {
       }),
     "already recorded",
   );
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLiveWithdrawal({
         amountUsdc: "0.1",
@@ -260,7 +262,7 @@ async function main() {
     "exceeds withdrawable balance",
   );
 
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLivePass({
         eventId,
@@ -272,7 +274,7 @@ async function main() {
       }),
     "Live transaction hash",
   );
-  expectThrow(
+  await expectReject(
     () =>
       repository.recordLiveCheckIn({
         checkedInByWallet: organizerWallet,
@@ -283,13 +285,27 @@ async function main() {
     "already checked in",
   );
 
-  const db = dbModule.getDatabase();
   const proofRows = [
-    ...db.prepare("SELECT publish_tx_hash AS tx_hash FROM events WHERE id = ?").all(draft.event.id),
-    ...db.prepare("SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = ?").all(eventId),
-    ...db.prepare("SELECT tx_hash FROM purchases WHERE event_id = ?").all(eventId),
-    ...db.prepare("SELECT tx_hash FROM check_ins WHERE event_id = ?").all(eventId),
-    ...db.prepare("SELECT tx_hash FROM withdrawals WHERE event_id = ?").all(eventId),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT publish_tx_hash AS tx_hash FROM events WHERE id = $1",
+      [draft.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = $1",
+      [eventId],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM purchases WHERE event_id = $1",
+      [eventId],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM check_ins WHERE event_id = $1",
+      [eventId],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM withdrawals WHERE event_id = $1",
+      [eventId],
+    )),
   ] as Array<{ tx_hash: string | null }>;
 
   assert(
@@ -301,7 +317,7 @@ async function main() {
     JSON.stringify(
       {
         ok: true,
-        databasePath: databasePath(),
+        databaseSchema,
         checks: [
           "record-live-publish",
           "record-live-pass",
@@ -310,6 +326,7 @@ async function main() {
           "reject-stub-live-hash",
           "reject-duplicate-live-publish-tx",
           "reject-duplicate-live-pass-tx",
+          "reject-cross-table-live-hash-replay",
           "reject-duplicate-live-check-in",
           "reject-duplicate-live-check-in-tx",
           "reject-live-withdrawal-overdraw",
@@ -321,7 +338,6 @@ async function main() {
       2,
     ),
   );
-  dbModule.getDatabase().close();
 }
 
 main()
@@ -329,8 +345,10 @@ main()
     console.error(error);
     process.exitCode = 1;
   })
-  .finally(() => {
-    fs.rmSync(databasePath(), { force: true });
-    fs.rmSync(`${databasePath()}-shm`, { force: true });
-    fs.rmSync(`${databasePath()}-wal`, { force: true });
+  .finally(async () => {
+    if (process.env.QUORUM_DB_SCHEMA) {
+      await execute(
+        `DROP SCHEMA IF EXISTS ${quoteIdentifier(process.env.QUORUM_DB_SCHEMA)} CASCADE`,
+      );
+    }
   });

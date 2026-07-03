@@ -27,10 +27,12 @@ export default async function PassesPage() {
   const cookieStore = await cookies();
   const session = readSessionToken(cookieStore.get(SESSION_COOKIE)?.value);
   const passEntries = session
-    ? listPassesByOwner(session.walletAddress).map((pass) => ({
-        event: getEventById(pass.eventId),
-        pass,
-      }))
+    ? await Promise.all(
+        (await listPassesByOwner(session.walletAddress)).map(async (pass) => ({
+          event: await getEventById(pass.eventId),
+          pass,
+        })),
+      )
     : [];
 
   return (

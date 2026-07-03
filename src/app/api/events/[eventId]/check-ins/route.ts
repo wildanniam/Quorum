@@ -54,7 +54,7 @@ export async function POST(request: NextRequest, context: CheckInRouteContext) {
 
   try {
     const policy = assertLocalProofAction("check_in_pass");
-    const result = markLocalPassCheckedIn({
+    const result = await markLocalPassCheckedIn({
       checkedInByWallet: session.walletAddress,
       eventId,
       tokenId: parsed.data.tokenId,

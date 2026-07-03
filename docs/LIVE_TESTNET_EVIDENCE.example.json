@@ -35,6 +35,10 @@
       "tokenId": "<minted paid pass token ID>",
       "paymentAsset": "USDC"
     },
+    "publishFreeEvent": {
+      "txHash": "<64 hex transaction hash>",
+      "eventUrl": "<public HTTPS hosted free event URL>"
+    },
     "freeClaim": {
       "txHash": "<64 hex transaction hash>",
       "tokenId": "<minted free pass token ID>"

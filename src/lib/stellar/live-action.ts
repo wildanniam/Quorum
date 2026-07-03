@@ -138,7 +138,7 @@ function buildEnvelope({
   };
 }
 
-export function prepareLiveContractAction({
+export async function prepareLiveContractAction({
   action,
   eventId,
   signerWallet,
@@ -150,9 +150,9 @@ export function prepareLiveContractAction({
   tokenId?: string | null;
 }) {
   const readiness = requireLiveReadiness();
-  const event = getEventById(eventId);
-  const collaborators = listCollaborators(event.id);
-  const resources = listResources(event.id);
+  const event = await getEventById(eventId);
+  const collaborators = await listCollaborators(event.id);
+  const resources = await listResources(event.id);
 
   if (action === "publish_event") {
     assertOrganizer(event.organizerWallet, signerWallet);
@@ -204,14 +204,14 @@ export function prepareLiveContractAction({
       "Passes can only be prepared for published events.",
     );
 
-    if (getPassByEventAndOwner(event.id, signerWallet)) {
+    if (await getPassByEventAndOwner(event.id, signerWallet)) {
       throw livePreparationError(
         "Connected wallet already owns a pass for this event.",
         409,
       );
     }
 
-    if (countPassesForEvent(event.id) >= event.capacity) {
+    if ((await countPassesForEvent(event.id)) >= event.capacity) {
       throw livePreparationError("Event capacity is sold out.", 409);
     }
 

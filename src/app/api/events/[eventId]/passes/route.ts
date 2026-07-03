@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: PassRouteContext) {
 
   try {
     const policy = assertLocalProofAction("checkout_pass");
-    const result = createLocalPassProof(eventId, session.walletAddress);
+    const result = await createLocalPassProof(eventId, session.walletAddress);
 
     return NextResponse.json(
       { ...result, executionMode: policy.executionMode, proofMode: policy.proofMode },

@@ -1,20 +1,6 @@
-import Database from "better-sqlite3";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import path from "node:path";
-
-function resolveDatabasePath() {
-  const databaseUrl = process.env.DATABASE_URL ?? "file:./data/quorum.db";
-
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error("DB smoke test expects DATABASE_URL to use file:./path/to.db");
-  }
-
-  return path.resolve(process.cwd(), databaseUrl.replace(/^file:/, ""));
-}
-
-const db = new Database(resolveDatabasePath());
-db.pragma("foreign_keys = ON");
+import { databaseSchema, withClient, withTransaction } from "./postgres-utils.mjs";
 
 const id = randomUUID();
 const eventId = `evt_${id}`;
@@ -29,18 +15,22 @@ const requiredUniqueIndexes = {
   passes: ["idx_passes_mint_tx_hash_unique"],
 };
 
-function tableIndexNames(tableName) {
-  return new Set(
-    db
-      .prepare(`PRAGMA index_list(${JSON.stringify(tableName)})`)
-      .all()
-      .map((row) => row.name),
+async function tableIndexNames(client, tableName) {
+  const { rows } = await client.query(
+    `
+    SELECT indexname
+    FROM pg_indexes
+    WHERE schemaname = $1 AND tablename = $2
+    `,
+    [databaseSchema(), tableName],
   );
+
+  return new Set(rows.map((row) => row.indexname));
 }
 
-function assertUniqueLiveProofIndexes() {
+async function assertUniqueLiveProofIndexes(client) {
   for (const [tableName, indexNames] of Object.entries(requiredUniqueIndexes)) {
-    const actualIndexNames = tableIndexNames(tableName);
+    const actualIndexNames = await tableIndexNames(client, tableName);
 
     for (const indexName of indexNames) {
       assert(
@@ -49,112 +39,147 @@ function assertUniqueLiveProofIndexes() {
       );
     }
   }
+
+  const registry = await client.query(
+    `
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = $1 AND table_name = 'live_proof_hashes'
+    `,
+    [databaseSchema()],
+  );
+  assert.equal(registry.rowCount, 1, "live_proof_hashes registry is missing");
 }
 
-const runSmoke = db.transaction(() => {
-  assertUniqueLiveProofIndexes();
+await withClient(async (client) => {
+  const result = await withTransaction(client, async () => {
+    await assertUniqueLiveProofIndexes(client);
 
-  db.prepare(
-    `
-    INSERT INTO users (id, wallet_address)
-    VALUES (?, ?)
-    `,
-  ).run(`usr_${id}`, organizerWallet);
+    await client.query(
+      `
+      INSERT INTO users (id, wallet_address)
+      VALUES ($1, $2)
+      `,
+      [`usr_${id}`, organizerWallet],
+    );
 
-  db.prepare(
-    `
-    INSERT INTO events (
-      id, slug, title, event_type, short_description, start_date_time,
-      end_date_time, timezone, location_type, location_text, price_usdc,
-      is_free, capacity, organizer_wallet
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `,
-  ).run(
-    eventId,
-    slug,
-    "Smoke Test Meetup",
-    "workshop",
-    "Temporary event used to verify CRUD constraints.",
-    "2026-06-08T10:00:00.000Z",
-    "2026-06-08T12:00:00.000Z",
-    "Asia/Jakarta",
-    "physical",
-    "Jakarta",
-    "10",
-    0,
-    50,
-    organizerWallet,
-  );
+    await client.query(
+      `
+      INSERT INTO events (
+        id, slug, title, event_type, short_description, start_date_time,
+        end_date_time, timezone, location_type, location_text, price_usdc,
+        is_free, capacity, organizer_wallet
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      `,
+      [
+        eventId,
+        slug,
+        "Smoke Test Meetup",
+        "workshop",
+        "Temporary event used to verify CRUD constraints.",
+        "2026-06-08T10:00:00.000Z",
+        "2026-06-08T12:00:00.000Z",
+        "Asia/Jakarta",
+        "physical",
+        "Jakarta",
+        "10",
+        false,
+        50,
+        organizerWallet,
+      ],
+    );
 
-  const collaboratorInsert = db.prepare(
-    `
-    INSERT INTO collaborators (
-      id, event_id, display_name, role, wallet_address, split_percentage
-    )
-    VALUES (?, ?, ?, ?, ?, ?)
-    `,
-  );
-  collaboratorInsert.run(
-    `col_${id}_1`,
-    eventId,
-    "Organizer",
-    "Host",
-    organizerWallet,
-    70,
-  );
-  collaboratorInsert.run(
-    `col_${id}_2`,
-    eventId,
-    "Workshop Lead",
-    "Speaker",
-    "GDZVKOY2J54JIEE5Y4MG4KMX55SPOMT57DMOJ2MMCR34STICD6PZKJ25",
-    30,
-  );
+    const collaborators = [
+      [`col_${id}_1`, eventId, "Organizer", "Host", organizerWallet, 70],
+      [
+        `col_${id}_2`,
+        eventId,
+        "Workshop Lead",
+        "Speaker",
+        "GDZVKOY2J54JIEE5Y4MG4KMX55SPOMT57DMOJ2MMCR34STICD6PZKJ25",
+        30,
+      ],
+    ];
 
-  db.prepare(
-    `
-    INSERT INTO resources (id, event_id, title, description, type, url, sort_order)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-    `,
-  ).run(
-    `res_${id}`,
-    eventId,
-    "Workshop Deck",
-    "Temporary gated resource.",
-    "link",
-    "https://example.com/deck",
-    1,
-  );
+    for (const collaborator of collaborators) {
+      await client.query(
+        `
+        INSERT INTO collaborators (
+          id, event_id, display_name, role, wallet_address, split_percentage
+        )
+        VALUES ($1, $2, $3, $4, $5, $6)
+        `,
+        collaborator,
+      );
+    }
 
-  const event = db
-    .prepare("SELECT id, slug, status FROM events WHERE id = ?")
-    .get(eventId);
-  const splitTotal = db
-    .prepare("SELECT SUM(split_percentage) as total FROM collaborators WHERE event_id = ?")
-    .get(eventId).total;
-  const resourceCount = db
-    .prepare("SELECT COUNT(*) as count FROM resources WHERE event_id = ?")
-    .get(eventId).count;
+    await client.query(
+      `
+      INSERT INTO resources (id, event_id, title, description, type, url, sort_order)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `,
+      [
+        `res_${id}`,
+        eventId,
+        "Workshop Deck",
+        "Temporary gated resource.",
+        "link",
+        "https://example.com/deck",
+        1,
+      ],
+    );
 
-  db.prepare("DELETE FROM events WHERE id = ?").run(eventId);
-  db.prepare("DELETE FROM users WHERE id = ?").run(`usr_${id}`);
+    const event = (
+      await client.query("SELECT id, slug, status FROM events WHERE id = $1", [
+        eventId,
+      ])
+    ).rows[0];
+    const splitTotal = Number(
+      (
+        await client.query(
+          "SELECT COALESCE(SUM(split_percentage), 0)::float8 AS total FROM collaborators WHERE event_id = $1",
+          [eventId],
+        )
+      ).rows[0].total,
+    );
+    const resourceCount = Number(
+      (
+        await client.query(
+          "SELECT COUNT(*)::int AS count FROM resources WHERE event_id = $1",
+          [eventId],
+        )
+      ).rows[0].count,
+    );
 
-  return {
-    event,
-    splitTotal,
-    resourceCount,
-    cleanedUp: db.prepare("SELECT COUNT(*) as count FROM events WHERE id = ?").get(eventId)
-      .count === 0,
-    checks: [
-      "unique-live-proof-indexes",
-      "event-crud",
-      "collaborator-split-total",
-      "resource-crud",
-      "cascade-cleanup",
-    ],
-  };
+    await client.query("DELETE FROM events WHERE id = $1", [eventId]);
+    await client.query("DELETE FROM users WHERE id = $1", [`usr_${id}`]);
+
+    const cleanedUp =
+      Number(
+        (
+          await client.query(
+            "SELECT COUNT(*)::int AS count FROM events WHERE id = $1",
+            [eventId],
+          )
+        ).rows[0].count,
+      ) === 0;
+
+    return {
+      event,
+      splitTotal,
+      resourceCount,
+      cleanedUp,
+      checks: [
+        "unique-live-proof-indexes",
+        "live-proof-hash-registry",
+        "event-crud",
+        "collaborator-split-total",
+        "resource-crud",
+        "cascade-cleanup",
+      ],
+    };
+  });
+
+  console.log(JSON.stringify(result, null, 2));
 });
-
-console.log(JSON.stringify(runSmoke(), null, 2));
-db.close();

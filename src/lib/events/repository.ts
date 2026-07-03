@@ -1,7 +1,13 @@
 import { StrKey } from "@stellar/stellar-sdk";
 import { createHash } from "node:crypto";
-import { getDatabase } from "@/lib/db/client";
 import { createId } from "@/lib/db/ids";
+import {
+  execute,
+  query,
+  queryOne,
+  withTransaction,
+  type DatabaseClient,
+} from "@/lib/db/client";
 import type {
   CheckInRecord,
   CollaboratorRecord,
@@ -37,7 +43,7 @@ type EventRow = {
   location_text: string | null;
   meeting_url: string | null;
   price_usdc: string;
-  is_free: 0 | 1;
+  is_free: boolean;
   capacity: number;
   status: "draft" | "published";
   organizer_wallet: string;
@@ -78,7 +84,7 @@ type PassRow = {
   metadata_hash: string | null;
   mint_tx_hash: string | null;
   source: PassSource;
-  checked_in: 0 | 1;
+  checked_in: boolean;
   created_at: string;
 };
 
@@ -202,30 +208,46 @@ function assertLiveTransactionHash(txHash: string) {
   }
 }
 
-function assertLiveProofHashUnused(txHash: string) {
+async function assertLiveProofHashUnused(txHash: string, db?: DatabaseClient) {
   const normalizedTxHash = txHash.toLowerCase();
-  const db = getDatabase();
-  const existing = [
-    db
-      .prepare("SELECT id FROM events WHERE publish_tx_hash = ?")
-      .get(normalizedTxHash),
-    db
-      .prepare("SELECT id FROM passes WHERE mint_tx_hash = ?")
-      .get(normalizedTxHash),
-    db
-      .prepare("SELECT id FROM purchases WHERE tx_hash = ?")
-      .get(normalizedTxHash),
-    db
-      .prepare("SELECT id FROM check_ins WHERE tx_hash = ?")
-      .get(normalizedTxHash),
-    db
-      .prepare("SELECT id FROM withdrawals WHERE tx_hash = ?")
-      .get(normalizedTxHash),
-  ].some(Boolean);
+  const existing = await queryOne<{ tx_hash: string }>(
+    `
+    SELECT tx_hash FROM live_proof_hashes WHERE tx_hash = $1
+    UNION ALL SELECT publish_tx_hash FROM events WHERE publish_tx_hash = $1
+    UNION ALL SELECT mint_tx_hash FROM passes WHERE mint_tx_hash = $1
+    UNION ALL SELECT tx_hash FROM purchases WHERE tx_hash = $1
+    UNION ALL SELECT tx_hash FROM check_ins WHERE tx_hash = $1
+    UNION ALL SELECT tx_hash FROM withdrawals WHERE tx_hash = $1
+    LIMIT 1
+    `,
+    [normalizedTxHash],
+    db,
+  );
 
   if (existing) {
     throw new Error("Live transaction hash is already recorded.");
   }
+}
+
+async function reserveLiveProofHash({
+  db,
+  sourceId,
+  sourceTable,
+  txHash,
+}: {
+  db: DatabaseClient;
+  sourceId: string;
+  sourceTable: "events" | "passes" | "check_ins" | "withdrawals";
+  txHash: string;
+}) {
+  await execute(
+    `
+    INSERT INTO live_proof_hashes (tx_hash, source_table, source_id)
+    VALUES ($1, $2, $3)
+    `,
+    [txHash.toLowerCase(), sourceTable, sourceId],
+    db,
+  );
 }
 
 function assertContractEventId(coreEventId: string) {
@@ -260,12 +282,16 @@ function formatUsdcAmount(value: number) {
   return value.toFixed(7).replace(/\.?0+$/, "") || "0";
 }
 
+function toTimestamp(value: string | Date) {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
 function toUserRecord(row: UserRow): UserRecord {
   return {
     id: row.id,
     walletAddress: row.wallet_address,
-    createdAt: row.created_at,
-    lastSeenAt: row.last_seen_at,
+    createdAt: toTimestamp(row.created_at),
+    lastSeenAt: toTimestamp(row.last_seen_at),
   };
 }
 
@@ -277,22 +303,22 @@ function toEventRecord(row: EventRow): EventRecord {
     eventType: row.event_type,
     shortDescription: row.short_description,
     coverImageUrl: row.cover_image_url,
-    startDateTime: row.start_date_time,
-    endDateTime: row.end_date_time,
+    startDateTime: toTimestamp(row.start_date_time),
+    endDateTime: toTimestamp(row.end_date_time),
     timezone: row.timezone,
     locationType: row.location_type,
     locationText: row.location_text,
     meetingUrl: row.meeting_url,
     priceUsdc: row.price_usdc,
-    isFree: row.is_free === 1,
-    capacity: row.capacity,
+    isFree: row.is_free,
+    capacity: Number(row.capacity),
     status: row.status,
     organizerWallet: row.organizer_wallet,
     metadataHash: row.metadata_hash,
     coreEventId: row.core_event_id,
     publishTxHash: row.publish_tx_hash,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: toTimestamp(row.created_at),
+    updatedAt: toTimestamp(row.updated_at),
   };
 }
 
@@ -303,8 +329,8 @@ function toCollaboratorRecord(row: CollaboratorRow): CollaboratorRecord {
     displayName: row.display_name,
     role: row.role,
     walletAddress: row.wallet_address,
-    splitPercentage: row.split_percentage,
-    createdAt: row.created_at,
+    splitPercentage: Number(row.split_percentage),
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
@@ -316,8 +342,8 @@ function toResourceRecord(row: ResourceRow): ResourceRecord {
     description: row.description,
     type: row.type,
     url: row.url,
-    sortOrder: row.sort_order,
-    createdAt: row.created_at,
+    sortOrder: Number(row.sort_order),
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
@@ -331,8 +357,8 @@ function toPassRecord(row: PassRow): PassRecord {
     metadataHash: row.metadata_hash,
     mintTxHash: row.mint_tx_hash,
     source: row.source,
-    checkedIn: row.checked_in === 1,
-    createdAt: row.created_at,
+    checkedIn: row.checked_in,
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
@@ -345,7 +371,7 @@ function toPurchaseRecord(row: PurchaseRow): PurchaseRecord {
     tokenId: row.token_id,
     txHash: row.tx_hash,
     status: row.status,
-    createdAt: row.created_at,
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
@@ -357,7 +383,7 @@ function toCheckInRecord(row: CheckInRow): CheckInRecord {
     ownerWallet: row.owner_wallet,
     checkedInByWallet: row.checked_in_by_wallet,
     txHash: row.tx_hash,
-    createdAt: row.created_at,
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
@@ -368,100 +394,253 @@ function toWithdrawalRecord(row: WithdrawalRow): WithdrawalRecord {
     collaboratorWallet: row.collaborator_wallet,
     amountUsdc: row.amount_usdc,
     txHash: row.tx_hash,
-    createdAt: row.created_at,
+    createdAt: toTimestamp(row.created_at),
   };
 }
 
-export function upsertUser(walletAddress: string) {
-  assertWalletAddress(walletAddress);
-
-  const db = getDatabase();
-  const existing = db
-    .prepare("SELECT * FROM users WHERE wallet_address = ?")
-    .get(walletAddress) as UserRow | undefined;
-
-  if (existing) {
-    db.prepare(
-      "UPDATE users SET last_seen_at = datetime('now') WHERE wallet_address = ?",
-    ).run(walletAddress);
-    return toUserRecord(
-      db.prepare("SELECT * FROM users WHERE wallet_address = ?").get(walletAddress) as UserRow,
-    );
-  }
-
-  const id = createId("usr");
-  db.prepare("INSERT INTO users (id, wallet_address) VALUES (?, ?)").run(
-    id,
-    walletAddress,
+async function getEventByIdFromDb(id: string, db?: DatabaseClient, lock = false) {
+  const row = await queryOne<EventRow>(
+    `SELECT * FROM events WHERE id = $1${lock ? " FOR UPDATE" : ""}`,
+    [id],
+    db,
   );
 
-  return toUserRecord(db.prepare("SELECT * FROM users WHERE id = ?").get(id) as UserRow);
+  if (!row) {
+    throw new Error(`Event not found: ${id}`);
+  }
+
+  return row;
 }
 
-export function createDraftEvent(input: CreateDraftEventInput) {
+async function listCollaboratorsFromDb(eventId: string, db?: DatabaseClient) {
+  return (
+    await query<CollaboratorRow>(
+      "SELECT * FROM collaborators WHERE event_id = $1 ORDER BY created_at ASC",
+      [eventId],
+      db,
+    )
+  ).map(toCollaboratorRecord);
+}
+
+async function listResourcesFromDb(eventId: string, db?: DatabaseClient) {
+  return (
+    await query<ResourceRow>(
+      `
+      SELECT * FROM resources
+      WHERE event_id = $1
+      ORDER BY sort_order ASC, created_at ASC
+      `,
+      [eventId],
+      db,
+    )
+  ).map(toResourceRecord);
+}
+
+async function getCollaboratorSplitTotalFromDb(eventId: string, db?: DatabaseClient) {
+  const row = await queryOne<{ total: number }>(
+    `
+    SELECT COALESCE(SUM(split_percentage), 0)::float8 AS total
+    FROM collaborators
+    WHERE event_id = $1
+    `,
+    [eventId],
+    db,
+  );
+
+  return Number(row?.total ?? 0);
+}
+
+async function countPassesForEventFromDb(eventId: string, db?: DatabaseClient) {
+  const row = await queryOne<{ count: number }>(
+    "SELECT COUNT(*)::int AS count FROM passes WHERE event_id = $1",
+    [eventId],
+    db,
+  );
+
+  return Number(row?.count ?? 0);
+}
+
+async function getEventRevenueUsdcFromDb(eventId: string, db?: DatabaseClient) {
+  const row = await queryOne<{ total: number }>(
+    `
+    SELECT COALESCE(SUM(CAST(amount_usdc AS double precision)), 0)::float8 AS total
+    FROM purchases
+    WHERE event_id = $1 AND status = 'succeeded'
+    `,
+    [eventId],
+    db,
+  );
+
+  return Number(row?.total ?? 0);
+}
+
+async function getWithdrawnTotalUsdcFromDb(
+  eventId: string,
+  walletAddress: string,
+  db?: DatabaseClient,
+) {
+  assertWalletAddress(walletAddress);
+
+  const row = await queryOne<{ total: number }>(
+    `
+    SELECT COALESCE(SUM(CAST(amount_usdc AS double precision)), 0)::float8 AS total
+    FROM withdrawals
+    WHERE event_id = $1 AND collaborator_wallet = $2
+    `,
+    [eventId, walletAddress],
+    db,
+  );
+
+  return Number(row?.total ?? 0);
+}
+
+async function createDraftEventWithDb(
+  input: CreateDraftEventInput,
+  db: DatabaseClient,
+) {
   assertWalletAddress(input.organizerWallet);
 
-  const db = getDatabase();
   const id = createId("evt");
-
-  db.prepare(
+  const row = await queryOne<EventRow>(
     `
     INSERT INTO events (
       id, slug, title, event_type, short_description, cover_image_url,
       start_date_time, end_date_time, timezone, location_type, location_text,
       meeting_url, price_usdc, is_free, capacity, organizer_wallet
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (
+      $1, $2, $3, $4, $5, $6, $7, $8,
+      $9, $10, $11, $12, $13, $14, $15, $16
+    )
+    RETURNING *
     `,
-  ).run(
-    id,
-    input.slug,
-    input.title,
-    input.eventType,
-    input.shortDescription,
-    input.coverImageUrl ?? null,
-    input.startDateTime,
-    input.endDateTime,
-    input.timezone,
-    input.locationType,
-    input.locationText ?? null,
-    input.meetingUrl ?? null,
-    input.isFree ? "0" : input.priceUsdc,
-    input.isFree ? 1 : 0,
-    input.capacity,
-    input.organizerWallet,
+    [
+      id,
+      input.slug,
+      input.title,
+      input.eventType,
+      input.shortDescription,
+      input.coverImageUrl ?? null,
+      input.startDateTime,
+      input.endDateTime,
+      input.timezone,
+      input.locationType,
+      input.locationText ?? null,
+      input.meetingUrl ?? null,
+      input.isFree ? "0" : input.priceUsdc,
+      input.isFree,
+      input.capacity,
+      input.organizerWallet,
+    ],
+    db,
   );
 
-  return getEventById(id);
+  return toEventRecord(row as EventRow);
 }
 
-export function createDraftEventWithSetup(
+async function addCollaboratorWithDb(
+  eventId: string,
+  input: UpsertCollaboratorInput,
+  db: DatabaseClient,
+) {
+  assertWalletAddress(input.walletAddress);
+
+  const id = createId("col");
+  const row = await queryOne<CollaboratorRow>(
+    `
+    INSERT INTO collaborators (
+      id, event_id, display_name, role, wallet_address, split_percentage
+    )
+    VALUES ($1, $2, $3, $4, $5, $6)
+    RETURNING *
+    `,
+    [
+      id,
+      eventId,
+      input.displayName,
+      input.role,
+      input.walletAddress,
+      input.splitPercentage,
+    ],
+    db,
+  );
+
+  return toCollaboratorRecord(row as CollaboratorRow);
+}
+
+async function addResourceWithDb(
+  eventId: string,
+  input: CreateResourceInput,
+  db: DatabaseClient,
+) {
+  const id = createId("res");
+  const row = await queryOne<ResourceRow>(
+    `
+    INSERT INTO resources (id, event_id, title, description, type, url, sort_order)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING *
+    `,
+    [
+      id,
+      eventId,
+      input.title,
+      input.description ?? null,
+      input.type,
+      input.url ?? null,
+      input.sortOrder,
+    ],
+    db,
+  );
+
+  return toResourceRecord(row as ResourceRow);
+}
+
+export async function upsertUser(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  const row = await queryOne<UserRow>(
+    `
+    INSERT INTO users (id, wallet_address)
+    VALUES ($1, $2)
+    ON CONFLICT (wallet_address) DO UPDATE
+      SET last_seen_at = now()
+    RETURNING *
+    `,
+    [createId("usr"), walletAddress],
+  );
+
+  return toUserRecord(row as UserRow);
+}
+
+export async function createDraftEvent(input: CreateDraftEventInput) {
+  return withTransaction((db) => createDraftEventWithDb(input, db));
+}
+
+export async function createDraftEventWithSetup(
   input: CreateDraftEventInput,
   collaborators: UpsertCollaboratorInput[],
   resources: CreateResourceInput[],
 ) {
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const event = createDraftEvent(input);
+  return withTransaction(async (db) => {
+    const event = await createDraftEventWithDb(input, db);
 
     for (const collaborator of collaborators) {
-      addCollaborator(event.id, collaborator);
+      await addCollaboratorWithDb(event.id, collaborator, db);
     }
 
     for (const resource of resources) {
-      addResource(event.id, resource);
+      await addResourceWithDb(event.id, resource, db);
     }
 
     return {
       event,
-      collaborators: listCollaborators(event.id),
-      resources: listResources(event.id),
+      collaborators: await listCollaboratorsFromDb(event.id, db),
+      resources: await listResourcesFromDb(event.id, db),
     };
-  })();
+  });
 }
 
-export function updateDraftEventWithSetup({
+export async function updateDraftEventWithSetup({
   eventId,
   organizerWallet,
   input,
@@ -476,14 +655,16 @@ export function updateDraftEventWithSetup({
 }) {
   assertWalletAddress(organizerWallet);
 
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const existing = db
-      .prepare(
-        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
-      )
-      .get(eventId, organizerWallet) as EventRow | undefined;
+  return withTransaction(async (db) => {
+    const existing = await queryOne<EventRow>(
+      `
+      SELECT * FROM events
+      WHERE id = $1 AND organizer_wallet = $2
+      FOR UPDATE
+      `,
+      [eventId, organizerWallet],
+      db,
+    );
 
     if (!existing) {
       throw new Error("Draft event not found for connected organizer.");
@@ -493,72 +674,76 @@ export function updateDraftEventWithSetup({
       throw new Error("Published events cannot be edited in the MVP.");
     }
 
-    db.prepare(
+    await execute(
       `
       UPDATE events
       SET
-        title = ?,
-        event_type = ?,
-        short_description = ?,
-        cover_image_url = ?,
-        start_date_time = ?,
-        end_date_time = ?,
-        timezone = ?,
-        location_type = ?,
-        location_text = ?,
-        meeting_url = ?,
-        price_usdc = ?,
-        is_free = ?,
-        capacity = ?
-      WHERE id = ?
+        title = $1,
+        event_type = $2,
+        short_description = $3,
+        cover_image_url = $4,
+        start_date_time = $5,
+        end_date_time = $6,
+        timezone = $7,
+        location_type = $8,
+        location_text = $9,
+        meeting_url = $10,
+        price_usdc = $11,
+        is_free = $12,
+        capacity = $13
+      WHERE id = $14
       `,
-    ).run(
-      input.title,
-      input.eventType,
-      input.shortDescription,
-      input.coverImageUrl ?? null,
-      input.startDateTime,
-      input.endDateTime,
-      input.timezone,
-      input.locationType,
-      input.locationText ?? null,
-      input.meetingUrl ?? null,
-      input.isFree ? "0" : input.priceUsdc,
-      input.isFree ? 1 : 0,
-      input.capacity,
-      eventId,
+      [
+        input.title,
+        input.eventType,
+        input.shortDescription,
+        input.coverImageUrl ?? null,
+        input.startDateTime,
+        input.endDateTime,
+        input.timezone,
+        input.locationType,
+        input.locationText ?? null,
+        input.meetingUrl ?? null,
+        input.isFree ? "0" : input.priceUsdc,
+        input.isFree,
+        input.capacity,
+        eventId,
+      ],
+      db,
     );
 
-    db.prepare("DELETE FROM collaborators WHERE event_id = ?").run(eventId);
-    db.prepare("DELETE FROM resources WHERE event_id = ?").run(eventId);
+    await execute("DELETE FROM collaborators WHERE event_id = $1", [eventId], db);
+    await execute("DELETE FROM resources WHERE event_id = $1", [eventId], db);
 
     for (const collaborator of collaborators) {
-      addCollaborator(eventId, collaborator);
+      await addCollaboratorWithDb(eventId, collaborator, db);
     }
 
     for (const resource of resources) {
-      addResource(eventId, resource);
+      await addResourceWithDb(eventId, resource, db);
     }
 
     return {
-      event: getEventById(eventId),
-      collaborators: listCollaborators(eventId),
-      resources: listResources(eventId),
+      event: toEventRecord(await getEventByIdFromDb(eventId, db)),
+      collaborators: await listCollaboratorsFromDb(eventId, db),
+      resources: await listResourcesFromDb(eventId, db),
     };
-  })();
+  });
 }
 
-export function publishDraftEventStub(eventId: string, organizerWallet: string) {
+export async function publishDraftEventStub(eventId: string, organizerWallet: string) {
   assertWalletAddress(organizerWallet);
 
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const event = db
-      .prepare(
-        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
-      )
-      .get(eventId, organizerWallet) as EventRow | undefined;
+  return withTransaction(async (db) => {
+    const event = await queryOne<EventRow>(
+      `
+      SELECT * FROM events
+      WHERE id = $1 AND organizer_wallet = $2
+      FOR UPDATE
+      `,
+      [eventId, organizerWallet],
+      db,
+    );
 
     if (!event) {
       throw new Error("Draft event not found for connected organizer.");
@@ -568,8 +753,8 @@ export function publishDraftEventStub(eventId: string, organizerWallet: string) 
       throw new Error("Only draft events can be published.");
     }
 
-    const splitTotal = getCollaboratorSplitTotal(eventId);
-    const resourceCount = listResources(eventId).length;
+    const splitTotal = await getCollaboratorSplitTotalFromDb(eventId, db);
+    const resourceCount = (await listResourcesFromDb(eventId, db)).length;
 
     if (Math.abs(splitTotal - 100) > 0.001) {
       throw new Error("Collaborator split total must equal 100% before publish.");
@@ -584,36 +769,41 @@ export function publishDraftEventStub(eventId: string, organizerWallet: string) 
       .digest("hex");
     const publishTxHash = `stub:publish:${Date.now()}`;
 
-    db.prepare(
+    await execute(
       `
       UPDATE events
-      SET status = 'published', metadata_hash = ?, publish_tx_hash = ?
-      WHERE id = ?
+      SET status = 'published', metadata_hash = $1, publish_tx_hash = $2
+      WHERE id = $3
       `,
-    ).run(`sha256:${metadataHash}`, publishTxHash, eventId);
+      [`sha256:${metadataHash}`, publishTxHash, eventId],
+      db,
+    );
 
     return {
-      event: getEventById(eventId),
-      collaborators: listCollaborators(eventId),
-      resources: listResources(eventId),
+      event: toEventRecord(await getEventByIdFromDb(eventId, db)),
+      collaborators: await listCollaboratorsFromDb(eventId, db),
+      resources: await listResourcesFromDb(eventId, db),
     };
-  })();
+  });
 }
 
-export function recordLivePublishedEvent(input: RecordLivePublishInput) {
+export async function recordLivePublishedEvent(input: RecordLivePublishInput) {
   assertWalletAddress(input.organizerWallet);
   assertContractEventId(input.coreEventId);
   assertLiveTransactionHash(input.publishTxHash);
-  assertLiveProofHashUnused(input.publishTxHash);
 
-  const db = getDatabase();
+  return withTransaction(async (db) => {
+    await assertLiveProofHashUnused(input.publishTxHash, db);
 
-  return db.transaction(() => {
-    const event = db
-      .prepare(
-        "SELECT * FROM events WHERE id = ? AND organizer_wallet = ?",
-      )
-      .get(input.eventId, input.organizerWallet) as EventRow | undefined;
+    const event = await queryOne<EventRow>(
+      `
+      SELECT * FROM events
+      WHERE id = $1 AND organizer_wallet = $2
+      FOR UPDATE
+      `,
+      [input.eventId, input.organizerWallet],
+      db,
+    );
 
     if (!event) {
       throw new Error("Draft event not found for connected organizer.");
@@ -623,8 +813,8 @@ export function recordLivePublishedEvent(input: RecordLivePublishInput) {
       throw new Error("Only draft events can be recorded as live published.");
     }
 
-    const splitTotal = getCollaboratorSplitTotal(input.eventId);
-    const resourceCount = listResources(input.eventId).length;
+    const splitTotal = await getCollaboratorSplitTotalFromDb(input.eventId, db);
+    const resourceCount = (await listResourcesFromDb(input.eventId, db)).length;
 
     if (Math.abs(splitTotal - 100) > 0.001) {
       throw new Error("Collaborator split total must equal 100% before publish.");
@@ -634,304 +824,226 @@ export function recordLivePublishedEvent(input: RecordLivePublishInput) {
       throw new Error("Add at least one gated resource before publish.");
     }
 
-    db.prepare(
+    await execute(
       `
       UPDATE events
       SET status = 'published',
-          metadata_hash = ?,
-          core_event_id = ?,
-          publish_tx_hash = ?
-      WHERE id = ?
+          metadata_hash = $1,
+          core_event_id = $2,
+          publish_tx_hash = $3
+      WHERE id = $4
       `,
-    ).run(
-      normalizeHashForStorage(input.metadataHash, "Event metadata hash"),
-      input.coreEventId.toLowerCase(),
-      input.publishTxHash.toLowerCase(),
-      input.eventId,
+      [
+        normalizeHashForStorage(input.metadataHash, "Event metadata hash"),
+        input.coreEventId.toLowerCase(),
+        input.publishTxHash.toLowerCase(),
+        input.eventId,
+      ],
+      db,
     );
+    await reserveLiveProofHash({
+      db,
+      sourceId: input.eventId,
+      sourceTable: "events",
+      txHash: input.publishTxHash,
+    });
 
     return {
-      event: getEventById(input.eventId),
-      collaborators: listCollaborators(input.eventId),
-      resources: listResources(input.eventId),
-    };
-  })();
-}
-
-export function getEventById(id: string) {
-  const row = getDatabase().prepare("SELECT * FROM events WHERE id = ?").get(id) as
-    | EventRow
-    | undefined;
-
-  if (!row) {
-    throw new Error(`Event not found: ${id}`);
-  }
-
-  return toEventRecord(row);
-}
-
-export function getEventBySlug(slug: string) {
-  const row = getDatabase()
-    .prepare("SELECT * FROM events WHERE slug = ?")
-    .get(slug) as EventRow | undefined;
-
-  return row ? toEventRecord(row) : null;
-}
-
-export function listPublishedEvents() {
-  return (
-    getDatabase()
-      .prepare(
-        "SELECT * FROM events WHERE status = 'published' ORDER BY start_date_time ASC",
-      )
-      .all() as EventRow[]
-  ).map(toEventRecord);
-}
-
-export function listOrganizerEvents(organizerWallet: string) {
-  assertWalletAddress(organizerWallet);
-
-  return (
-    getDatabase()
-      .prepare(
-        "SELECT * FROM events WHERE organizer_wallet = ? ORDER BY created_at DESC",
-      )
-      .all(organizerWallet) as EventRow[]
-  ).map(toEventRecord);
-}
-
-export function listCollaborationsByWallet(walletAddress: string) {
-  assertWalletAddress(walletAddress);
-
-  return (
-    getDatabase()
-      .prepare(
-        `
-        SELECT c.*
-        FROM collaborators c
-        JOIN events e ON e.id = c.event_id
-        WHERE c.wallet_address = ?
-        ORDER BY e.created_at DESC, c.created_at DESC
-        `,
-      )
-      .all(walletAddress) as CollaboratorRow[]
-  ).map((row) => {
-    const collaborator = toCollaboratorRecord(row);
-    const event = getEventById(collaborator.eventId);
-    const revenueUsdc = getEventRevenueUsdc(event.id);
-    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, walletAddress);
-
-    return {
-      collaborator,
-      event,
-      earnedUsdc: (revenueUsdc * collaborator.splitPercentage) / 100,
-      withdrawnUsdc,
+      event: toEventRecord(await getEventByIdFromDb(input.eventId, db)),
+      collaborators: await listCollaboratorsFromDb(input.eventId, db),
+      resources: await listResourcesFromDb(input.eventId, db),
     };
   });
 }
 
-export function addCollaborator(
+export async function getEventById(id: string) {
+  return toEventRecord(await getEventByIdFromDb(id));
+}
+
+export async function getEventBySlug(slug: string) {
+  const row = await queryOne<EventRow>(
+    "SELECT * FROM events WHERE slug = $1",
+    [slug],
+  );
+
+  return row ? toEventRecord(row) : null;
+}
+
+export async function listPublishedEvents() {
+  return (
+    await query<EventRow>(
+      "SELECT * FROM events WHERE status = 'published' ORDER BY start_date_time ASC",
+    )
+  ).map(toEventRecord);
+}
+
+export async function listOrganizerEvents(organizerWallet: string) {
+  assertWalletAddress(organizerWallet);
+
+  return (
+    await query<EventRow>(
+      `
+      SELECT * FROM events
+      WHERE organizer_wallet = $1
+      ORDER BY created_at DESC
+      `,
+      [organizerWallet],
+    )
+  ).map(toEventRecord);
+}
+
+export async function listCollaborationsByWallet(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  const rows = await query<CollaboratorRow>(
+    `
+    SELECT c.*
+    FROM collaborators c
+    JOIN events e ON e.id = c.event_id
+    WHERE c.wallet_address = $1
+    ORDER BY e.created_at DESC, c.created_at DESC
+    `,
+    [walletAddress],
+  );
+  const collaborations: CollaboratorEventRecord[] = [];
+
+  for (const row of rows) {
+    const collaborator = toCollaboratorRecord(row);
+    const event = await getEventById(collaborator.eventId);
+    const revenueUsdc = await getEventRevenueUsdc(event.id);
+    const withdrawnUsdc = await getWithdrawnTotalUsdc(event.id, walletAddress);
+
+    collaborations.push({
+      collaborator,
+      event,
+      earnedUsdc: (revenueUsdc * collaborator.splitPercentage) / 100,
+      withdrawnUsdc,
+    });
+  }
+
+  return collaborations;
+}
+
+export async function addCollaborator(
   eventId: string,
   input: UpsertCollaboratorInput,
 ) {
-  assertWalletAddress(input.walletAddress);
-
-  const id = createId("col");
-  getDatabase()
-    .prepare(
-      `
-      INSERT INTO collaborators (
-        id, event_id, display_name, role, wallet_address, split_percentage
-      )
-      VALUES (?, ?, ?, ?, ?, ?)
-      `,
-    )
-    .run(
-      id,
-      eventId,
-      input.displayName,
-      input.role,
-      input.walletAddress,
-      input.splitPercentage,
-    );
-
-  const row = getDatabase()
-    .prepare("SELECT * FROM collaborators WHERE id = ?")
-    .get(id) as CollaboratorRow;
-
-  return toCollaboratorRecord(row);
+  return withTransaction((db) => addCollaboratorWithDb(eventId, input, db));
 }
 
-export function listCollaborators(eventId: string) {
-  return (
-    getDatabase()
-      .prepare("SELECT * FROM collaborators WHERE event_id = ? ORDER BY created_at ASC")
-      .all(eventId) as CollaboratorRow[]
-  ).map(toCollaboratorRecord);
+export async function listCollaborators(eventId: string) {
+  return listCollaboratorsFromDb(eventId);
 }
 
-export function getCollaboratorSplitTotal(eventId: string) {
-  const row = getDatabase()
-    .prepare(
-      "SELECT COALESCE(SUM(split_percentage), 0) as total FROM collaborators WHERE event_id = ?",
-    )
-    .get(eventId) as { total: number };
-
-  return Number(row.total);
+export async function getCollaboratorSplitTotal(eventId: string) {
+  return getCollaboratorSplitTotalFromDb(eventId);
 }
 
-export function addResource(eventId: string, input: CreateResourceInput) {
-  const id = createId("res");
-  getDatabase()
-    .prepare(
-      `
-      INSERT INTO resources (id, event_id, title, description, type, url, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-      `,
-    )
-    .run(
-      id,
-      eventId,
-      input.title,
-      input.description ?? null,
-      input.type,
-      input.url ?? null,
-      input.sortOrder,
-    );
-
-  return listResources(eventId).find((resource) => resource.id === id);
+export async function addResource(eventId: string, input: CreateResourceInput) {
+  return withTransaction((db) => addResourceWithDb(eventId, input, db));
 }
 
-export function listResources(eventId: string) {
-  return (
-    getDatabase()
-      .prepare(
-        "SELECT * FROM resources WHERE event_id = ? ORDER BY sort_order ASC, created_at ASC",
-      )
-      .all(eventId) as ResourceRow[]
-  ).map(toResourceRecord);
+export async function listResources(eventId: string) {
+  return listResourcesFromDb(eventId);
 }
 
-export function countPassesForEvent(eventId: string) {
-  const row = getDatabase()
-    .prepare("SELECT COUNT(*) as count FROM passes WHERE event_id = ?")
-    .get(eventId) as { count: number };
-
-  return Number(row.count);
+export async function countPassesForEvent(eventId: string) {
+  return countPassesForEventFromDb(eventId);
 }
 
-export function countCheckedInPassesForEvent(eventId: string) {
-  const row = getDatabase()
-    .prepare(
-      "SELECT COUNT(*) as count FROM passes WHERE event_id = ? AND checked_in = 1",
-    )
-    .get(eventId) as { count: number };
+export async function countCheckedInPassesForEvent(eventId: string) {
+  const row = await queryOne<{ count: number }>(
+    `
+    SELECT COUNT(*)::int AS count
+    FROM passes
+    WHERE event_id = $1 AND checked_in = true
+    `,
+    [eventId],
+  );
 
-  return Number(row.count);
+  return Number(row?.count ?? 0);
 }
 
-export function countMintedPasses() {
-  const row = getDatabase()
-    .prepare("SELECT COUNT(*) as count FROM passes")
-    .get() as { count: number };
+export async function countMintedPasses() {
+  const row = await queryOne<{ count: number }>(
+    "SELECT COUNT(*)::int AS count FROM passes",
+  );
 
-  return Number(row.count);
+  return Number(row?.count ?? 0);
 }
 
-export function getSucceededPurchaseTotalUsdc() {
-  const row = getDatabase()
-    .prepare(
-      `
-      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
-      FROM purchases
-      WHERE status = 'succeeded'
-      `,
-    )
-    .get() as { total: number };
+export async function getSucceededPurchaseTotalUsdc() {
+  const row = await queryOne<{ total: number }>(
+    `
+    SELECT COALESCE(SUM(CAST(amount_usdc AS double precision)), 0)::float8 AS total
+    FROM purchases
+    WHERE status = 'succeeded'
+    `,
+  );
 
-  return Number(row.total);
+  return Number(row?.total ?? 0);
 }
 
-export function getEventRevenueUsdc(eventId: string) {
-  const row = getDatabase()
-    .prepare(
-      `
-      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
-      FROM purchases
-      WHERE event_id = ? AND status = 'succeeded'
-      `,
-    )
-    .get(eventId) as { total: number };
-
-  return Number(row.total);
+export async function getEventRevenueUsdc(eventId: string) {
+  return getEventRevenueUsdcFromDb(eventId);
 }
 
-export function getWithdrawnTotalUsdc(eventId: string, walletAddress: string) {
-  assertWalletAddress(walletAddress);
-
-  const row = getDatabase()
-    .prepare(
-      `
-      SELECT COALESCE(SUM(CAST(amount_usdc AS REAL)), 0) as total
-      FROM withdrawals
-      WHERE event_id = ? AND collaborator_wallet = ?
-      `,
-    )
-    .get(eventId, walletAddress) as { total: number };
-
-  return Number(row.total);
+export async function getWithdrawnTotalUsdc(
+  eventId: string,
+  walletAddress: string,
+) {
+  return getWithdrawnTotalUsdcFromDb(eventId, walletAddress);
 }
 
-export function listWithdrawalsByWallet(walletAddress: string) {
+export async function listWithdrawalsByWallet(walletAddress: string) {
   assertWalletAddress(walletAddress);
 
   return (
-    getDatabase()
-      .prepare(
-        `
-        SELECT *
-        FROM withdrawals
-        WHERE collaborator_wallet = ?
-        ORDER BY created_at DESC
-        `,
-      )
-      .all(walletAddress) as WithdrawalRow[]
+    await query<WithdrawalRow>(
+      `
+      SELECT * FROM withdrawals
+      WHERE collaborator_wallet = $1
+      ORDER BY created_at DESC
+      `,
+      [walletAddress],
+    )
   ).map(toWithdrawalRecord);
 }
 
-export function createLocalWithdrawalProof(eventId: string, collaboratorWallet: string) {
+export async function createLocalWithdrawalProof(
+  eventId: string,
+  collaboratorWallet: string,
+) {
   assertWalletAddress(collaboratorWallet);
 
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
+  return withTransaction(async (db) => {
+    const eventRow = await getEventByIdFromDb(eventId, db, true);
     const event = toEventRecord(eventRow);
 
     if (event.status !== "published") {
       throw new Error("Only published events can be withdrawn from.");
     }
 
-    const collaboratorRow = db
-      .prepare(
-        "SELECT * FROM collaborators WHERE event_id = ? AND wallet_address = ?",
-      )
-      .get(eventId, collaboratorWallet) as CollaboratorRow | undefined;
+    const collaboratorRow = await queryOne<CollaboratorRow>(
+      `
+      SELECT * FROM collaborators
+      WHERE event_id = $1 AND wallet_address = $2
+      `,
+      [eventId, collaboratorWallet],
+      db,
+    );
 
     if (!collaboratorRow) {
       throw new Error("Connected wallet is not a collaborator for this event.");
     }
 
     const collaborator = toCollaboratorRecord(collaboratorRow);
-    const revenueUsdc = getEventRevenueUsdc(event.id);
-    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, collaboratorWallet);
+    const revenueUsdc = await getEventRevenueUsdcFromDb(event.id, db);
+    const withdrawnUsdc = await getWithdrawnTotalUsdcFromDb(
+      event.id,
+      collaboratorWallet,
+      db,
+    );
     const earnedUsdc = (revenueUsdc * collaborator.splitPercentage) / 100;
     const availableUsdc = Math.max(earnedUsdc - withdrawnUsdc, 0);
 
@@ -942,64 +1054,61 @@ export function createLocalWithdrawalProof(eventId: string, collaboratorWallet: 
     const withdrawalId = createId("wdr");
     const txHash = `stub:withdraw:${event.id}:${withdrawalId}`;
     const amountUsdc = formatUsdcAmount(availableUsdc);
-
-    db.prepare(
+    const withdrawal = await queryOne<WithdrawalRow>(
       `
       INSERT INTO withdrawals (
         id, event_id, collaborator_wallet, amount_usdc, tx_hash
       )
-      VALUES (?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
       `,
-    ).run(withdrawalId, event.id, collaboratorWallet, amountUsdc, txHash);
-
-    const withdrawal = db
-      .prepare("SELECT * FROM withdrawals WHERE id = ?")
-      .get(withdrawalId) as WithdrawalRow;
+      [withdrawalId, event.id, collaboratorWallet, amountUsdc, txHash],
+      db,
+    );
 
     return {
       collaborator,
       event,
-      withdrawal: toWithdrawalRecord(withdrawal),
+      withdrawal: toWithdrawalRecord(withdrawal as WithdrawalRow),
     };
-  })();
+  });
 }
 
-export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
+export async function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
   assertWalletAddress(input.collaboratorWallet);
   assertLiveTransactionHash(input.txHash);
-  assertLiveProofHashUnused(input.txHash);
   assertUsdcAmount(input.amountUsdc);
 
-  const db = getDatabase();
+  return withTransaction(async (db) => {
+    await assertLiveProofHashUnused(input.txHash, db);
 
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(input.eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
+    const eventRow = await getEventByIdFromDb(input.eventId, db, true);
     const event = toEventRecord(eventRow);
 
     if (event.status !== "published") {
       throw new Error("Only published events can be withdrawn from.");
     }
 
-    const collaboratorRow = db
-      .prepare(
-        "SELECT * FROM collaborators WHERE event_id = ? AND wallet_address = ?",
-      )
-      .get(input.eventId, input.collaboratorWallet) as CollaboratorRow | undefined;
+    const collaboratorRow = await queryOne<CollaboratorRow>(
+      `
+      SELECT * FROM collaborators
+      WHERE event_id = $1 AND wallet_address = $2
+      `,
+      [input.eventId, input.collaboratorWallet],
+      db,
+    );
 
     if (!collaboratorRow) {
       throw new Error("Connected wallet is not a collaborator for this event.");
     }
 
     const collaborator = toCollaboratorRecord(collaboratorRow);
-    const revenueUsdc = getEventRevenueUsdc(event.id);
-    const withdrawnUsdc = getWithdrawnTotalUsdc(event.id, input.collaboratorWallet);
+    const revenueUsdc = await getEventRevenueUsdcFromDb(event.id, db);
+    const withdrawnUsdc = await getWithdrawnTotalUsdcFromDb(
+      event.id,
+      input.collaboratorWallet,
+      db,
+    );
     const earnedUsdc = (revenueUsdc * collaborator.splitPercentage) / 100;
     const availableUsdc = Math.max(earnedUsdc - withdrawnUsdc, 0);
     const requestedUsdc = Number(input.amountUsdc);
@@ -1009,39 +1118,43 @@ export function recordLiveWithdrawal(input: RecordLiveWithdrawalInput) {
     }
 
     const withdrawalId = createId("wdr");
-
-    db.prepare(
+    const withdrawal = await queryOne<WithdrawalRow>(
       `
       INSERT INTO withdrawals (
         id, event_id, collaborator_wallet, amount_usdc, tx_hash
       )
-      VALUES (?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
       `,
-    ).run(
-      withdrawalId,
-      event.id,
-      input.collaboratorWallet,
-      input.amountUsdc,
-      input.txHash.toLowerCase(),
+      [
+        withdrawalId,
+        event.id,
+        input.collaboratorWallet,
+        input.amountUsdc,
+        input.txHash.toLowerCase(),
+      ],
+      db,
     );
-
-    const withdrawal = db
-      .prepare("SELECT * FROM withdrawals WHERE id = ?")
-      .get(withdrawalId) as WithdrawalRow;
+    await reserveLiveProofHash({
+      db,
+      sourceId: withdrawalId,
+      sourceTable: "withdrawals",
+      txHash: input.txHash,
+    });
 
     return {
       collaborator,
       event,
-      withdrawal: toWithdrawalRecord(withdrawal),
+      withdrawal: toWithdrawalRecord(withdrawal as WithdrawalRow),
     };
-  })();
+  });
 }
 
-export function getEventDashboardMetrics(eventId: string) {
-  const event = getEventById(eventId);
-  const passCount = countPassesForEvent(event.id);
-  const checkedInCount = countCheckedInPassesForEvent(event.id);
-  const revenueUsdc = getEventRevenueUsdc(event.id);
+export async function getEventDashboardMetrics(eventId: string) {
+  const event = await getEventById(eventId);
+  const passCount = await countPassesForEvent(event.id);
+  const checkedInCount = await countCheckedInPassesForEvent(event.id);
+  const revenueUsdc = await getEventRevenueUsdc(event.id);
 
   return {
     checkedInCount,
@@ -1051,64 +1164,76 @@ export function getEventDashboardMetrics(eventId: string) {
   };
 }
 
-export function getPassByEventAndOwner(eventId: string, ownerWallet: string) {
+export async function getPassByEventAndOwner(
+  eventId: string,
+  ownerWallet: string,
+) {
   assertWalletAddress(ownerWallet);
 
-  const row = getDatabase()
-    .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
-    .get(eventId, ownerWallet) as PassRow | undefined;
+  const row = await queryOne<PassRow>(
+    "SELECT * FROM passes WHERE event_id = $1 AND owner_wallet = $2",
+    [eventId, ownerWallet],
+  );
 
   return row ? toPassRecord(row) : null;
 }
 
-export function listPassesByOwner(ownerWallet: string) {
+export async function listPassesByOwner(ownerWallet: string) {
   assertWalletAddress(ownerWallet);
 
   return (
-    getDatabase()
-      .prepare("SELECT * FROM passes WHERE owner_wallet = ? ORDER BY created_at DESC")
-      .all(ownerWallet) as PassRow[]
+    await query<PassRow>(
+      `
+      SELECT * FROM passes
+      WHERE owner_wallet = $1
+      ORDER BY created_at DESC
+      `,
+      [ownerWallet],
+    )
   ).map(toPassRecord);
 }
 
-export function getPassByTokenId(tokenId: string) {
-  const passRow = getDatabase()
-    .prepare("SELECT * FROM passes WHERE token_id = ?")
-    .get(tokenId) as PassRow | undefined;
+export async function getPassByTokenId(tokenId: string) {
+  const passRow = await queryOne<PassRow>(
+    "SELECT * FROM passes WHERE token_id = $1",
+    [tokenId],
+  );
 
   if (!passRow) {
     return null;
   }
 
-  const purchaseRow = getDatabase()
-    .prepare(
-      `
-      SELECT * FROM purchases
-      WHERE token_id = ?
-      ORDER BY created_at DESC
-      LIMIT 1
-      `,
-    )
-    .get(tokenId) as PurchaseRow | undefined;
+  const purchaseRow = await queryOne<PurchaseRow>(
+    `
+    SELECT * FROM purchases
+    WHERE token_id = $1
+    ORDER BY created_at DESC
+    LIMIT 1
+    `,
+    [tokenId],
+  );
 
   return {
-    event: getEventById(passRow.event_id),
+    event: await getEventById(passRow.event_id),
     pass: toPassRecord(passRow),
     purchase: purchaseRow ? toPurchaseRecord(purchaseRow) : null,
   };
 }
 
-export function listCheckInsForEvent(eventId: string) {
+export async function listCheckInsForEvent(eventId: string) {
   return (
-    getDatabase()
-      .prepare(
-        "SELECT * FROM check_ins WHERE event_id = ? ORDER BY created_at DESC",
-      )
-      .all(eventId) as CheckInRow[]
+    await query<CheckInRow>(
+      `
+      SELECT * FROM check_ins
+      WHERE event_id = $1
+      ORDER BY created_at DESC
+      `,
+      [eventId],
+    )
   ).map(toCheckInRecord);
 }
 
-export function markLocalPassCheckedIn({
+export async function markLocalPassCheckedIn({
   checkedInByWallet,
   eventId,
   tokenId,
@@ -1119,18 +1244,8 @@ export function markLocalPassCheckedIn({
 }) {
   assertWalletAddress(checkedInByWallet);
 
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
-    const event = toEventRecord(eventRow);
+  return withTransaction(async (db) => {
+    const event = toEventRecord(await getEventByIdFromDb(eventId, db, true));
 
     if (event.status !== "published") {
       throw new Error("Only published events can be checked in.");
@@ -1140,74 +1255,72 @@ export function markLocalPassCheckedIn({
       throw new Error("Only the event organizer can check in passes.");
     }
 
-    const passRow = db
-      .prepare("SELECT * FROM passes WHERE event_id = ? AND token_id = ?")
-      .get(eventId, tokenId) as PassRow | undefined;
+    const passRow = await queryOne<PassRow>(
+      `
+      SELECT * FROM passes
+      WHERE event_id = $1 AND token_id = $2
+      FOR UPDATE
+      `,
+      [eventId, tokenId],
+      db,
+    );
 
     if (!passRow) {
       throw new Error("Pass not found for this event.");
     }
 
-    if (passRow.checked_in === 1) {
+    if (passRow.checked_in) {
       throw new Error("Pass is already checked in.");
     }
 
     const checkInId = createId("chk");
     const txHash = `stub:check-in:${eventId}:${checkInId}`;
-
-    db.prepare(
+    const checkIn = await queryOne<CheckInRow>(
       `
       INSERT INTO check_ins (
         id, event_id, token_id, owner_wallet, checked_in_by_wallet, tx_hash
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
       `,
-    ).run(
-      checkInId,
-      eventId,
-      tokenId,
-      passRow.owner_wallet,
-      checkedInByWallet,
-      txHash,
+      [
+        checkInId,
+        eventId,
+        tokenId,
+        passRow.owner_wallet,
+        checkedInByWallet,
+        txHash,
+      ],
+      db,
+    );
+    const pass = await queryOne<PassRow>(
+      `
+      UPDATE passes
+      SET checked_in = true
+      WHERE event_id = $1 AND token_id = $2
+      RETURNING *
+      `,
+      [eventId, tokenId],
+      db,
     );
 
-    db.prepare(
-      "UPDATE passes SET checked_in = 1 WHERE event_id = ? AND token_id = ?",
-    ).run(eventId, tokenId);
-
-    const checkIn = db
-      .prepare("SELECT * FROM check_ins WHERE id = ?")
-      .get(checkInId) as CheckInRow;
-    const pass = db
-      .prepare("SELECT * FROM passes WHERE id = ?")
-      .get(passRow.id) as PassRow;
-
     return {
-      checkIn: toCheckInRecord(checkIn),
+      checkIn: toCheckInRecord(checkIn as CheckInRow),
       event,
-      pass: toPassRecord(pass),
+      pass: toPassRecord(pass as PassRow),
     };
-  })();
+  });
 }
 
-export function recordLiveCheckIn(input: RecordLiveCheckInInput) {
+export async function recordLiveCheckIn(input: RecordLiveCheckInInput) {
   assertWalletAddress(input.checkedInByWallet);
   assertLiveTransactionHash(input.txHash);
-  assertLiveProofHashUnused(input.txHash);
   assertTokenId(input.tokenId);
 
-  const db = getDatabase();
+  return withTransaction(async (db) => {
+    await assertLiveProofHashUnused(input.txHash, db);
 
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(input.eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
-    const event = toEventRecord(eventRow);
+    const event = toEventRecord(await getEventByIdFromDb(input.eventId, db, true));
 
     if (event.status !== "published") {
       throw new Error("Only published events can be checked in.");
@@ -1217,84 +1330,92 @@ export function recordLiveCheckIn(input: RecordLiveCheckInInput) {
       throw new Error("Only the event organizer can check in passes.");
     }
 
-    const passRow = db
-      .prepare("SELECT * FROM passes WHERE event_id = ? AND token_id = ?")
-      .get(input.eventId, input.tokenId) as PassRow | undefined;
+    const passRow = await queryOne<PassRow>(
+      `
+      SELECT * FROM passes
+      WHERE event_id = $1 AND token_id = $2
+      FOR UPDATE
+      `,
+      [input.eventId, input.tokenId],
+      db,
+    );
 
     if (!passRow) {
       throw new Error("Pass not found for this event.");
     }
 
-    if (passRow.checked_in === 1) {
+    if (passRow.checked_in) {
       throw new Error("Pass is already checked in.");
     }
 
     const checkInId = createId("chk");
-
-    db.prepare(
+    const checkIn = await queryOne<CheckInRow>(
       `
       INSERT INTO check_ins (
         id, event_id, token_id, owner_wallet, checked_in_by_wallet, tx_hash
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *
       `,
-    ).run(
-      checkInId,
-      input.eventId,
-      input.tokenId,
-      passRow.owner_wallet,
-      input.checkedInByWallet,
-      input.txHash.toLowerCase(),
+      [
+        checkInId,
+        input.eventId,
+        input.tokenId,
+        passRow.owner_wallet,
+        input.checkedInByWallet,
+        input.txHash.toLowerCase(),
+      ],
+      db,
     );
-
-    db.prepare(
-      "UPDATE passes SET checked_in = 1 WHERE event_id = ? AND token_id = ?",
-    ).run(input.eventId, input.tokenId);
-
-    const checkIn = db
-      .prepare("SELECT * FROM check_ins WHERE id = ?")
-      .get(checkInId) as CheckInRow;
-    const pass = db
-      .prepare("SELECT * FROM passes WHERE id = ?")
-      .get(passRow.id) as PassRow;
+    const pass = await queryOne<PassRow>(
+      `
+      UPDATE passes
+      SET checked_in = true
+      WHERE event_id = $1 AND token_id = $2
+      RETURNING *
+      `,
+      [input.eventId, input.tokenId],
+      db,
+    );
+    await reserveLiveProofHash({
+      db,
+      sourceId: checkInId,
+      sourceTable: "check_ins",
+      txHash: input.txHash,
+    });
 
     return {
-      checkIn: toCheckInRecord(checkIn),
+      checkIn: toCheckInRecord(checkIn as CheckInRow),
       event,
-      pass: toPassRecord(pass),
+      pass: toPassRecord(pass as PassRow),
     };
-  })();
+  });
 }
 
-export function createLocalPassProof(eventId: string, ownerWallet: string) {
+export async function createLocalPassProof(eventId: string, ownerWallet: string) {
   assertWalletAddress(ownerWallet);
 
-  const db = getDatabase();
-
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
-    const event = toEventRecord(eventRow);
+  return withTransaction(async (db) => {
+    const event = toEventRecord(await getEventByIdFromDb(eventId, db, true));
 
     if (event.status !== "published") {
       throw new Error("Passes can only be claimed for published events.");
     }
 
-    const existingPass = db
-      .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
-      .get(eventId, ownerWallet) as PassRow | undefined;
+    const existingPass = await queryOne<PassRow>(
+      `
+      SELECT * FROM passes
+      WHERE event_id = $1 AND owner_wallet = $2
+      `,
+      [eventId, ownerWallet],
+      db,
+    );
 
     if (existingPass) {
       throw new Error("Connected wallet already owns a pass for this event.");
     }
 
-    const mintedCount = countPassesForEvent(eventId);
+    const mintedCount = await countPassesForEventFromDb(eventId, db);
 
     if (mintedCount >= event.capacity) {
       throw new Error("Event capacity is sold out.");
@@ -1310,89 +1431,82 @@ export function createLocalPassProof(eventId: string, ownerWallet: string) {
       .update(`${event.id}:${ownerWallet}:${tokenId}:${event.metadataHash ?? ""}`)
       .digest("hex");
     const localTxHash = `stub:${source}:${event.id}:${passId}`;
-
-    db.prepare(
+    const pass = await queryOne<PassRow>(
       `
       INSERT INTO passes (
         id, event_id, owner_wallet, token_id, metadata_uri, metadata_hash,
         mint_tx_hash, source
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
       `,
-    ).run(
-      passId,
-      event.id,
-      ownerWallet,
-      tokenId,
-      metadataUri,
-      `sha256:${metadataHash}`,
-      `stub:mint:${event.id}:${passId}`,
-      source,
+      [
+        passId,
+        event.id,
+        ownerWallet,
+        tokenId,
+        metadataUri,
+        `sha256:${metadataHash}`,
+        `stub:mint:${event.id}:${passId}`,
+        source,
+      ],
+      db,
     );
-
-    db.prepare(
+    const purchase = await queryOne<PurchaseRow>(
       `
       INSERT INTO purchases (
         id, event_id, buyer_wallet, amount_usdc, token_id, tx_hash, status
       )
-      VALUES (?, ?, ?, ?, ?, ?, 'succeeded')
+      VALUES ($1, $2, $3, $4, $5, $6, 'succeeded')
+      RETURNING *
       `,
-    ).run(
-      purchaseId,
-      event.id,
-      ownerWallet,
-      event.isFree ? "0" : event.priceUsdc,
-      tokenId,
-      localTxHash,
+      [
+        purchaseId,
+        event.id,
+        ownerWallet,
+        event.isFree ? "0" : event.priceUsdc,
+        tokenId,
+        localTxHash,
+      ],
+      db,
     );
-
-    const pass = db
-      .prepare("SELECT * FROM passes WHERE id = ?")
-      .get(passId) as PassRow;
-    const purchase = db
-      .prepare("SELECT * FROM purchases WHERE id = ?")
-      .get(purchaseId) as PurchaseRow;
 
     return {
       event,
-      pass: toPassRecord(pass),
-      purchase: toPurchaseRecord(purchase),
+      pass: toPassRecord(pass as PassRow),
+      purchase: toPurchaseRecord(purchase as PurchaseRow),
     };
-  })();
+  });
 }
 
-export function recordLivePass(input: RecordLivePassInput) {
+export async function recordLivePass(input: RecordLivePassInput) {
   assertWalletAddress(input.ownerWallet);
   assertLiveTransactionHash(input.txHash);
-  assertLiveProofHashUnused(input.txHash);
   assertTokenId(input.tokenId);
 
-  const db = getDatabase();
+  return withTransaction(async (db) => {
+    await assertLiveProofHashUnused(input.txHash, db);
 
-  return db.transaction(() => {
-    const eventRow = db
-      .prepare("SELECT * FROM events WHERE id = ?")
-      .get(input.eventId) as EventRow | undefined;
-
-    if (!eventRow) {
-      throw new Error("Event not found.");
-    }
-
-    const event = toEventRecord(eventRow);
+    const event = toEventRecord(await getEventByIdFromDb(input.eventId, db, true));
 
     if (event.status !== "published") {
       throw new Error("Passes can only be recorded for published events.");
     }
 
-    const existingPass = db
-      .prepare("SELECT * FROM passes WHERE event_id = ? AND owner_wallet = ?")
-      .get(input.eventId, input.ownerWallet) as PassRow | undefined;
+    const existingPass = await queryOne<PassRow>(
+      `
+      SELECT * FROM passes
+      WHERE event_id = $1 AND owner_wallet = $2
+      `,
+      [input.eventId, input.ownerWallet],
+      db,
+    );
 
     if (existingPass) {
       throw new Error("Connected wallet already owns a pass for this event.");
     }
 
-    const mintedCount = countPassesForEvent(input.eventId);
+    const mintedCount = await countPassesForEventFromDb(input.eventId, db);
 
     if (mintedCount >= event.capacity) {
       throw new Error("Event capacity is sold out.");
@@ -1401,53 +1515,56 @@ export function recordLivePass(input: RecordLivePassInput) {
     const passId = createId("pas");
     const purchaseId = createId("pur");
     const source: PassSource = event.isFree ? "free_claim" : "purchase";
-
-    db.prepare(
+    const pass = await queryOne<PassRow>(
       `
       INSERT INTO passes (
         id, event_id, owner_wallet, token_id, metadata_uri, metadata_hash,
         mint_tx_hash, source
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
       `,
-    ).run(
-      passId,
-      event.id,
-      input.ownerWallet,
-      input.tokenId,
-      input.metadataUri,
-      normalizeHashForStorage(input.metadataHash, "Pass metadata hash"),
-      input.txHash.toLowerCase(),
-      source,
+      [
+        passId,
+        event.id,
+        input.ownerWallet,
+        input.tokenId,
+        input.metadataUri,
+        normalizeHashForStorage(input.metadataHash, "Pass metadata hash"),
+        input.txHash.toLowerCase(),
+        source,
+      ],
+      db,
     );
-
-    db.prepare(
+    const purchase = await queryOne<PurchaseRow>(
       `
       INSERT INTO purchases (
         id, event_id, buyer_wallet, amount_usdc, token_id, tx_hash, status
       )
-      VALUES (?, ?, ?, ?, ?, ?, 'succeeded')
+      VALUES ($1, $2, $3, $4, $5, $6, 'succeeded')
+      RETURNING *
       `,
-    ).run(
-      purchaseId,
-      event.id,
-      input.ownerWallet,
-      event.isFree ? "0" : event.priceUsdc,
-      input.tokenId,
-      input.txHash.toLowerCase(),
+      [
+        purchaseId,
+        event.id,
+        input.ownerWallet,
+        event.isFree ? "0" : event.priceUsdc,
+        input.tokenId,
+        input.txHash.toLowerCase(),
+      ],
+      db,
     );
-
-    const pass = db
-      .prepare("SELECT * FROM passes WHERE id = ?")
-      .get(passId) as PassRow;
-    const purchase = db
-      .prepare("SELECT * FROM purchases WHERE id = ?")
-      .get(purchaseId) as PurchaseRow;
+    await reserveLiveProofHash({
+      db,
+      sourceId: passId,
+      sourceTable: "passes",
+      txHash: input.txHash,
+    });
 
     return {
       event,
-      pass: toPassRecord(pass),
-      purchase: toPurchaseRecord(purchase),
+      pass: toPassRecord(pass as PassRow),
+      purchase: toPurchaseRecord(purchase as PurchaseRow),
     };
-  })();
+  });
 }
