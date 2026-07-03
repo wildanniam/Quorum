@@ -42,12 +42,13 @@ Use `sslmode=require` on both URLs.
 Format:
 
 ```env
-DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<DB_PASSWORD>@aws-<REGION>.pooler.supabase.com:6543/postgres?sslmode=require
-DIRECT_DATABASE_URL=postgresql://postgres:<DB_PASSWORD>@db.<PROJECT_REF>.supabase.co:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<DB_PASSWORD_URL_ENCODED>@aws-<REGION>.pooler.supabase.com:6543/postgres?pgbouncer=true&sslmode=require
+DIRECT_DATABASE_URL=postgresql://postgres.<PROJECT_REF>:<DB_PASSWORD_URL_ENCODED>@aws-<REGION>.pooler.supabase.com:5432/postgres?sslmode=require
 ```
 
 If the password contains special characters like `@`, `:`, `/`, `#`, `?`, or
 `&`, URL-encode them before putting the password into the connection string.
+For this Supabase project, encode `!` as `%21`.
 
 ## Vercel Environment Variables
 
@@ -93,7 +94,7 @@ After Supabase env values exist, run migrations once against Supabase:
 
 ```powershell
 $env:DATABASE_URL="<Supabase transaction pooler URL with sslmode=require>"
-$env:DIRECT_DATABASE_URL="<Supabase direct URL with sslmode=require>"
+$env:DIRECT_DATABASE_URL="<Supabase session pooler/direct URL with sslmode=require>"
 $env:QUORUM_DB_SCHEMA="public"
 npm run db:migrate
 ```

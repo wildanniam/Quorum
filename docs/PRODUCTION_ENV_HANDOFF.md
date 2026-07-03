@@ -66,8 +66,10 @@ uses Freighter in the browser.
 3. Copy the pooled Postgres URL to Vercel as `DATABASE_URL`.
 4. Copy the direct Postgres URL to Vercel as `DIRECT_DATABASE_URL` when
    migrations should bypass the pooler.
-5. Add `sslmode=require` to both URLs.
-6. Run migrations before hosted live testing:
+5. URL-encode any special characters in the password before pasting it into a
+   Postgres URL. For example, `!` becomes `%21`.
+6. Add `sslmode=require` to both URLs.
+7. Run migrations before hosted live testing:
 
 ```bash
 DATABASE_URL="<pooled-url>" DIRECT_DATABASE_URL="<direct-url>" npm run db:migrate

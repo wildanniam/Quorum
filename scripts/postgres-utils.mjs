@@ -65,13 +65,28 @@ function shouldUseSsl(value) {
   );
 }
 
+function poolConnectionString(value) {
+  const parsed = new URL(value);
+
+  if (parsed.searchParams.get("sslmode") === "require") {
+    parsed.searchParams.delete("sslmode");
+    parsed.searchParams.delete("uselibpqcompat");
+    return parsed.toString();
+  }
+
+  return value;
+}
+
 export function createPool({ migration = false } = {}) {
   const connectionString = databaseUrl({ migration });
+  const ssl = shouldUseSsl(connectionString)
+    ? { rejectUnauthorized: false }
+    : undefined;
 
   return new Pool({
-    connectionString,
+    connectionString: ssl ? poolConnectionString(connectionString) : connectionString,
     max: Number(process.env.QUORUM_DB_POOL_MAX ?? 10),
-    ssl: shouldUseSsl(connectionString) ? { rejectUnauthorized: false } : undefined,
+    ssl,
   });
 }
 

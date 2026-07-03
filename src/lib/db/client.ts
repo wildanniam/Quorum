@@ -59,6 +59,18 @@ function shouldUseSsl(databaseUrl: string) {
   );
 }
 
+function poolConnectionString(databaseUrl: string) {
+  const parsed = new URL(databaseUrl);
+
+  if (parsed.searchParams.get("sslmode") === "require") {
+    parsed.searchParams.delete("sslmode");
+    parsed.searchParams.delete("uselibpqcompat");
+    return parsed.toString();
+  }
+
+  return databaseUrl;
+}
+
 function poolKey() {
   return `${getDatabaseUrl()}::${getDatabaseSchema()}`;
 }
@@ -73,12 +85,15 @@ export function getDatabasePool() {
     }
 
     const connectionString = getDatabaseUrl();
+    const ssl = shouldUseSsl(connectionString)
+      ? { rejectUnauthorized: false }
+      : undefined;
     globalForDb.quorumDatabasePool = new Pool({
-      connectionString,
+      connectionString: ssl
+        ? poolConnectionString(connectionString)
+        : connectionString,
       max: Number(process.env.QUORUM_DB_POOL_MAX ?? 10),
-      ssl: shouldUseSsl(connectionString)
-        ? { rejectUnauthorized: false }
-        : undefined,
+      ssl,
     });
     globalForDb.quorumDatabasePoolKey = key;
   }
