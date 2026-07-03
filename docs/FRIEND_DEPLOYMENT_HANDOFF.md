@@ -9,6 +9,10 @@ env vars lives on branch:
 codex/supabase-live-evidence
 ```
 
+Use `docs/VERCEL_ENV_VALUES.example.env` for a project-specific copy-paste env
+template with the Supabase project ref already filled in. Replace only the
+secret placeholders before adding values to Vercel.
+
 ## What To Deploy
 
 Deploy this branch or merge it to the branch Vercel auto-deploys from:
