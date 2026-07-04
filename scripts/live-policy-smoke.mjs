@@ -11,6 +11,8 @@ const readinessUrl = `${baseUrl}/api/contracts/status`;
 const databaseSchema =
   process.env.LIVE_POLICY_SMOKE_DB_SCHEMA ??
   `quorum_live_policy_smoke_${randomUUID().replaceAll("-", "_")}`;
+process.env.QUORUM_DB_SCHEMA = databaseSchema;
+
 const fakeCoreContractId =
   process.env.LIVE_POLICY_CORE_CONTRACT_ID ??
   StrKey.encodeContract(Buffer.alloc(32, 7));
