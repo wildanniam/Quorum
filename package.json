@@ -2,6 +2,9 @@
   "name": "quorum",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -46,7 +49,7 @@
   "dependencies": {
     "@gsap/react": "^2.1.2",
     "@stellar/freighter-api": "^6.0.1",
-    "@stellar/stellar-sdk": "^13.3.0",
+    "@stellar/stellar-sdk": "^16.0.1",
     "embla-carousel-react": "^8.6.0",
     "gsap": "^3.15.0",
     "lucide-react": "^1.17.0",
