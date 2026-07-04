@@ -7,6 +7,7 @@ import { withClient } from "./postgres-utils.mjs";
 const projectRoot = process.cwd();
 const port = Number(process.env.LIVE_POLICY_SMOKE_PORT ?? 3036);
 const baseUrl = `http://127.0.0.1:${port}`;
+const readinessUrl = `${baseUrl}/api/contracts/status`;
 const databaseSchema =
   process.env.LIVE_POLICY_SMOKE_DB_SCHEMA ??
   `quorum_live_policy_smoke_${randomUUID().replaceAll("-", "_")}`;
@@ -104,7 +105,7 @@ async function waitForServer(child) {
     }
 
     try {
-      const response = await fetch(baseUrl);
+      const response = await fetch(readinessUrl);
       if (response.ok) return;
       lastError = `HTTP ${response.status}`;
     } catch (error) {
@@ -114,7 +115,7 @@ async function waitForServer(child) {
     await delay(400);
   }
 
-  throw new Error(`Timed out waiting for ${baseUrl}: ${lastError}`);
+  throw new Error(`Timed out waiting for ${readinessUrl}: ${lastError}`);
 }
 
 async function stopServer(child) {
@@ -414,7 +415,7 @@ async function main() {
     const invalidPreflightBody = await readJson(invalidPreflight);
     assert(
       invalidPreflight.status === 400,
-      "invalid live preflight should fail before RPC",
+      `invalid live preflight should fail before RPC; got ${invalidPreflight.status}: ${JSON.stringify(invalidPreflightBody)}`,
     );
     assert(
       invalidPreflightBody?.error === "Invalid live transaction preflight request.",

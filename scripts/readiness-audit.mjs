@@ -20,10 +20,14 @@ const requiredFiles = [
   "docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md",
   "docs/LIVE_TESTNET_EVIDENCE.example.json",
   "docs/MVP_READINESS.md",
+  "docs/PR_2_3_5_COMPLETION.md",
   "docs/PRODUCTION_ENV_HANDOFF.md",
   "docs/QUORUM_PM_GOAL_BRIEF.md",
   "docs/SOROBAN_SPIKE.md",
+  "db/migrations/0003_indexer_evidence_ledger.sql",
   "db/migrations/0002_live_proof_uniqueness.sql",
+  "scripts/settlement-smoke.ts",
+  "scripts/stellar-indexer-run.ts",
   "scripts/mutation-origin-smoke.ts",
   "scripts/live-args-smoke.ts",
   "scripts/live-browser-flow-smoke.ts",
@@ -94,6 +98,8 @@ const requiredPackageScripts = [
   "live:ui-wiring:smoke",
   "live:xdr:smoke",
   "readiness:audit",
+  "settlement:smoke",
+  "indexer:run",
   "wallet:auth:smoke",
 ];
 
@@ -108,6 +114,7 @@ const requiredEvidenceChecks = [
   "API origin smoke",
   "Demo smoke",
   "Live policy smoke",
+  "Settlement smoke",
   "Browser QA",
   "Deploy env smoke",
   "Deploy hosted preflight smoke",
@@ -157,6 +164,7 @@ const requiredSmokeCoverage = [
 const requiredDbSmokeCoverage = [
   "unique-live-proof-indexes",
   "live-proof-hash-registry",
+  "indexer-tables",
   "event-crud",
   "collaborator-split-total",
   "resource-crud",
@@ -209,6 +217,18 @@ const requiredLivePersistenceCoverage = [
   "reject-live-withdrawal-overdraw",
   "reject-duplicate-live-withdrawal-tx",
   "no-stub-live-records",
+];
+
+const requiredSettlementCoverage = [
+  "indexer-schema",
+  "indexer-idempotent-ingest",
+  "indexer-state-cursor",
+  "global-event-evidence-read-model",
+  "event-proof-filter",
+  "stellar-explorer-links",
+  "collaborator-credit-ledger",
+  "collaborator-debit-ledger",
+  "collaborator-withdrawable-balance",
 ];
 
 const requiredLivePolicyCoverage = [
@@ -565,6 +585,12 @@ function checkEvidence() {
   for (const coverage of requiredLivePersistenceCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing live persistence coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredSettlementCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing settlement smoke coverage: ${coverage}`);
     }
   }
 

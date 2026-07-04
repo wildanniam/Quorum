@@ -24,6 +24,9 @@ Implemented in the app shell:
 - Freighter-first wallet auth foundation;
 - signed wallet session API routes;
 - Postgres migration foundation for local, Supabase, and isolated smoke schemas;
+- custom Soroban event indexer storage and Vercel Cron route;
+- public live evidence page and event-specific proof pages;
+- collaborator ledger page with credit/debit rows and explorer proof links;
 - draft event create/update API routes;
 - publish-to-marketplace DB stub;
 - collaborator percentage split setup;
@@ -36,11 +39,11 @@ Implemented in the app shell:
 - organizer-authorized local check-in API route;
 - collaborator local withdrawal API route;
 - dashboard metrics for organizer revenue, collaborator balances, attendee passes, and proof queue.
+- settlement smoke proof for indexer, evidence pages, and collaborator ledger.
 
 Not completed yet:
 
 - Vercel project/env configuration;
-- Supabase project/env configuration;
 - real Freighter-signed hosted publish, checkout, free claim, check-in, and withdraw evidence.
 
 ## Local Development
@@ -74,6 +77,7 @@ npm run build
 npm audit --audit-level=moderate
 npm run demo:smoke
 npm run demo:live-policy
+npm run settlement:smoke
 npm run browser:qa
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
@@ -87,6 +91,7 @@ npm run live:xdr:smoke
 npm run live:browser-flow:smoke
 npm run live:ui-wiring:smoke
 npm run live:deployment:validate
+npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
 cargo test
@@ -100,6 +105,16 @@ npm run contracts:doctor
 valid contract IDs, verifies non-signing live action preparation, confirms the
 preflight route fails invalid requests before RPC, and confirms mutation routes
 fail safe without creating local proof records.
+
+`npm run settlement:smoke` creates a temporary Postgres schema and proves the
+PR 2/3/5 surfaces together: idempotent Soroban event ingestion, indexer
+cursor/latest-ledger state, global and event evidence read models, Stellar
+Explorer links, collaborator credit ledger rows, collaborator withdrawal debit
+rows, and withdrawable balance math.
+
+`npm run indexer:run` performs one real Stellar RPC `getEvents` indexer pass
+for the configured Quorum contracts. The same worker is exposed at
+`GET /api/indexer/stellar-events` for Vercel Cron and manual hosted ingestion.
 
 `npm run browser:qa` runs a headless browser across desktop/mobile viewport
 checks and regenerates `docs/BROWSER_QA.md`.

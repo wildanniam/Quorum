@@ -14,6 +14,8 @@
     "wallet:auth:smoke": "node scripts/wallet-auth-smoke.mjs",
     "api:origin:smoke": "tsx scripts/mutation-origin-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
+    "indexer:run": "tsx scripts/stellar-indexer-run.ts",
+    "settlement:smoke": "tsx scripts/settlement-smoke.ts",
     "browser:qa": "node scripts/browser-qa.mjs",
     "deploy:env:smoke": "tsx scripts/deploy-env-smoke.ts",
     "deploy:hosted:preflight": "tsx scripts/hosted-deployment-preflight.ts",

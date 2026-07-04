@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/indexer/stellar-events",
+      "schedule": "0 3 * * *"
+    }
+  ]
+}
