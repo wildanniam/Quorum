@@ -1,0 +1,102 @@
+{
+  "generatedAt": "2026-07-04T06:55:00.000Z",
+  "network": "TESTNET",
+  "rpcUrl": "https://soroban-testnet.stellar.org",
+  "hostedAppUrl": "https://palest-seclusively-gwyn.ngrok-free.dev",
+  "wallets": {
+    "admin": "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW",
+    "organizer": "GDP5NPBC6QKUCFL6G7CRK2THY57Q3IYNAFX6225XNWXYRFJPMS4K4UMO",
+    "paidAttendee": "GDP5NPBC6QKUCFL6G7CRK2THY57Q3IYNAFX6225XNWXYRFJPMS4K4UMO",
+    "freeAttendee": "GDP5NPBC6QKUCFL6G7CRK2THY57Q3IYNAFX6225XNWXYRFJPMS4K4UMO",
+    "collaborator": "GDP5NPBC6QKUCFL6G7CRK2THY57Q3IYNAFX6225XNWXYRFJPMS4K4UMO"
+  },
+  "contracts": {
+    "coreContractId": "CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV",
+    "passContractId": "CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH",
+    "usdcContractId": "CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA",
+    "coreWasmHash": "73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0",
+    "passWasmHash": "e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec",
+    "platformFeeBps": 0
+  },
+  "deploymentTransactions": {
+    "passDeployTxHash": "ba7133cef219e08aae0d27657aca94df8e5cb495d7de304690f567f375eb8002",
+    "coreDeployTxHash": "579021fd3e1ee60e24e9c8117e98cc27c4bf065b56dce5f50ff17b1a8ddad2a8",
+    "passInitTxHash": "4fb637aa6841134dc1de8332f460710b5831076354dd44291b283028bb3a4ed0",
+    "coreInitTxHash": "b0c66ce6c6479c14740559f02bd594733c7aa1d30a471389dcdb4695e495b582",
+    "passSetCoreTxHash": "77896a93eb556e356eac4df87cbd8b38ad8e4772cc83ef42077614b39a7d4f0b"
+  },
+  "liveFlows": {
+    "publishPaidEvent": {
+      "txHash": "4ef57a3cc189e728f17e9f0209b4e52853b6e7dfe6fb853e85ec42bca5673f53",
+      "eventUrl": "https://palest-seclusively-gwyn.ngrok-free.dev/events/quorum-live-paid-proof-20260704044609"
+    },
+    "paidCheckout": {
+      "txHash": "9de9002c53d18b3762ab740c799269cec25056afe3349edeaaca3f4a6536a0cd",
+      "tokenId": "2",
+      "paymentAsset": "USDC"
+    },
+    "publishFreeEvent": {
+      "txHash": "aacff3ab92050be1e374c3d21c5f278b05b3fc4ed5d0c170be0d9a86ca14036e",
+      "eventUrl": "https://palest-seclusively-gwyn.ngrok-free.dev/events/quorum-live-free-proof-20260704044609"
+    },
+    "freeClaim": {
+      "txHash": "ea793672bee14b696d9d3c38f7ed49ad7acc12d992941e32adbd2e34466480f8",
+      "tokenId": "1"
+    },
+    "checkIn": {
+      "txHash": "a495baefc620c8dc4ebd7948152ec680f46d0fbe1c5012cfaf93a82777c9e253",
+      "tokenId": "2"
+    },
+    "collaboratorWithdraw": {
+      "txHash": "f202905159b999cb142b9c802080f613b1240e0f6d97933ca7db59d9836156a0",
+      "withdrawAmountUsdc": "1"
+    }
+  },
+  "browserProof": {
+    "contractStatusUrl": "https://palest-seclusively-gwyn.ngrok-free.dev/api/contracts/status",
+    "contractStatusProofMode": "live",
+    "contractStatusActionsLive": true,
+    "paidResourceUnlockedUrl": "https://palest-seclusively-gwyn.ngrok-free.dev/events/quorum-live-paid-proof-20260704044609/resources",
+    "browserQaDeployed": "Manual Freighter live testnet flow completed on ngrok HTTPS; paid resource URL unlocked for wallet GDP5NPBC6QKUCFL6G7CRK2THY57Q3IYNAFX6225XNWXYRFJPMS4K4UMO after paid token 2 purchase."
+  },
+  "verification": {
+    "commands": {
+      "contractsDoctor": {
+        "command": "npm run contracts:doctor",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      "contractsTest": {
+        "command": "npm run contracts:test",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      "contractsBuild": {
+        "command": "npm run contracts:build",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      "lint": {
+        "command": "npm run lint",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      "build": {
+        "command": "npm run build",
+        "status": "PASS",
+        "exitCode": 0
+      },
+      "readinessAudit": {
+        "command": "npm run readiness:audit",
+        "status": "PASS",
+        "exitCode": 0
+      }
+    }
+  },
+  "approval": {
+    "explicitApprovalRecorded": true,
+    "approvedBy": "Arga / Codex user",
+    "approvedAt": "2026-07-04T04:34:44.451Z",
+    "notes": "User explicitly approved the ngrok live testnet Freighter signing run. No wallet secrets, seed phrases, or Supabase secrets are recorded here."
+  }
+}
