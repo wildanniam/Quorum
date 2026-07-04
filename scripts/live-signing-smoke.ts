@@ -119,6 +119,37 @@ async function main() {
   assert.equal(signed.signerAddress, attendeeWallet);
   assert.equal(signed.signedTransactionXdr, preparedTransaction.preparedTransactionXdr);
 
+  let wrongNetworkSignCalls = 0;
+
+  await assert.rejects(
+    () =>
+      signPreparedLiveTransaction({
+        preparedTransaction,
+        signer: {
+          async getNetworkDetails() {
+            return {
+              network: "PUBLIC",
+              networkPassphrase: Networks.PUBLIC,
+            };
+          },
+          async signTransaction(transactionXdr) {
+            wrongNetworkSignCalls += 1;
+
+            return {
+              signedTxXdr: transactionXdr,
+              signerAddress: attendeeWallet,
+            };
+          },
+        },
+      }),
+    (error) => {
+      assert(error instanceof FreighterLiveSigningError);
+      assert.match(error.message, /Stellar Testnet/);
+      return true;
+    },
+  );
+  assert.equal(wrongNetworkSignCalls, 0);
+
   await assert.rejects(
     () =>
       signPreparedLiveTransaction({
@@ -318,6 +349,7 @@ async function main() {
         ok: true,
         checks: [
           "freighter-sign-transaction-options",
+          "reject-mainnet-freighter-before-signing",
           "signed-xdr-parseable",
           "reject-signer-mismatch",
           "normalize-wallet-rejection",

@@ -1,4 +1,5 @@
 import {
+  Networks,
   StrKey,
   Transaction,
   TransactionBuilder,
@@ -7,6 +8,11 @@ import {
 import type { LiveTransactionForSigning } from "@/lib/stellar/live-preflight";
 
 export type FreighterLiveSigner = {
+  getNetworkDetails?: () => Promise<{
+    error?: unknown;
+    network?: string;
+    networkPassphrase?: string;
+  }>;
   signTransaction(
     transactionXdr: string,
     options?: {
@@ -67,6 +73,34 @@ function normalizeWalletAddress(value: unknown): string | null {
   }
 
   return null;
+}
+
+async function assertFreighterNetworkMatchesPrepared(
+  signer: FreighterLiveSigner,
+  preparedTransaction: LiveTransactionForSigning,
+) {
+  if (!signer.getNetworkDetails) return;
+
+  const networkDetails = await signer.getNetworkDetails();
+
+  if (networkDetails.error) {
+    throw new FreighterLiveSigningError(normalizeError(networkDetails.error));
+  }
+
+  const network = networkDetails.network?.trim().toUpperCase();
+  const networkPassphrase = networkDetails.networkPassphrase?.trim();
+
+  if (
+    network !== "TESTNET" ||
+    networkPassphrase !== Networks.TESTNET ||
+    networkPassphrase !== preparedTransaction.networkPassphrase
+  ) {
+    throw new FreighterLiveSigningError(
+      `Switch Freighter to Stellar Testnet before signing. Current network: ${
+        networkDetails.network || "unknown"
+      }.`,
+    );
+  }
 }
 
 export class FreighterLiveSigningError extends Error {
@@ -191,6 +225,8 @@ export async function signPreparedLiveTransaction({
     preparedTransaction,
     transaction: parsedPreparedTransaction,
   });
+
+  await assertFreighterNetworkMatchesPrepared(liveSigner, preparedTransaction);
 
   const signed = await liveSigner.signTransaction(
     preparedTransaction.preparedTransactionXdr,

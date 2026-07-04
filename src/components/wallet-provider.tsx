@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { StrKey } from "@stellar/stellar-sdk";
+import { Networks, StrKey } from "@stellar/stellar-sdk";
 
 type WalletState = {
   status: "idle" | "checking" | "connected" | "error" | "unavailable";
@@ -83,6 +83,16 @@ function normalizeWalletAddress(value: unknown): string | null {
   return null;
 }
 
+function isTestnetNetworkDetails(details: {
+  network?: string;
+  networkPassphrase?: string;
+}) {
+  return (
+    details.network?.trim().toUpperCase() === "TESTNET" &&
+    details.networkPassphrase?.trim() === Networks.TESTNET
+  );
+}
+
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<WalletState>(initialState);
 
@@ -131,6 +141,27 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
 
       const networkDetails = await freighter.getNetworkDetails();
+
+      if (networkDetails.error) {
+        setState((current) => ({
+          ...current,
+          status: "error",
+          error: normalizeError(networkDetails.error),
+        }));
+        return;
+      }
+
+      if (!isTestnetNetworkDetails(networkDetails)) {
+        setState((current) => ({
+          ...current,
+          status: "error",
+          error: `Switch Freighter to Stellar Testnet before signing. Current network: ${
+            networkDetails.network || "unknown"
+          }.`,
+        }));
+        return;
+      }
+
       const challengeResponse = await fetch("/api/auth/challenge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
