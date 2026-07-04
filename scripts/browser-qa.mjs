@@ -13,6 +13,7 @@ const baseUrl = `http://127.0.0.1:${port}`;
 const databaseSchema =
   process.env.BROWSER_QA_DB_SCHEMA ??
   `quorum_browser_qa_${randomUUID().replaceAll("-", "_")}`;
+process.env.QUORUM_DB_SCHEMA = databaseSchema;
 
 const viewports = [
   { label: "Desktop", width: 1280, height: 720 },
