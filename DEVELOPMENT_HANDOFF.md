@@ -1,6 +1,6 @@
 # Quorum Development Handoff
 
-Last updated: 2026-07-03
+Last updated: 2026-07-06
 
 Dokumen ini dibuat untuk menyamakan konteks development Quorum. Tujuannya bukan
 membuat roadmap per hari, tetapi menjelaskan posisi project sekarang, keputusan
@@ -40,8 +40,10 @@ Status project saat ini:
 - Smart contract foundation dan testnet deployment evidence sudah ada.
 - Flow utama seperti event publish, checkout, pass, check-in, dan withdraw
   sudah punya fondasi lokal/contract-ready.
-- App masih memakai SQLite lokal lewat `better-sqlite3`.
-- Supabase belum terintegrasi.
+- App sudah dimigrasikan dari SQLite lokal ke Postgres/Supabase-ready
+  persistence lewat `pg`.
+- Supabase/Postgres migration sudah masuk ke `main`, tetapi hosted Supabase
+  project, Vercel env, dan live hosted verification tetap perlu disiapkan.
 - Live Transaction Evidence Page belum ada sebagai halaman produk.
 - Soroban Event Indexer belum ada.
 - Anchor/MoneyGram belum terintegrasi.
@@ -74,15 +76,15 @@ kuat.
 
 ### Storage
 
-- Supabase akan dipakai sebagai database production/handoff.
-- Supabase dipakai dulu sebagai Postgres server-side database.
+- Supabase dipakai sebagai database production/handoff melalui Postgres
+  server-side access.
 - Jangan expose Supabase service-role key, database password, atau Postgres URL
   ke browser.
 - Jangan tambahkan `NEXT_PUBLIC_SUPABASE_URL` dan
   `NEXT_PUBLIC_SUPABASE_ANON_KEY` kecuali nanti memang ada desain frontend
   Supabase client + RLS.
-- Migrasi Supabase bukan sekadar ganti env. Current code masih SQLite dan perlu
-  migrasi DB adapter/repository ke Postgres/async.
+- Jangan mengembalikan code ke SQLite/local file DB. Current baseline sudah
+  menggunakan Postgres driver dan async repository flow.
 
 ### Evidence Page
 
@@ -272,27 +274,33 @@ dibereskan.
 
 ### PR 1: Supabase/Postgres Migration
 
-Tujuan:
+Status:
 
-- mengganti persistence dari SQLite lokal ke Supabase/Postgres;
-- membuat app siap hosted/serverless;
-- memastikan event/pass/purchase/check-in/withdraw tetap tersimpan durable.
+- migration baseline sudah masuk ke `main`;
+- codebase sudah menggunakan `pg` dan Postgres/Supabase-ready persistence;
+- pekerjaan yang tersisa adalah environment setup, hosted migration, dan
+  verification di Supabase/Vercel.
+
+Tujuan tersisa:
+
+- membuat hosted app benar-benar memakai Supabase/Postgres;
+- memastikan event/pass/purchase/check-in/withdraw tetap tersimpan durable di
+  hosted environment;
+- memastikan semua smoke test tetap valid setelah env Supabase/Vercel dipasang.
 
 Yang perlu dikerjakan:
 
 - buat Supabase project;
 - siapkan server-only `DATABASE_URL`;
-- migrasi schema SQLite ke Postgres;
-- ganti DB client dari `better-sqlite3` ke Postgres driver;
-- ubah repository sync menjadi async;
-- update call site yang membaca/menulis DB agar memakai `await`;
-- update migration runner;
-- update smoke tests;
+- jalankan hosted Postgres migrations;
+- konfigurasi Vercel env;
+- tarik/validasi env yang dipakai hosted runtime;
+- jalankan smoke tests dengan Postgres/Supabase env;
 - pastikan uniqueness constraint untuk tx hash tetap ada.
 
 Acceptance criteria:
 
-- app bisa run dengan Postgres/Supabase;
+- hosted app bisa run dengan Postgres/Supabase;
 - event, pass, purchase, check-in, withdrawal tersimpan;
 - duplicate/replayed tx hash tetap ditolak;
 - tidak ada secret Supabase yang bocor ke browser;
@@ -505,7 +513,7 @@ https://quorum.<domain-kamu>
 
 Ini bukan jadwal per hari. Ini hanya urutan dependency yang paling masuk akal.
 
-1. Supabase/Postgres migration.
+1. Supabase/Vercel hosted env verification.
 2. Custom Soroban Event Indexer.
 3. Live Transaction Evidence Page.
 4. Receipt/pass proof polish.
@@ -516,8 +524,9 @@ Ini bukan jadwal per hari. Ini hanya urutan dependency yang paling masuk akal.
 
 Alasan urutan ini:
 
-- Supabase dibutuhkan supaya data durable.
-- Indexer butuh database durable.
+- Supabase/Postgres baseline sudah masuk, tetapi hosted env perlu diverifikasi.
+- Indexer butuh database durable yang sudah benar-benar aktif di environment
+  target.
 - Evidence page butuh data transaksi yang rapi.
 - Receipt dan ledger mengambil manfaat dari evidence/indexed data.
 - Anchor payout butuh ledger dan payout state.
@@ -525,13 +534,15 @@ Alasan urutan ini:
 
 ## Risiko Dan Fallback
 
-### Supabase Migration Lebih Lama Dari Perkiraan
+### Supabase/Vercel Hosted Setup Belum Siap
 
 Fallback:
 
-- migrasi tabel inti dulu: events, passes, purchases, withdrawals, check_ins,
-  users/sessions jika dibutuhkan;
-- jangan langsung migrasi fitur sekunder;
+- jalankan migration dan smoke test lokal dengan Postgres dulu;
+- gunakan `docs/FRIEND_DEPLOYMENT_HANDOFF.md` dan
+  `docs/VERCEL_ENV_VALUES.example.env` untuk setup;
+- jangan klaim hosted persistence sampai Vercel env dan Supabase migrations
+  sudah lolos verifikasi;
 - pertahankan uniqueness tx hash.
 
 ### Indexer Belum Stabil
@@ -594,4 +605,3 @@ Kalimat pitch teknikal:
 - Stellar Anchor Platform: https://developers.stellar.org/docs/platforms/anchor-platform
 - MoneyGram Ramps: https://developer.moneygram.com/moneygram-developer/docs/integrate-moneygram-ramps
 - Stellar Wallet Integration: https://developers.stellar.org/docs/tools/developer-tools/wallets
-
