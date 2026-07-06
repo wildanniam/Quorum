@@ -26,10 +26,25 @@ type AnchorPayoutRow = {
   updated_at: string;
 };
 
+type AnchorPayoutEventRow = AnchorPayoutRow & {
+  event_slug: string;
+  event_title: string;
+  withdrawal_tx_hash: string | null;
+};
+
 type EventCollaboratorRow = {
   event_id: string;
   event_status: "draft" | "published";
   split_percentage: number;
+};
+
+type AnchorPayoutOpportunityRow = {
+  event_id: string;
+  event_slug: string;
+  event_title: string;
+  earned_usdc: number;
+  reserved_usdc: number;
+  withdrawn_usdc: number;
 };
 
 export type AnchorPayoutAvailability = {
@@ -37,6 +52,18 @@ export type AnchorPayoutAvailability = {
   earnedUsdc: string;
   reservedUsdc: string;
   withdrawnUsdc: string;
+};
+
+export type AnchorPayoutOpportunity = AnchorPayoutAvailability & {
+  eventId: string;
+  eventSlug: string;
+  eventTitle: string;
+};
+
+export type AnchorPayoutWithEvent = AnchorPayoutRecord & {
+  eventSlug: string;
+  eventTitle: string;
+  withdrawalTxHash: string | null;
 };
 
 export type CreateAnchorPayoutInput = {
@@ -80,6 +107,15 @@ function toAnchorPayoutRecord(row: AnchorPayoutRow): AnchorPayoutRecord {
     status: row.status,
     updatedAt: row.updated_at,
     withdrawalId: row.withdrawal_id,
+  };
+}
+
+function toAnchorPayoutWithEvent(row: AnchorPayoutEventRow): AnchorPayoutWithEvent {
+  return {
+    ...toAnchorPayoutRecord(row),
+    eventSlug: row.event_slug,
+    eventTitle: row.event_title,
+    withdrawalTxHash: row.withdrawal_tx_hash,
   };
 }
 
@@ -305,4 +341,98 @@ export async function listAnchorPayoutsByWallet(walletAddress: string) {
       [walletAddress],
     )
   ).map(toAnchorPayoutRecord);
+}
+
+export async function listAnchorPayoutsWithEventsByWallet(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  return (
+    await query<AnchorPayoutEventRow>(
+      `
+      SELECT
+        a.*,
+        e.slug AS event_slug,
+        e.title AS event_title,
+        w.tx_hash AS withdrawal_tx_hash
+      FROM anchor_payouts a
+      JOIN events e ON e.id = a.event_id
+      LEFT JOIN withdrawals w ON w.id = a.withdrawal_id
+      WHERE a.collaborator_wallet = $1
+      ORDER BY a.created_at DESC
+      `,
+      [walletAddress],
+    )
+  ).map(toAnchorPayoutWithEvent);
+}
+
+export async function listAnchorPayoutOpportunities(walletAddress: string) {
+  assertWalletAddress(walletAddress);
+
+  const rows = await query<AnchorPayoutOpportunityRow>(
+    `
+    WITH event_revenue AS (
+      SELECT
+        e.id AS event_id,
+        COALESCE(SUM(CAST(p.amount_usdc AS double precision)), 0)::float8 AS revenue_usdc
+      FROM events e
+      LEFT JOIN purchases p ON p.event_id = e.id
+        AND p.status = 'succeeded'
+        AND CAST(p.amount_usdc AS numeric) > 0
+      GROUP BY e.id
+    ),
+    withdrawn AS (
+      SELECT
+        event_id,
+        collaborator_wallet,
+        COALESCE(SUM(CAST(amount_usdc AS double precision)), 0)::float8 AS withdrawn_usdc
+      FROM withdrawals
+      WHERE collaborator_wallet = $1
+      GROUP BY event_id, collaborator_wallet
+    ),
+    reserved AS (
+      SELECT
+        event_id,
+        collaborator_wallet,
+        COALESCE(SUM(CAST(amount_usdc AS double precision)), 0)::float8 AS reserved_usdc
+      FROM anchor_payouts
+      WHERE collaborator_wallet = $1
+        AND status IN ('requested', 'pending_anchor')
+      GROUP BY event_id, collaborator_wallet
+    )
+    SELECT
+      e.id AS event_id,
+      e.slug AS event_slug,
+      e.title AS event_title,
+      (er.revenue_usdc * c.split_percentage / 100)::float8 AS earned_usdc,
+      COALESCE(r.reserved_usdc, 0)::float8 AS reserved_usdc,
+      COALESCE(w.withdrawn_usdc, 0)::float8 AS withdrawn_usdc
+    FROM collaborators c
+    JOIN events e ON e.id = c.event_id
+    JOIN event_revenue er ON er.event_id = e.id
+    LEFT JOIN withdrawn w ON w.event_id = e.id
+      AND w.collaborator_wallet = c.wallet_address
+    LEFT JOIN reserved r ON r.event_id = e.id
+      AND r.collaborator_wallet = c.wallet_address
+    WHERE c.wallet_address = $1
+      AND e.status = 'published'
+    ORDER BY e.start_date_time DESC, e.title ASC
+    `,
+    [walletAddress],
+  );
+
+  return rows.map((row): AnchorPayoutOpportunity => {
+    const earnedUsdc = Number(row.earned_usdc);
+    const withdrawnUsdc = Number(row.withdrawn_usdc);
+    const reservedUsdc = Number(row.reserved_usdc);
+
+    return {
+      availableUsdc: formatUsdc(Math.max(earnedUsdc - withdrawnUsdc - reservedUsdc, 0)),
+      earnedUsdc: formatUsdc(earnedUsdc),
+      eventId: row.event_id,
+      eventSlug: row.event_slug,
+      eventTitle: row.event_title,
+      reservedUsdc: formatUsdc(reservedUsdc),
+      withdrawnUsdc: formatUsdc(withdrawnUsdc),
+    };
+  });
 }

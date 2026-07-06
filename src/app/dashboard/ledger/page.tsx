@@ -6,10 +6,18 @@ import {
   BanknoteArrowUp,
   CircleDollarSign,
   Handshake,
+  RadioTower,
   WalletCards,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { AnchorPayoutButton } from "@/components/anchor/anchor-payout-button";
+import { ProofSurface } from "@/components/ui/proof-surface";
+import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
+import {
+  listAnchorPayoutOpportunities,
+  listAnchorPayoutsWithEventsByWallet,
+} from "@/lib/anchor/payouts";
 import {
   getCollaboratorLedgerSummary,
   listCollaboratorLedger,
@@ -35,6 +43,12 @@ export default async function CollaboratorLedgerPage() {
   const entries = session
     ? await listCollaboratorLedger(session.walletAddress)
     : [];
+  const anchorOpportunities = session
+    ? await listAnchorPayoutOpportunities(session.walletAddress)
+    : [];
+  const anchorPayouts = session
+    ? await listAnchorPayoutsWithEventsByWallet(session.walletAddress)
+    : [];
   const summary = session
     ? await getCollaboratorLedgerSummary(session.walletAddress)
     : {
@@ -55,14 +69,13 @@ export default async function CollaboratorLedgerPage() {
           <ArrowLeft size={15} /> Back to Studio
         </Link>
 
-        <div className="mt-6 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
+        <ProofSurface className="mt-6 lg:p-6" elevated>
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
-              <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
-                <Handshake size={14} />
+              <StatusPill icon={Handshake} tone="cyan">
                 Collaborator ledger
-              </div>
-              <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
+              </StatusPill>
+              <h1 className="mt-5 max-w-4xl font-product text-5xl font-medium leading-[1.05] tracking-normal md:text-7xl">
                 Credits and withdrawals, tied to proof.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
@@ -71,8 +84,8 @@ export default async function CollaboratorLedgerPage() {
                   : "Connect the collaborator wallet to see only its related event ledger."}
               </p>
             </div>
-            <div className="flex items-center gap-3 rounded-full border border-foreground/10 bg-background/32 px-4 py-3 text-sm text-muted">
-              <WalletCards className="text-accent" size={18} />
+            <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-muted">
+              <WalletCards className="text-quorum-cyan-soft" size={18} />
               {summary.entryCount} ledger rows
             </div>
           </div>
@@ -104,10 +117,10 @@ export default async function CollaboratorLedgerPage() {
 
               return (
                 <div
-                  className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
+                  className="rounded-[12px] border border-white/10 bg-white/[0.035] p-4"
                   key={item.label}
                 >
-                  <Icon className="text-accent" size={18} />
+                  <Icon className="text-quorum-cyan-soft" size={18} />
                   <p className="mt-4 break-all font-mono text-xl text-foreground">
                     {item.value}
                   </p>
@@ -116,7 +129,111 @@ export default async function CollaboratorLedgerPage() {
               );
             })}
           </div>
-        </div>
+        </ProofSurface>
+
+        {session ? (
+          <ProofSurface className="mt-5">
+            <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+              <div>
+                <StatusPill icon={RadioTower} tone="cyan">
+                  Anchor payout rail
+                </StatusPill>
+                <h2 className="mt-4 font-product text-2xl font-medium">
+                  Request mock anchor payouts from withdrawable USDC.
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-muted">
+                  This is the MoneyGram-ready product path without live sandbox
+                  credentials. Mock payouts create local proof and debit the
+                  collaborator ledger through the existing withdrawal evidence.
+                </p>
+              </div>
+
+              <div className="grid gap-3">
+                {anchorOpportunities.length > 0 ? (
+                  anchorOpportunities.map((item) => (
+                    <article
+                      className="grid gap-4 rounded-[12px] border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_auto] md:items-center"
+                      key={item.eventId}
+                    >
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 px-2.5 py-1 font-mono text-xs text-quorum-cyan-soft">
+                            {item.availableUsdc} USDC available
+                          </span>
+                          <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
+                            earned {item.earnedUsdc}
+                          </span>
+                          <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
+                            withdrawn {item.withdrawnUsdc}
+                          </span>
+                        </div>
+                        <h3 className="mt-3 truncate font-product text-lg font-medium">
+                          {item.eventTitle}
+                        </h3>
+                        <Link
+                          className="mt-2 inline-flex text-sm text-muted transition hover:text-quorum-cyan-soft"
+                          href={`/events/${item.eventSlug}/proof`}
+                        >
+                          Event proof <ArrowUpRight size={13} />
+                        </Link>
+                      </div>
+                      <div className="md:min-w-48">
+                        <AnchorPayoutButton
+                          amountUsdc={item.availableUsdc}
+                          eventId={item.eventId}
+                        />
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="rounded-[12px] border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-muted">
+                    No payout opportunities for this wallet yet.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {anchorPayouts.length > 0 ? (
+              <div className="mt-5 border-t border-white/10 pt-5">
+                <h3 className="font-product text-lg font-medium">
+                  Anchor payout history
+                </h3>
+                <div className="mt-3 grid gap-3 md:grid-cols-2">
+                  {anchorPayouts.map((payout) => (
+                    <article
+                      className="rounded-[12px] border border-white/10 bg-quorum-grey-800 p-4"
+                      key={payout.id}
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 px-2.5 py-1 font-mono text-xs text-quorum-cyan-soft">
+                          {payout.status.replaceAll("_", " ")}
+                        </span>
+                        <span className="font-mono text-xs text-muted">
+                          {payout.provider}
+                        </span>
+                      </div>
+                      <p className="mt-3 font-product font-medium">
+                        {payout.eventTitle}
+                      </p>
+                      <p className="mt-2 font-mono text-sm text-foreground">
+                        {payout.amountUsdc} {payout.asset}
+                      </p>
+                      <p className="mt-2 break-all font-mono text-xs leading-5 text-muted">
+                        {payout.referenceNumber ?? payout.anchorTransactionId}
+                      </p>
+                      <Link
+                        className="mt-3 inline-flex text-sm text-quorum-cyan-soft transition hover:text-foreground"
+                        href={`/events/${payout.eventSlug}/proof`}
+                      >
+                        Proof timeline <ArrowUpRight size={13} />
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </ProofSurface>
+        ) : null}
 
         {session ? (
           entries.length > 0 ? (
