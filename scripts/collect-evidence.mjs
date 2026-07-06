@@ -204,6 +204,8 @@ ${wasmRows}
 - App RPC: \`${doctorJson?.network?.appRpcUrl ?? "unknown"}\`
 - Payment asset configured: \`${doctorJson?.paymentAsset?.usdcContractIdConfigured ?? "unknown"}\`
 - Platform fee bps: \`${doctorJson?.config?.platformFeeBps ?? "unknown"}\`
+- Live signing approved: \`${doctorJson?.signing?.liveSigningApproved ?? "unknown"}\`
+- Signing approval gate: \`${doctorJson?.signing?.approvalEnv ?? "QUORUM_LIVE_SIGNING_APPROVED"}=${doctorJson?.signing?.approvalValue ?? "I_APPROVE_TESTNET_SIGNING"}\`
 - Stellar CLI: \`${doctorJson?.tools?.stellar?.version ?? "unknown"}\`
 - Rust: \`${doctorJson?.tools?.rust?.version ?? "unknown"}\`
 - Cargo: \`${doctorJson?.tools?.cargo?.version ?? "unknown"}\`
