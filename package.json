@@ -19,6 +19,7 @@
     "anchor:config:smoke": "tsx scripts/anchor-config-smoke.ts",
     "anchor:sep1:smoke": "tsx scripts/anchor-sep1-smoke.ts",
     "anchor:sep10:smoke": "tsx scripts/anchor-sep10-smoke.ts",
+    "anchor:sep24:smoke": "tsx scripts/anchor-sep24-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "indexer:run": "tsx scripts/stellar-indexer-run.ts",
     "settlement:smoke": "tsx scripts/settlement-smoke.ts",

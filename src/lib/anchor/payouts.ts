@@ -70,6 +70,7 @@ export type CreateAnchorPayoutInput = {
   amountUsdc?: string | null;
   collaboratorWallet: string;
   eventId: string;
+  moneyGramAuthToken?: string | null;
 };
 
 function assertWalletAddress(walletAddress: string) {
@@ -222,10 +223,15 @@ export async function getAnchorPayoutAvailability(
   };
 }
 
-export async function createMockAnchorPayout({
+function shouldCreateWithdrawalForPayout(status: AnchorPayoutStatus) {
+  return status === "completed" || status === "ready_for_pickup";
+}
+
+export async function createAnchorPayout({
   amountUsdc,
   collaboratorWallet,
   eventId,
+  moneyGramAuthToken,
 }: CreateAnchorPayoutInput) {
   assertWalletAddress(collaboratorWallet);
 
@@ -265,6 +271,7 @@ export async function createMockAnchorPayout({
       amountUsdc: requestedAmount,
       collaboratorWallet,
       eventId,
+      moneyGramAuthToken,
       payoutId,
     });
     const payoutRow = await queryOne<AnchorPayoutRow>(
@@ -291,34 +298,38 @@ export async function createMockAnchorPayout({
       db,
     );
 
-    await queryOne(
-      `
-      INSERT INTO withdrawals (
-        id, event_id, collaborator_wallet, amount_usdc, tx_hash
-      )
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING *
-      `,
-      [
-        withdrawalId,
-        eventId,
-        collaboratorWallet,
-        requestedAmount,
-        `stub:anchor-payout:${payoutId}`,
-      ],
-      db,
-    );
+    let updatedPayoutRow = payoutRow;
 
-    const updatedPayoutRow = await queryOne<AnchorPayoutRow>(
-      `
-      UPDATE anchor_payouts
-      SET withdrawal_id = $2
-      WHERE id = $1
-      RETURNING *
-      `,
-      [payoutId, withdrawalId],
-      db,
-    );
+    if (shouldCreateWithdrawalForPayout(providerResult.status)) {
+      await queryOne(
+        `
+        INSERT INTO withdrawals (
+          id, event_id, collaborator_wallet, amount_usdc, tx_hash
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING *
+        `,
+        [
+          withdrawalId,
+          eventId,
+          collaboratorWallet,
+          requestedAmount,
+          `stub:anchor-payout:${payoutId}`,
+        ],
+        db,
+      );
+
+      updatedPayoutRow = await queryOne<AnchorPayoutRow>(
+        `
+        UPDATE anchor_payouts
+        SET withdrawal_id = $2
+        WHERE id = $1
+        RETURNING *
+        `,
+        [payoutId, withdrawalId],
+        db,
+      );
+    }
 
     return {
       availabilityBefore: availability,
@@ -326,6 +337,8 @@ export async function createMockAnchorPayout({
     };
   });
 }
+
+export const createMockAnchorPayout = createAnchorPayout;
 
 export async function listAnchorPayoutsByWallet(walletAddress: string) {
   assertWalletAddress(walletAddress);

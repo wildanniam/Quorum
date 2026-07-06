@@ -9,6 +9,8 @@ const guardedMutationRoutes = [
   "src/app/api/auth/challenge/route.ts",
   "src/app/api/auth/logout/route.ts",
   "src/app/api/auth/verify/route.ts",
+  "src/app/api/anchor/moneygram/auth/challenge/route.ts",
+  "src/app/api/anchor/moneygram/auth/token/route.ts",
   "src/app/api/events/route.ts",
   "src/app/api/events/[eventId]/route.ts",
   "src/app/api/events/[eventId]/check-ins/route.ts",

@@ -7,11 +7,13 @@ import {
   getAnchorProviderName,
   resolveAnchorRuntimeConfig,
 } from "@/lib/anchor/config";
+import { initiateMoneyGramSep24Withdrawal } from "@/lib/anchor/moneygram/sep24";
 
 export type AnchorPayoutProviderInput = {
   amountUsdc: string;
   collaboratorWallet: string;
   eventId: string;
+  moneyGramAuthToken?: string | null;
   payoutId: string;
 };
 
@@ -36,9 +38,39 @@ export function getAnchorPayoutProvider(): AnchorPayoutProviderAdapter {
   if (provider === "moneygram") {
     assertMoneyGramSigningSecret(config.moneygram);
 
-    throw new Error(
-      "MoneyGram anchor provider is not implemented yet. Use ANCHOR_PROVIDER=mock until the MoneyGram provider phase is complete.",
-    );
+    return {
+      provider: "moneygram",
+      async createPayout(input) {
+        if (!input.moneyGramAuthToken) {
+          throw new Error("MoneyGram wallet authorization required.");
+        }
+
+        const withdrawal = await initiateMoneyGramSep24Withdrawal({
+          account: input.collaboratorWallet,
+          amountUsdc: input.amountUsdc,
+          authToken: input.moneyGramAuthToken,
+          config: config.moneygram,
+        });
+
+        return {
+          anchorTransactionId: withdrawal.id,
+          metadataJson: {
+            amountUsdc: input.amountUsdc,
+            assetCode: config.moneygram.usdcAssetCode,
+            assetIssuer: config.moneygram.usdcIssuer,
+            eventId: input.eventId,
+            homeDomain: config.moneygram.homeDomain,
+            mode: "moneygram",
+            responseType: withdrawal.type,
+            sep: "SEP-24",
+          },
+          pickupUrl: withdrawal.url,
+          provider: "moneygram",
+          referenceNumber: withdrawal.id,
+          status: "requested",
+        };
+      },
+    };
   }
 
   return {
