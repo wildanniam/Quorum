@@ -4,6 +4,7 @@ import type {
   PassRecord,
   PurchaseRecord,
 } from "@/lib/db/models";
+import { checkInPathForToken, checkInQrPayload } from "@/lib/check-in/qr";
 import { queryOne } from "@/lib/db/client";
 import { getPassByTokenId } from "@/lib/events/repository";
 import {
@@ -41,6 +42,8 @@ export type ReceiptProofRow = {
 
 export type PassReceipt = {
   checkIn: CheckInRecord | null;
+  checkInQrPayload: string | null;
+  checkInUrl: string | null;
   event: EventRecord;
   eventProofUrl: string;
   pass: PassRecord;
@@ -119,9 +122,16 @@ export async function getPassReceipt(tokenId: string): Promise<PassReceipt | nul
   const { event, pass, purchase } = proof;
   const checkIn = await getLatestCheckInForPass(event.id, pass.tokenId);
   const receiptToken = pass.tokenId ?? pass.id;
+  const checkInUrl = pass.tokenId
+    ? checkInPathForToken(event.id, pass.tokenId)
+    : null;
 
   return {
     checkIn,
+    checkInQrPayload: pass.tokenId
+      ? checkInQrPayload(event.id, pass.tokenId)
+      : null,
+    checkInUrl,
     event,
     eventProofUrl: `/events/${event.slug}/proof`,
     pass,

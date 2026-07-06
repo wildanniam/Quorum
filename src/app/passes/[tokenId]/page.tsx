@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { QrCodeCard } from "@/components/qr-code-card";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -229,12 +230,20 @@ export default async function PassPage({ params }: PassPageProps) {
                 })}
               </div>
 
+              {receipt.checkInQrPayload ? (
+                <QrCodeCard
+                  className="mt-5"
+                  label="Door QR"
+                  value={receipt.checkInQrPayload}
+                />
+              ) : null}
+
               <div className="mt-5 grid gap-3">
                 <QuorumButton href={receipt.resourceUrl}>
                   Open resources
                 </QuorumButton>
                 <QuorumButton
-                  href={`/check-in/${event.id}`}
+                  href={receipt.checkInUrl ?? `/check-in/${event.id}`}
                   icon={<QrCode size={17} />}
                   variant="secondary"
                 >
