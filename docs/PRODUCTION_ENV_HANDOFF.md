@@ -151,6 +151,9 @@ npm run lint
 npm run build
 ```
 
+For MoneyGram-specific verification and troubleshooting, see
+`docs/MONEYGRAM_ANCHOR_RUNBOOK.md`.
+
 After deployment, verify the hosted app:
 
 1. Open the hosted app over public HTTPS.

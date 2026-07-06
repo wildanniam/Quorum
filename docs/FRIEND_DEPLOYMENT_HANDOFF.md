@@ -124,6 +124,9 @@ Expected result: JSON with `"ok": true`. The checks should include hosted
 anchor client-domain match, hosted `stellar.toml` signing key match, MoneyGram
 SEP-1 discovery, and MoneyGram SEP-24 USDC withdraw readiness.
 
+MoneyGram-specific setup and troubleshooting lives in
+`docs/MONEYGRAM_ANCHOR_RUNBOOK.md`.
+
 Also verify:
 
 ```text
