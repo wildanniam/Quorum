@@ -13,6 +13,14 @@
   --cyan: #8fb8bd;
   --coral: #d98571;
   --success: #95c98a;
+  --quorum-blue-300: #6ed9e6;
+  --quorum-blue-500: #26c6da;
+  --quorum-blue-900: #10535c;
+  --quorum-grey-500: #1c1b1b;
+  --quorum-grey-600: #191919;
+  --quorum-grey-700: #141313;
+  --quorum-grey-800: #0f0f0f;
+  --quorum-grey-900: #0c0b0b;
   --event-accent: #d9a85c;
   --event-accent-2: #a993ff;
   --event-ink: #111112;
@@ -38,12 +46,21 @@
   --color-cyan: var(--cyan);
   --color-coral: var(--coral);
   --color-success: var(--success);
+  --color-quorum-cyan: var(--quorum-blue-500);
+  --color-quorum-cyan-soft: var(--quorum-blue-300);
+  --color-quorum-cyan-deep: var(--quorum-blue-900);
+  --color-quorum-grey-500: var(--quorum-grey-500);
+  --color-quorum-grey-600: var(--quorum-grey-600);
+  --color-quorum-grey-700: var(--quorum-grey-700);
+  --color-quorum-grey-800: var(--quorum-grey-800);
+  --color-quorum-grey-900: var(--quorum-grey-900);
   --color-event-accent: var(--event-accent);
   --color-event-accent-2: var(--event-accent-2);
   --color-event-ink: var(--event-ink);
   --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-display: "Playfair Display", Georgia, serif;
+  --font-product: "Outfit", "Outfit Fallback", ui-sans-serif, system-ui, sans-serif;
 }
 
 body {
@@ -189,6 +206,25 @@ select {
 
 .font-display {
   font-family: var(--font-display), Georgia, serif;
+}
+
+.font-product {
+  font-family: var(--font-outfit), "Outfit", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0;
+}
+
+.quorum-proof-shell {
+  background:
+    linear-gradient(180deg, rgba(110, 217, 230, 0.06), transparent 22rem),
+    var(--quorum-grey-900);
+}
+
+.quorum-cyan-ring {
+  border-color: color-mix(in srgb, var(--quorum-blue-500) 58%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px color-mix(in srgb, var(--quorum-blue-500) 16%, transparent),
+    0 20px 70px rgba(38, 198, 218, 0.12);
 }
 
 .text-balance {
