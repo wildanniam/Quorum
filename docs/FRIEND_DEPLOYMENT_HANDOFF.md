@@ -120,7 +120,9 @@ Run hosted preflight:
 npm run deploy:hosted:preflight -- --url https://<vercel-app-url> --env-file .env.vercel.production
 ```
 
-Expected result: JSON with `"ok": true`.
+Expected result: JSON with `"ok": true`. The checks should include hosted
+anchor client-domain match, hosted `stellar.toml` signing key match, MoneyGram
+SEP-1 discovery, and MoneyGram SEP-24 USDC withdraw readiness.
 
 Also verify:
 

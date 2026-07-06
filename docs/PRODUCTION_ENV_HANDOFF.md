@@ -143,6 +143,8 @@ any hosted live transaction demo:
 ```bash
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
+npm run anchor:sep1:smoke
+npm run anchor:sep24:smoke
 npm run live:readiness:smoke
 npm run live:deployment:validate
 npm run lint
@@ -155,14 +157,16 @@ After deployment, verify the hosted app:
 2. Run migrations against Supabase.
 3. Run the hosted preflight against the deployed origin and pulled hosted env:
    `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
-4. Confirm `/api/contracts/status` returns `proofMode: "live"`.
-5. Confirm publish, checkout, check-in, and withdraw policies report
+4. Confirm the preflight checks include MoneyGram SEP-1 discovery, hosted
+   `stellar.toml` signing key match, and SEP-24 USDC withdraw readiness.
+5. Confirm `/api/contracts/status` returns `proofMode: "live"`.
+6. Confirm publish, checkout, check-in, and withdraw policies report
    `live_required`.
-6. Restart/redeploy the hosted app and confirm records persist in Supabase.
-7. Run browser QA against the hosted origin or capture equivalent screenshots.
-8. Record hosted URLs and signed transaction hashes in
+7. Restart/redeploy the hosted app and confirm records persist in Supabase.
+8. Run browser QA against the hosted origin or capture equivalent screenshots.
+9. Record hosted URLs and signed transaction hashes in
    `docs/LIVE_TESTNET_EVIDENCE.json`.
-9. Run `npm run live:evidence:audit` only after the filled evidence file has no
+10. Run `npm run live:evidence:audit` only after the filled evidence file has no
    placeholders.
 
 ## Handoff Status
@@ -172,6 +176,7 @@ After deployment, verify the hosted app:
 | Testnet contract IDs | Recorded and read-only validated. |
 | Browser live action wiring | Verified locally with mocked signer/RPC boundaries. |
 | Postgres persistence adapter | Implemented for app, migrations, seed, and smoke scripts. |
+| MoneyGram anchor env/preflight | Implemented for hosted `stellar.toml`, SEP-1, SEP-10, and SEP-24 readiness. |
 | Production session secret guard | Verified locally. |
 | Hosted app URL | Not configured in repo. |
 | Supabase project | External setup still required. |

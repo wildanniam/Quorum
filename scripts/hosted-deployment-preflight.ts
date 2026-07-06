@@ -1,9 +1,20 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { isIP } from "node:net";
-import { Networks, StrKey } from "@stellar/stellar-sdk";
+import { Keypair, Networks, StrKey } from "@stellar/stellar-sdk";
+import { parse as parseToml } from "smol-toml";
 import { CONTRACT_ACTIONS } from "../src/lib/stellar/action-policy";
 import { resolveSessionSecret } from "../src/lib/auth/session";
+import {
+  DEFAULT_MONEYGRAM_HOME_DOMAIN,
+  DEFAULT_QUORUM_ANCHOR_SIGNING_KEY,
+  MONEYGRAM_TESTNET_USDC_ISSUER,
+  assertMoneyGramSigningSecret,
+  getAnchorProviderName,
+  resolveMoneyGramAnchorConfig,
+} from "../src/lib/anchor/config";
+import { fetchMoneyGramSep1Info } from "../src/lib/anchor/moneygram/sep1";
+import { fetchMoneyGramSep24Info } from "../src/lib/anchor/moneygram/sep24";
 
 type EnvMap = Record<string, string | undefined>;
 
@@ -27,14 +38,7 @@ type ExpectedHostedRuntime = {
   usdcContractId: string;
 };
 
-type FetchLike = (
-  input: string,
-  init?: { headers?: Record<string, string> },
-) => Promise<{
-  ok: boolean;
-  status: number;
-  json: () => Promise<unknown>;
-}>;
+type FetchLike = Pick<typeof globalThis, "fetch">["fetch"];
 
 const evidencePath = "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json";
 const productionSecret = "hosted-production-session-secret-32-chars-minimum";
@@ -49,6 +53,7 @@ const forbiddenHostedEnvKeys = [
   "SUPABASE_SERVICE_ROLE_KEY",
   "NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY",
 ] as const;
+const fixtureAnchorKey = Keypair.random();
 
 function getArgValue(name: string) {
   const index = process.argv.indexOf(name);
@@ -286,6 +291,84 @@ function assertHostedSessionSecret(env: EnvMap) {
   });
 }
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function parseHostedStellarToml(toml: string) {
+  return asRecord(parseToml(toml));
+}
+
+async function assertHostedAnchorRuntime({
+  env,
+  fetcher,
+  hostedUrl,
+}: {
+  env: EnvMap;
+  fetcher: FetchLike;
+  hostedUrl: URL;
+}) {
+  const provider = getAnchorProviderName(env.ANCHOR_PROVIDER);
+  const moneygramConfig = resolveMoneyGramAnchorConfig(env);
+
+  assert.equal(
+    moneygramConfig.clientDomain,
+    hostedUrl.host,
+    "ANCHOR_CLIENT_DOMAIN must match the hosted app domain.",
+  );
+
+  const stellarTomlUrl = new URL("/.well-known/stellar.toml", hostedUrl).toString();
+  const stellarTomlResponse = await fetcher(stellarTomlUrl, {
+    headers: { accept: "text/plain" },
+  });
+
+  assert.equal(
+    stellarTomlResponse.ok,
+    true,
+    `${stellarTomlUrl} returned HTTP ${stellarTomlResponse.status}.`,
+  );
+
+  const hostedToml = parseHostedStellarToml(await stellarTomlResponse.text());
+
+  assert.equal(
+    hostedToml.SIGNING_KEY,
+    moneygramConfig.clientSigningPublicKey,
+    "Hosted stellar.toml SIGNING_KEY must match ANCHOR_CLIENT_SIGNING_PUBLIC_KEY.",
+  );
+  assert(
+    Array.isArray(hostedToml.ACCOUNTS) &&
+      hostedToml.ACCOUNTS.includes(moneygramConfig.clientSigningPublicKey),
+    "Hosted stellar.toml ACCOUNTS must include ANCHOR_CLIENT_SIGNING_PUBLIC_KEY.",
+  );
+
+  if (provider === "moneygram") {
+    assertMoneyGramSigningSecret(moneygramConfig);
+
+    const sep1 = await fetchMoneyGramSep1Info({
+      config: moneygramConfig,
+      fetcher,
+    });
+    const sep24 = await fetchMoneyGramSep24Info({
+      config: moneygramConfig,
+      discovery: sep1,
+      fetcher,
+    });
+    const usdcWithdraw = asRecord(sep24.withdraw.USDC);
+
+    assert.equal(sep1.homeDomain, moneygramConfig.homeDomain);
+    assert.equal(sep1.usdc.issuer, moneygramConfig.usdcIssuer);
+    assert.equal(
+      usdcWithdraw.enabled,
+      true,
+      "MoneyGram SEP-24 must enable USDC withdrawals.",
+    );
+  }
+
+  return provider;
+}
+
 function readField(source: unknown, field: string) {
   if (!source || typeof source !== "object") return undefined;
 
@@ -345,6 +428,11 @@ async function runHostedDeploymentPreflight(options: {
   assertNoBrowserSupabaseEnv(options.env);
 
   const fetcher = options.fetcher ?? fetch;
+  const anchorProvider = await assertHostedAnchorRuntime({
+    env: options.env,
+    fetcher,
+    hostedUrl,
+  });
   const response = await fetcher(statusUrl, {
     headers: { accept: "application/json" },
   });
@@ -356,11 +444,16 @@ async function runHostedDeploymentPreflight(options: {
 
   return {
     hostedAppUrl: expected.hostedAppUrl,
+    anchorProvider,
     contractStatusUrl: statusUrl,
     checks: [
       "hosted-url-public-https",
       "production-session-secret-present",
       "server-postgres-database-url-present",
+      "hosted-anchor-client-domain-matches-url",
+      "hosted-stellar-toml-signing-key-matches-anchor-env",
+      "moneygram-sep1-discovery-ready",
+      "moneygram-sep24-usdc-withdraw-ready",
       "runtime-env-matches-deployment-evidence",
       "operator-signing-env-absent",
       "browser-supabase-env-absent",
@@ -380,6 +473,12 @@ function fixtureEnv(overrides: EnvMap = {}) {
   return {
     QUORUM_HOSTED_APP_URL: "https://quorum.example.com",
     QUORUM_SESSION_SECRET: productionSecret,
+    ANCHOR_PROVIDER: "moneygram",
+    ANCHOR_CLIENT_DOMAIN: "quorum.example.com",
+    ANCHOR_CLIENT_SIGNING_PUBLIC_KEY: fixtureAnchorKey.publicKey(),
+    ANCHOR_CLIENT_SIGNING_SECRET: fixtureAnchorKey.secret(),
+    MONEYGRAM_HOME_DOMAIN: DEFAULT_MONEYGRAM_HOME_DOMAIN,
+    MONEYGRAM_USDC_ISSUER: MONEYGRAM_TESTNET_USDC_ISSUER,
     DATABASE_URL:
       "postgresql://postgres:postgres@db.quorum.example.com:6543/postgres?sslmode=require",
     DIRECT_DATABASE_URL:
@@ -426,25 +525,93 @@ function fixtureStatus(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function jsonFetcher(payload: unknown): FetchLike {
-  return async () => ({
-    ok: true,
-    status: 200,
-    json: async () => payload,
-  });
+function moneyGramFixtureToml() {
+  return `
+VERSION = "2.0.0"
+NETWORK_PASSPHRASE = "Test SDF Network ; September 2015"
+SIGNING_KEY = "GCSESAP5ILVM6CWIEGK2SDOCQU7PHVFYYT7JNKRDAQNVQWKD5YEE5ZJ4"
+WEB_AUTH_ENDPOINT = "https://extstellar.moneygram.com/stellaradapterservice/auth"
+TRANSFER_SERVER_SEP0024 = "https://extstellar.moneygram.com/stellaradapterservice/sep24"
+
+[[CURRENCIES]]
+code = "USDC"
+issuer = "${MONEYGRAM_TESTNET_USDC_ISSUER}"
+status = "test"
+is_asset_anchored = true
+anchor_asset_type = "fiat"
+`;
+}
+
+function hostedStellarToml(signingKey = fixtureAnchorKey.publicKey()) {
+  return `
+VERSION="2.0.0"
+NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
+SIGNING_KEY="${signingKey}"
+ACCOUNTS=["${signingKey}"]
+
+[DOCUMENTATION]
+ORG_NAME="Quorum"
+ORG_URL="https://quorum.example.com"
+`;
+}
+
+function preflightFetcher({
+  anchorSigningKey = fixtureAnchorKey.publicKey(),
+  statusPayload = fixtureStatus(),
+}: {
+  anchorSigningKey?: string;
+  statusPayload?: unknown;
+} = {}): FetchLike {
+  return async (input) => {
+    const url = String(input);
+
+    if (url === "https://quorum.example.com/api/contracts/status") {
+      return Response.json(statusPayload);
+    }
+
+    if (url === "https://quorum.example.com/.well-known/stellar.toml") {
+      return new Response(hostedStellarToml(anchorSigningKey), {
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+
+    if (url === "https://extstellar.moneygram.com/.well-known/stellar.toml") {
+      return new Response(moneyGramFixtureToml(), {
+        headers: { "Content-Type": "text/plain" },
+      });
+    }
+
+    if (url === "https://extstellar.moneygram.com/stellaradapterservice/sep24/info") {
+      return Response.json({
+        deposit: {},
+        fee: { enabled: false },
+        features: {},
+        withdraw: {
+          USDC: {
+            enabled: true,
+            fee_fixed: 0,
+            max_amount: 2500,
+            min_amount: 1,
+          },
+        },
+      });
+    }
+
+    return Response.json({ error: `Unexpected preflight URL: ${url}` }, { status: 404 });
+  };
 }
 
 async function runSmoke() {
   const pass = await runHostedDeploymentPreflight({
     env: fixtureEnv(),
-    fetcher: jsonFetcher(fixtureStatus()),
+    fetcher: preflightFetcher(),
   });
 
   await assert.rejects(
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv({ QUORUM_HOSTED_APP_URL: "http://localhost:3000" }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /HTTPS/,
   );
@@ -453,7 +620,7 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv({ NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: StrKey.encodeContract(Buffer.alloc(32, 5)) }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID/,
   );
@@ -462,7 +629,7 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv({ STELLAR_ACCOUNT: "quorum-admin-testnet" }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /STELLAR_ACCOUNT/,
   );
@@ -471,7 +638,7 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv({ QUORUM_SESSION_SECRET: "short" }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /QUORUM_SESSION_SECRET/,
   );
@@ -480,7 +647,7 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv({ DATABASE_URL: "file:./data/quorum.db" }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /DATABASE_URL must be a Postgres URL/,
   );
@@ -492,7 +659,7 @@ async function runSmoke() {
           DATABASE_URL:
             "postgresql://postgres:postgres@db.quorum.example.com:6543/postgres",
         }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /sslmode=require/,
   );
@@ -503,7 +670,7 @@ async function runSmoke() {
         env: fixtureEnv({
           NEXT_PUBLIC_SUPABASE_URL: "https://quorum.supabase.co",
         }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /NEXT_PUBLIC_SUPABASE_URL/,
   );
@@ -514,7 +681,7 @@ async function runSmoke() {
         env: fixtureEnv({
           SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
         }),
-        fetcher: jsonFetcher(fixtureStatus()),
+        fetcher: preflightFetcher(),
       }),
     /SUPABASE_SERVICE_ROLE_KEY/,
   );
@@ -523,7 +690,9 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv(),
-        fetcher: jsonFetcher(fixtureStatus({ proofMode: "local" })),
+        fetcher: preflightFetcher({
+          statusPayload: fixtureStatus({ proofMode: "local" }),
+        }),
       }),
     /Expected values to be strictly equal/,
   );
@@ -532,17 +701,39 @@ async function runSmoke() {
     () =>
       runHostedDeploymentPreflight({
         env: fixtureEnv(),
-        fetcher: jsonFetcher(
-          fixtureStatus({
+        fetcher: preflightFetcher({
+          statusPayload: fixtureStatus({
             actions: CONTRACT_ACTIONS.map((action) => ({
               action,
               executionMode: action === "checkout_pass" ? "local_proof" : "live_required",
               proofMode: action === "checkout_pass" ? "local" : "live",
             })),
           }),
-        ),
+        }),
       }),
     /Expected values to be strictly equal/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
+        env: fixtureEnv({
+          ANCHOR_CLIENT_DOMAIN: "wrong.example.com",
+        }),
+        fetcher: preflightFetcher(),
+      }),
+    /ANCHOR_CLIENT_DOMAIN/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
+        env: fixtureEnv({
+          ANCHOR_CLIENT_SIGNING_PUBLIC_KEY: DEFAULT_QUORUM_ANCHOR_SIGNING_KEY,
+        }),
+        fetcher: preflightFetcher(),
+      }),
+    /SIGNING_KEY/,
   );
 
   console.log(
@@ -562,6 +753,8 @@ async function runSmoke() {
           "reject-supabase-service-role-env",
           "reject-local-contract-status",
           "reject-non-live-action-policy",
+          "reject-anchor-client-domain-mismatch",
+          "reject-hosted-stellar-toml-signing-key-mismatch",
         ],
       },
       null,
