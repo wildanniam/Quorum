@@ -16,6 +16,7 @@
     "demo:smoke": "node scripts/demo-smoke.mjs",
     "wallet:auth:smoke": "node scripts/wallet-auth-smoke.mjs",
     "api:origin:smoke": "tsx scripts/mutation-origin-smoke.ts",
+    "anchor:config:smoke": "tsx scripts/anchor-config-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "indexer:run": "tsx scripts/stellar-indexer-run.ts",
     "settlement:smoke": "tsx scripts/settlement-smoke.ts",

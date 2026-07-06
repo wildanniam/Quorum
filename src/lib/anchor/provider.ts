@@ -2,6 +2,11 @@ import type {
   AnchorPayoutProvider,
   AnchorPayoutStatus,
 } from "@/lib/db/models";
+import {
+  assertMoneyGramSigningSecret,
+  getAnchorProviderName,
+  resolveAnchorRuntimeConfig,
+} from "@/lib/anchor/config";
 
 export type AnchorPayoutProviderInput = {
   amountUsdc: string;
@@ -24,20 +29,15 @@ export type AnchorPayoutProviderAdapter = {
   provider: AnchorPayoutProvider;
 };
 
-export function getAnchorProviderName(): AnchorPayoutProvider {
-  const configured = process.env.ANCHOR_PROVIDER?.trim().toLowerCase();
-
-  if (configured === "moneygram") return "moneygram";
-
-  return "mock";
-}
-
 export function getAnchorPayoutProvider(): AnchorPayoutProviderAdapter {
+  const config = resolveAnchorRuntimeConfig();
   const provider = getAnchorProviderName();
 
   if (provider === "moneygram") {
+    assertMoneyGramSigningSecret(config.moneygram);
+
     throw new Error(
-      "MoneyGram anchor provider is not configured yet. Use ANCHOR_PROVIDER=mock until sandbox credentials are ready.",
+      "MoneyGram anchor provider is not implemented yet. Use ANCHOR_PROVIDER=mock until the MoneyGram provider phase is complete.",
     );
   }
 
