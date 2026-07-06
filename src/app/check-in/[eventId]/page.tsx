@@ -107,7 +107,11 @@ export default async function CheckInPage({
             </ProofSurface>
 
             <div className="grid gap-5">
-              <CheckInPanel eventId={event.id} initialTokenId={initialTokenId} />
+              <CheckInPanel
+                eventId={event.id}
+                eventSlug={event.slug}
+                initialTokenId={initialTokenId}
+              />
 
               <div className="grid gap-4 md:grid-cols-[0.72fr_1.28fr]">
                 <div className="grid min-h-56 place-items-center rounded-[16px] border border-quorum-cyan/24 bg-quorum-grey-800">
@@ -158,6 +162,12 @@ export default async function CheckInPage({
                     <p className="mt-1 text-xs text-muted">
                       owner {shorten(checkIn.ownerWallet)}
                     </p>
+                    <Link
+                      className="mt-2 inline-flex text-xs text-quorum-cyan-soft transition hover:text-foreground"
+                      href={`/passes/${encodeURIComponent(checkIn.tokenId)}`}
+                    >
+                      Pass receipt
+                    </Link>
                   </div>
                   <ProofDisplay
                     align="right"

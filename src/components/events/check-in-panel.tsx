@@ -17,6 +17,7 @@ import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type CheckInPanelProps = {
+  eventSlug: string;
   eventId: string;
   initialTokenId?: string | null;
 };
@@ -39,7 +40,11 @@ function shorten(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-5)}`;
 }
 
-export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelProps) {
+export function CheckInPanel({
+  eventId,
+  eventSlug,
+  initialTokenId = null,
+}: CheckInPanelProps) {
   const router = useRouter();
   const {
     connectAndSignIn,
@@ -50,6 +55,7 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
   const [tokenId, setTokenId] = useState(initialTokenId ?? "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInError, setCheckInError] = useState<string | null>(null);
+  const [checkedInTokenId, setCheckedInTokenId] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
   const isConnected = Boolean(sessionWalletAddress);
@@ -74,13 +80,14 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
       return;
     }
 
+    const submittedTokenId = tokenId.trim();
     setIsSubmitting(true);
 
     try {
       const response = await fetch(`/api/events/${eventId}/check-ins`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tokenId: tokenId.trim() }),
+        body: JSON.stringify({ tokenId: submittedTokenId }),
       });
       const payload = (await response.json().catch(() => ({}))) as CheckInResponse;
 
@@ -88,7 +95,7 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
         const liveResult = await executeLiveBrowserContractAction({
           action: "check_in_pass",
           eventId,
-          tokenId: tokenId.trim(),
+          tokenId: submittedTokenId,
         });
         const livePayload = liveResult.submission as CheckInResponse;
         const liveTxHash =
@@ -102,6 +109,7 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
         }
 
         setTxHash(liveTxHash);
+        setCheckedInTokenId(submittedTokenId);
         setTokenId("");
         router.refresh();
         return;
@@ -113,6 +121,7 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
       }
 
       setTxHash(payload.checkIn.txHash);
+      setCheckedInTokenId(submittedTokenId);
       setTokenId("");
       router.refresh();
     } catch (error) {
@@ -186,10 +195,29 @@ export function CheckInPanel({ eventId, initialTokenId = null }: CheckInPanelPro
       {txHash ? (
         <div className="mt-4 grid gap-3">
           <ProofDisplay compact label="Check-in proof" value={txHash} />
+          <div className="grid gap-2 sm:grid-cols-2">
+            <QuorumButton
+              className="w-full"
+              href={`/events/${eventSlug}/proof`}
+              variant="secondary"
+            >
+              Event proof
+            </QuorumButton>
+            {checkedInTokenId ? (
+              <QuorumButton
+                className="w-full"
+                href={`/passes/${encodeURIComponent(checkedInTokenId)}`}
+                variant="ghost"
+              >
+                Pass receipt
+              </QuorumButton>
+            ) : null}
+          </div>
           <button
             className="inline-flex min-h-10 w-full items-center justify-center rounded-full border border-white/10 px-4 text-sm font-semibold transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
             onClick={() => {
               setCheckInError(null);
+              setCheckedInTokenId(null);
               setTxHash(null);
             }}
             type="button"
