@@ -121,7 +121,9 @@ export function resolveAnchorRuntimeConfig(
   };
 }
 
-export function assertMoneyGramSigningSecret(config: MoneyGramAnchorConfig) {
+export function assertMoneyGramSigningSecret(
+  config: MoneyGramAnchorConfig,
+): asserts config is MoneyGramAnchorConfig & { clientSigningSecret: string } {
   if (!config.clientSigningSecret) {
     throw new Error(
       "ANCHOR_CLIENT_SIGNING_SECRET is required when ANCHOR_PROVIDER=moneygram.",
