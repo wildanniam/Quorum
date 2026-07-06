@@ -4,14 +4,15 @@ import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { chromium } from "playwright";
+import { withClient } from "./postgres-utils.mjs";
 
 const projectRoot = process.cwd();
 const browserQaPath = path.join(projectRoot, "docs", "BROWSER_QA.md");
 const port = Number(process.env.BROWSER_QA_PORT ?? 3040);
 const baseUrl = `http://127.0.0.1:${port}`;
-const databaseUrl =
-  process.env.BROWSER_QA_DATABASE_URL ??
-  `file:./data/quorum-browser-qa-${randomUUID()}.db`;
+const databaseSchema =
+  process.env.BROWSER_QA_DB_SCHEMA ??
+  `quorum_browser_qa_${randomUUID().replaceAll("-", "_")}`;
 
 const viewports = [
   { label: "Desktop", width: 1280, height: 720 },
@@ -49,30 +50,23 @@ const pages = [
     label: "Dashboard readiness",
     path: "/dashboard",
     requiredText: [
-      "Event operations without losing the proof trail",
-      "CONTRACT READINESS",
+      "Run your events from one calm workspace.",
+      "Setup pending",
       "Local proof mode",
       "USDC asset",
       "Missing",
-      "Action execution",
+      "Wallet actions",
       "local proof",
     ],
   },
 ];
-
-function resolveDatabasePath() {
-  if (!databaseUrl.startsWith("file:")) {
-    throw new Error("browser QA expects a file: SQLite DATABASE_URL");
-  }
-
-  return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
-}
 
 function runCommand(command, args, env = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: projectRoot,
       env: { ...process.env, ...env },
+      shell: process.platform === "win32" && command === "npm",
       stdio: ["ignore", "pipe", "pipe"],
     });
     let stdout = "";
@@ -131,6 +125,21 @@ function assert(condition, message) {
 
 function normalizeWhitespace(value) {
   return value.replace(/\s+/g, " ").trim();
+}
+
+async function stopServer(child) {
+  if (process.platform === "win32" && child.pid) {
+    await new Promise((resolve) => {
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+      killer.on("close", resolve);
+      killer.on("error", resolve);
+    });
+    return;
+  }
+
+  child.kill("SIGTERM");
 }
 
 async function inspectPage(browser, viewport, pageSpec) {
@@ -274,27 +283,27 @@ hosted environment variables, and explicit approval before signing.
 }
 
 async function main() {
-  const databasePath = resolveDatabasePath();
-  fs.rmSync(databasePath, { force: true });
-  fs.rmSync(`${databasePath}-shm`, { force: true });
-  fs.rmSync(`${databasePath}-wal`, { force: true });
-
   const env = {
-    DATABASE_URL: databaseUrl,
     NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: "",
     NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
     NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
+    QUORUM_DB_SCHEMA: databaseSchema,
   };
 
   await runCommand("node", ["scripts/db-migrate.mjs"], env);
   await runCommand("node", ["scripts/db-seed.mjs"], env);
 
-  const server = spawn("npm", ["run", "dev", "--", "--port", String(port)], {
-    cwd: projectRoot,
-    env: { ...process.env, ...env },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  const server = spawn(
+    "npm",
+    ["run", "dev", "--", "--port", String(port)],
+    {
+      cwd: projectRoot,
+      env: { ...process.env, ...env },
+      shell: process.platform === "win32",
+      stdio: ["ignore", "pipe", "pipe"],
+    },
+  );
   let serverOutput = "";
 
   server.stdout.on("data", (chunk) => {
@@ -369,11 +378,14 @@ async function main() {
     );
     process.exitCode = 1;
   } finally {
-    server.kill("SIGTERM");
+    await stopServer(server);
     await delay(500);
-    fs.rmSync(databasePath, { force: true });
-    fs.rmSync(`${databasePath}-shm`, { force: true });
-    fs.rmSync(`${databasePath}-wal`, { force: true });
+    await withClient(
+      async (client) => {
+        await client.query(`DROP SCHEMA IF EXISTS "${databaseSchema}" CASCADE`);
+      },
+      { migration: true },
+    );
   }
 }
 

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest, context: PublishRouteContext) {
 
   try {
     const policy = assertLocalProofAction("publish_event");
-    const result = publishDraftEventStub(eventId, session.walletAddress);
+    const result = await publishDraftEventStub(eventId, session.walletAddress);
 
     return NextResponse.json({
       ...result,

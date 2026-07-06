@@ -1,8 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
 import {
   Account,
   nativeToScVal,
@@ -14,6 +12,7 @@ import {
 import type {
   FreighterLiveSigner,
 } from "../src/lib/stellar/freighter-live-signing";
+import { execute, query, quoteIdentifier } from "../src/lib/db/client";
 import type { PreparedLiveContractAction } from "../src/lib/stellar/live-action";
 import type { PurchaseContractArgs } from "../src/lib/stellar/live-encoding";
 import type { LiveTransactionPreflightRpc } from "../src/lib/stellar/live-preflight";
@@ -24,7 +23,7 @@ type GetTransactionResponse = Awaited<
 >;
 
 const projectRoot = process.cwd();
-const databaseUrl = `file:./data/quorum-live-flow-smoke-${randomUUID()}.db`;
+const databaseSchema = `quorum_live_flow_smoke_${randomUUID().replaceAll("-", "_")}`;
 const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
@@ -39,22 +38,12 @@ function txHash(seed: number) {
   return Buffer.alloc(32, seed).toString("hex");
 }
 
-function databasePath() {
-  return path.resolve(projectRoot, databaseUrl.replace(/^file:/, ""));
-}
-
 function run(command: string, args: string[]) {
-  execFileSync(command, args, {
+  execFileSync(process.platform === "win32" && command === "npm" ? "npm.cmd" : command, args, {
     cwd: projectRoot,
-    env: { ...process.env, DATABASE_URL: databaseUrl },
+    env: { ...process.env, QUORUM_DB_SCHEMA: databaseSchema },
     stdio: "pipe",
   });
-}
-
-function cleanDatabaseFiles() {
-  fs.rmSync(databasePath(), { force: true });
-  fs.rmSync(`${databasePath()}-shm`, { force: true });
-  fs.rmSync(`${databasePath()}-wal`, { force: true });
 }
 
 function getSuccess(
@@ -84,7 +73,7 @@ function getFailed(hash: string): GetTransactionResponse {
 }
 
 async function main() {
-  process.env.DATABASE_URL = databaseUrl;
+  process.env.QUORUM_DB_SCHEMA = databaseSchema;
   process.env.NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID = fakeCoreContractId;
   process.env.NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID = fakePassContractId;
   process.env.NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID = fakeUsdcContractId;
@@ -94,11 +83,9 @@ async function main() {
   process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE =
     "Test SDF Network ; September 2015";
 
-  cleanDatabaseFiles();
   run("node", ["scripts/db-migrate.mjs"]);
   run("node", ["scripts/db-seed.mjs"]);
 
-  const { getDatabase } = await import("../src/lib/db/client");
   const repository = await import("../src/lib/events/repository");
   const { prepareLiveContractAction } = await import(
     "../src/lib/stellar/live-action"
@@ -184,7 +171,7 @@ async function main() {
     });
   }
 
-  const draft = repository.createDraftEventWithSetup(
+  const draft = await repository.createDraftEventWithSetup(
     {
       slug: `live-flow-${randomUUID().slice(0, 8)}`,
       title: "Live Flow Smoke",
@@ -227,7 +214,7 @@ async function main() {
       },
     ],
   );
-  const publishAction = prepareLiveContractAction({
+  const publishAction = await prepareLiveContractAction({
     action: "publish_event",
     eventId: draft.event.id,
     signerWallet: organizerWallet,
@@ -239,7 +226,7 @@ async function main() {
   });
   assert.equal(publishFlow.submission.returnValue.kind, "void");
 
-  const persistedPublish = persistLiveTransactionResult({
+  const persistedPublish = await persistLiveTransactionResult({
     eventId: draft.event.id,
     preparedAction: publishAction,
     submission: publishFlow.submission,
@@ -249,7 +236,7 @@ async function main() {
   assert.equal(published.event.status, "published");
   assert.equal(published.event.publishTxHash, txHash(21));
 
-  const checkoutAction = prepareLiveContractAction({
+  const checkoutAction = await prepareLiveContractAction({
     action: "checkout_pass",
     eventId: published.event.id,
     signerWallet: attendeeWallet,
@@ -269,7 +256,7 @@ async function main() {
   const tokenId = checkoutFlow.submission.returnValue.value;
   assert.equal(tokenId, "9001");
 
-  const persistedPass = persistLiveTransactionResult({
+  const persistedPass = await persistLiveTransactionResult({
     eventId: published.event.id,
     preparedAction: checkoutAction,
     submission: checkoutFlow.submission,
@@ -282,7 +269,7 @@ async function main() {
   assert.equal(passResult.pass.mintTxHash, txHash(22));
   assert.equal(passResult.purchase.txHash, txHash(22));
 
-  const freeClaimAction = prepareLiveContractAction({
+  const freeClaimAction = await prepareLiveContractAction({
     action: "checkout_pass",
     eventId: freeEventId,
     signerWallet: freeAttendeeWallet,
@@ -300,7 +287,7 @@ async function main() {
   }
   const freeTokenId = freeClaimFlow.submission.returnValue.value;
   assert.equal(freeTokenId, "9002");
-  const persistedFreePass = persistLiveTransactionResult({
+  const persistedFreePass = await persistLiveTransactionResult({
     eventId: freeEventId,
     preparedAction: freeClaimAction,
     submission: freeClaimFlow.submission,
@@ -313,7 +300,7 @@ async function main() {
   assert.equal(freePassResult.purchase.amountUsdc, "0");
   assert.equal(freePassResult.purchase.txHash, txHash(26));
 
-  const checkInAction = prepareLiveContractAction({
+  const checkInAction = await prepareLiveContractAction({
     action: "check_in_pass",
     eventId: published.event.id,
     signerWallet: organizerWallet,
@@ -325,7 +312,7 @@ async function main() {
     transactionHash: txHash(23),
   });
   assert.equal(checkInFlow.submission.returnValue.kind, "void");
-  const persistedCheckIn = persistLiveTransactionResult({
+  const persistedCheckIn = await persistLiveTransactionResult({
     eventId: published.event.id,
     preparedAction: checkInAction,
     submission: checkInFlow.submission,
@@ -335,7 +322,7 @@ async function main() {
   assert.equal(checkInResult.pass.checkedIn, true);
   assert.equal(checkInResult.checkIn.txHash, txHash(23));
 
-  const withdrawAction = prepareLiveContractAction({
+  const withdrawAction = await prepareLiveContractAction({
     action: "withdraw_balance",
     eventId: published.event.id,
     signerWallet: speakerWallet,
@@ -349,7 +336,7 @@ async function main() {
   if (withdrawFlow.submission.returnValue.kind !== "withdraw_amount_atomic") {
     throw new Error("Expected live withdraw finality to return an amount.");
   }
-  const persistedWithdrawal = persistLiveTransactionResult({
+  const persistedWithdrawal = await persistLiveTransactionResult({
     eventId: published.event.id,
     preparedAction: withdrawAction,
     submission: withdrawFlow.submission,
@@ -360,7 +347,7 @@ async function main() {
   assert.equal(withdrawalResult.withdrawal.amountUsdc, "2.8");
   assert.equal(withdrawalResult.withdrawal.txHash, txHash(24));
 
-  assert.throws(
+  await assert.rejects(
     () =>
       persistLiveTransactionResult({
         eventId: published.event.id,
@@ -379,7 +366,7 @@ async function main() {
   assert.equal(sendCalls, 5);
   assert.equal(pollCalls, 5);
 
-  const failedAction = prepareLiveContractAction({
+  const failedAction = await prepareLiveContractAction({
     action: "checkout_pass",
     eventId: published.event.id,
     signerWallet: failureWallet,
@@ -428,34 +415,40 @@ async function main() {
   );
 
   assert.equal(
-    repository.getPassByEventAndOwner(published.event.id, failureWallet),
+    await repository.getPassByEventAndOwner(published.event.id, failureWallet),
     null,
     "failed live finality must not be persisted as a pass",
   );
 
-  const db = getDatabase();
   const proofRows = [
-    ...db
-      .prepare("SELECT publish_tx_hash AS tx_hash FROM events WHERE id = ?")
-      .all(published.event.id),
-    ...db
-      .prepare("SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = ?")
-      .all(published.event.id),
-    ...db
-      .prepare("SELECT tx_hash FROM purchases WHERE event_id = ?")
-      .all(published.event.id),
-    ...db
-      .prepare("SELECT tx_hash FROM check_ins WHERE event_id = ?")
-      .all(published.event.id),
-    ...db
-      .prepare("SELECT tx_hash FROM withdrawals WHERE event_id = ?")
-      .all(published.event.id),
-    ...db
-      .prepare("SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = ?")
-      .all(freeEventId),
-    ...db
-      .prepare("SELECT tx_hash FROM purchases WHERE event_id = ?")
-      .all(freeEventId),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT publish_tx_hash AS tx_hash FROM events WHERE id = $1",
+      [published.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = $1",
+      [published.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM purchases WHERE event_id = $1",
+      [published.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM check_ins WHERE event_id = $1",
+      [published.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM withdrawals WHERE event_id = $1",
+      [published.event.id],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT mint_tx_hash AS tx_hash FROM passes WHERE event_id = $1",
+      [freeEventId],
+    )),
+    ...(await query<{ tx_hash: string | null }>(
+      "SELECT tx_hash FROM purchases WHERE event_id = $1",
+      [freeEventId],
+    )),
   ] as Array<{ tx_hash: string | null }>;
 
   assert(
@@ -484,7 +477,7 @@ async function main() {
           "persist-after-success-only",
           "reject-finality-failure-without-persistence",
         ],
-        databasePath: databasePath(),
+        databaseSchema,
         persistedEventId: published.event.id,
         persistedTokenId: passResult.pass.tokenId,
         persistedFreeTokenId: freePassResult.pass.tokenId,
@@ -501,7 +494,6 @@ async function main() {
       2,
     ),
   );
-  db.close();
 }
 
 main()
@@ -509,6 +501,10 @@ main()
     console.error(error);
     process.exitCode = 1;
   })
-  .finally(() => {
-    cleanDatabaseFiles();
+  .finally(async () => {
+    if (process.env.QUORUM_DB_SCHEMA) {
+      await execute(
+        `DROP SCHEMA IF EXISTS ${quoteIdentifier(process.env.QUORUM_DB_SCHEMA)} CASCADE`,
+      );
+    }
   });

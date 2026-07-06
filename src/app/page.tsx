@@ -56,16 +56,22 @@ function locationLabel(event: EventRecord) {
   return event.locationText ?? (event.locationType === "virtual" ? "Virtual" : "Venue TBA");
 }
 
-export default function LandingPage() {
-  const publishedEvents = listPublishedEvents();
+export default async function LandingPage() {
+  const publishedEvents = await listPublishedEvents();
   const featuredEvent = publishedEvents[0] ?? null;
   const secondaryEvents = publishedEvents.slice(1, 3);
-  const mintedPasses = countMintedPasses();
-  const routedUsdc = getSucceededPurchaseTotalUsdc();
-  const collaboratorCount = publishedEvents.reduce(
-    (total, event) => total + listCollaborators(event.id).length,
+  const mintedPasses = await countMintedPasses();
+  const routedUsdc = await getSucceededPurchaseTotalUsdc();
+  const collaboratorCounts = await Promise.all(
+    publishedEvents.map((event) => listCollaborators(event.id)),
+  );
+  const collaboratorCount = collaboratorCounts.reduce(
+    (total, collaborators) => total + collaborators.length,
     0,
   );
+  const featuredMintedPasses = featuredEvent
+    ? await countPassesForEvent(featuredEvent.id)
+    : 0;
 
   return (
     <AppShell>
@@ -162,8 +168,7 @@ export default function LandingPage() {
                             <TicketCheck className="text-accent" size={16} />
                             <span>
                               {Math.max(
-                                featuredEvent.capacity -
-                                  countPassesForEvent(featuredEvent.id),
+                                featuredEvent.capacity - featuredMintedPasses,
                                 0,
                               )}{" "}
                               seats left

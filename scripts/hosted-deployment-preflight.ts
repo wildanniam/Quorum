@@ -45,6 +45,10 @@ const operatorOnlyEnvKeys = [
   "QUORUM_PLATFORM_FEE_BPS",
   "QUORUM_NONZERO_PLATFORM_FEE_APPROVED",
 ] as const;
+const forbiddenHostedEnvKeys = [
+  "SUPABASE_SERVICE_ROLE_KEY",
+  "NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY",
+] as const;
 
 function getArgValue(name: string) {
   const index = process.argv.indexOf(name);
@@ -222,6 +226,59 @@ function assertOperatorOnlyEnvAbsent(env: EnvMap) {
   }
 }
 
+function assertNoBrowserSupabaseEnv(env: EnvMap) {
+  for (const key of Object.keys(env)) {
+    assert(
+      !key.startsWith("NEXT_PUBLIC_SUPABASE_"),
+      `${key} must not be present; Quorum uses Supabase only as server-side Postgres.`,
+    );
+  }
+
+  for (const key of forbiddenHostedEnvKeys) {
+    assert(
+      !env[key] || env[key]?.trim() === "",
+      `${key} must not be present in the hosted runtime preflight env.`,
+    );
+  }
+}
+
+function assertPostgresUrl(value: string | undefined, label: string, options = { requireSsl: true }) {
+  assert(value && value.trim(), `${label} must be set.`);
+
+  const url = new URL(value);
+  assert(
+    url.protocol === "postgres:" || url.protocol === "postgresql:",
+    `${label} must be a Postgres URL.`,
+  );
+  assert.notEqual(url.username, "", `${label} must include a username.`);
+  assert.notEqual(url.password, "", `${label} must include a password.`);
+  assert.notEqual(url.hostname, "", `${label} must include a host.`);
+  assert.notEqual(url.pathname, "/", `${label} must include a database name.`);
+
+  if (options.requireSsl) {
+    assert.equal(
+      url.searchParams.get("sslmode"),
+      "require",
+      `${label} must include sslmode=require for hosted Supabase/Vercel usage.`,
+    );
+  }
+}
+
+function assertHostedDatabaseEnv(env: EnvMap) {
+  assertPostgresUrl(env.DATABASE_URL, "DATABASE_URL");
+
+  if (env.DIRECT_DATABASE_URL?.trim()) {
+    assertPostgresUrl(env.DIRECT_DATABASE_URL, "DIRECT_DATABASE_URL");
+  }
+
+  if (env.QUORUM_DB_SCHEMA?.trim()) {
+    assert(
+      /^[A-Za-z_][A-Za-z0-9_]*$/.test(env.QUORUM_DB_SCHEMA),
+      "QUORUM_DB_SCHEMA must contain only letters, numbers, and underscores, and cannot start with a number.",
+    );
+  }
+}
+
 function assertHostedSessionSecret(env: EnvMap) {
   resolveSessionSecret({
     NODE_ENV: "production",
@@ -282,8 +339,10 @@ async function runHostedDeploymentPreflight(options: {
   const statusUrl = new URL("/api/contracts/status", hostedUrl).toString();
 
   assertHostedSessionSecret(options.env);
+  assertHostedDatabaseEnv(options.env);
   assertHostedEnvMatchesEvidence(options.env, expected);
   assertOperatorOnlyEnvAbsent(options.env);
+  assertNoBrowserSupabaseEnv(options.env);
 
   const fetcher = options.fetcher ?? fetch;
   const response = await fetcher(statusUrl, {
@@ -301,8 +360,10 @@ async function runHostedDeploymentPreflight(options: {
     checks: [
       "hosted-url-public-https",
       "production-session-secret-present",
+      "server-postgres-database-url-present",
       "runtime-env-matches-deployment-evidence",
       "operator-signing-env-absent",
+      "browser-supabase-env-absent",
       "contract-status-live-proof-mode",
       "contract-status-rpc-reachable",
       "contract-status-actions-live-required",
@@ -319,6 +380,10 @@ function fixtureEnv(overrides: EnvMap = {}) {
   return {
     QUORUM_HOSTED_APP_URL: "https://quorum.example.com",
     QUORUM_SESSION_SECRET: productionSecret,
+    DATABASE_URL:
+      "postgresql://postgres:postgres@db.quorum.example.com:6543/postgres?sslmode=require",
+    DIRECT_DATABASE_URL:
+      "postgresql://postgres:postgres@db.quorum.example.com:5432/postgres?sslmode=require",
     NEXT_PUBLIC_STELLAR_NETWORK: expected.network,
     NEXT_PUBLIC_STELLAR_RPC_URL: expected.rpcUrl,
     NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: expected.networkPassphrase,
@@ -414,6 +479,49 @@ async function runSmoke() {
   await assert.rejects(
     () =>
       runHostedDeploymentPreflight({
+        env: fixtureEnv({ DATABASE_URL: "file:./data/quorum.db" }),
+        fetcher: jsonFetcher(fixtureStatus()),
+      }),
+    /DATABASE_URL must be a Postgres URL/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
+        env: fixtureEnv({
+          DATABASE_URL:
+            "postgresql://postgres:postgres@db.quorum.example.com:6543/postgres",
+        }),
+        fetcher: jsonFetcher(fixtureStatus()),
+      }),
+    /sslmode=require/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
+        env: fixtureEnv({
+          NEXT_PUBLIC_SUPABASE_URL: "https://quorum.supabase.co",
+        }),
+        fetcher: jsonFetcher(fixtureStatus()),
+      }),
+    /NEXT_PUBLIC_SUPABASE_URL/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
+        env: fixtureEnv({
+          SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
+        }),
+        fetcher: jsonFetcher(fixtureStatus()),
+      }),
+    /SUPABASE_SERVICE_ROLE_KEY/,
+  );
+
+  await assert.rejects(
+    () =>
+      runHostedDeploymentPreflight({
         env: fixtureEnv(),
         fetcher: jsonFetcher(fixtureStatus({ proofMode: "local" })),
       }),
@@ -448,6 +556,10 @@ async function runSmoke() {
           "reject-contract-id-mismatch",
           "reject-operator-signing-env",
           "reject-invalid-production-session-secret",
+          "reject-non-postgres-database-url",
+          "reject-hosted-postgres-url-without-sslmode",
+          "reject-browser-supabase-env",
+          "reject-supabase-service-role-env",
           "reject-local-contract-status",
           "reject-non-live-action-policy",
         ],

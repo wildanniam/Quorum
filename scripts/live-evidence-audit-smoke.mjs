@@ -52,16 +52,20 @@ function buildEvidence(overrides = {}) {
         tokenId: "1",
         paymentAsset: "USDC",
       },
-      freeClaim: {
+      publishFreeEvent: {
         txHash: hex64(8),
+        eventUrl: "https://quorum.example.com/events/free",
+      },
+      freeClaim: {
+        txHash: hex64(9),
         tokenId: "2",
       },
       checkIn: {
-        txHash: hex64(9),
+        txHash: hex64(10),
         tokenId: "1",
       },
       collaboratorWithdraw: {
-        txHash: hex64(10),
+        txHash: hex64(11),
         withdrawAmountUsdc: "2.5",
       },
     },
@@ -191,6 +195,19 @@ assert.match(
   /same origin as hostedAppUrl/,
 );
 
+const duplicatePublishUrlEvidence = buildEvidence();
+duplicatePublishUrlEvidence.liveFlows.publishFreeEvent.eventUrl =
+  duplicatePublishUrlEvidence.liveFlows.publishPaidEvent.eventUrl;
+const duplicatePublishUrlResult = runAudit(
+  "duplicate-publish-url.json",
+  duplicatePublishUrlEvidence,
+);
+assert.notEqual(duplicatePublishUrlResult.status, 0);
+assert.match(
+  `${duplicatePublishUrlResult.stdout}${duplicatePublishUrlResult.stderr}`,
+  /publishFreeEvent\.eventUrl must be distinct/,
+);
+
 const zeroWithdrawEvidence = buildEvidence();
 zeroWithdrawEvidence.liveFlows.collaboratorWithdraw.withdrawAmountUsdc = "0";
 const zeroWithdrawResult = runAudit("zero-withdraw.json", zeroWithdrawEvidence);
@@ -213,6 +230,7 @@ console.log(
         "reject-filled-live-evidence-duplicate-tx",
         "reject-filled-live-evidence-token-mismatch",
         "reject-filled-live-evidence-origin-mismatch",
+        "reject-filled-live-evidence-duplicate-publish-url",
         "reject-filled-live-evidence-zero-withdraw",
       ],
     },

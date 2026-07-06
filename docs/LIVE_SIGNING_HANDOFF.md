@@ -114,7 +114,7 @@ The app should replace each `local_proof` mutation with a multi-step live flow:
    matches the connected wallet, submits the signed XDR to RPC, and polls
    finality.
 4. Server verifies the result, then stores the real transaction hash, token ID,
-   and proof metadata in SQLite using the `recordLivePublishedEvent`,
+   and proof metadata in Postgres using the `recordLivePublishedEvent`,
    `recordLivePass`, `recordLiveCheckIn`, and `recordLiveWithdrawal`
    repository functions.
 
@@ -140,7 +140,7 @@ preflight, mock wallet signing adapter, signed transaction submission/finality
 polling, finality return value decoding, full mock live action flows,
 post-success persistence, and preparation boundaries.
 `src/lib/stellar/live-encoding.ts` also provides USDC atomic-to-decimal
-conversion for storing contract-returned withdraw amounts in SQLite.
+conversion for storing contract-returned withdraw amounts in Postgres.
 
 Before asking Freighter to sign, the live implementation must fetch the
 signer's current account sequence from testnet, simulate the Soroban transaction
@@ -179,13 +179,13 @@ results into `recordLivePublishedEvent`, `recordLivePass`,
 `recordLiveCheckIn`, and `recordLiveWithdrawal`, rejecting mismatched
 prepared/submitted actions before any DB write.
 The live recording path also rejects replayed live proof transaction hashes
-across publish, pass, check-in, and withdrawal records. Withdrawal recording
-additionally rejects finality amounts that exceed the collaborator's DB
-withdrawable balance, so submit retries cannot inflate local proof totals.
-SQLite migrations enforce the same non-null uniqueness for core event IDs,
-publish transaction hashes, pass mint transaction hashes, and check-in
-transaction hashes; purchase and withdrawal transaction hashes are unique at
-table level from the initial schema.
+across publish, pass, check-in, purchase, and withdrawal records through the
+global `live_proof_hashes` registry. Withdrawal recording additionally rejects
+finality amounts that exceed the collaborator's DB withdrawable balance, so
+submit retries cannot inflate local proof totals. Postgres migrations enforce
+the same non-null uniqueness for core event IDs, publish transaction hashes,
+pass mint transaction hashes, purchase transaction hashes, check-in transaction
+hashes, and withdrawal transaction hashes.
 
 ## Manual Freighter Runbook
 

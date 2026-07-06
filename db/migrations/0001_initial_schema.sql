@@ -1,8 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
   id TEXT PRIMARY KEY,
   wallet_address TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  last_seen_at TEXT NOT NULL DEFAULT (datetime('now'))
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS events (
@@ -12,24 +12,24 @@ CREATE TABLE IF NOT EXISTS events (
   event_type TEXT NOT NULL,
   short_description TEXT NOT NULL,
   cover_image_url TEXT,
-  start_date_time TEXT NOT NULL,
-  end_date_time TEXT NOT NULL,
+  start_date_time TIMESTAMPTZ NOT NULL,
+  end_date_time TIMESTAMPTZ NOT NULL,
   timezone TEXT NOT NULL,
   location_type TEXT NOT NULL CHECK (location_type IN ('physical', 'virtual', 'hybrid')),
   location_text TEXT,
   meeting_url TEXT,
   price_usdc TEXT NOT NULL DEFAULT '0',
-  is_free INTEGER NOT NULL DEFAULT 0 CHECK (is_free IN (0, 1)),
+  is_free BOOLEAN NOT NULL DEFAULT false,
   capacity INTEGER NOT NULL CHECK (capacity > 0),
   status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
   organizer_wallet TEXT NOT NULL,
   metadata_hash TEXT,
   core_event_id TEXT,
   publish_tx_hash TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  CHECK (julianday(end_date_time) > julianday(start_date_time)),
-  CHECK ((is_free = 1 AND price_usdc = '0') OR is_free = 0)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  CHECK (end_date_time > start_date_time),
+  CHECK ((is_free = true AND price_usdc = '0') OR is_free = false)
 );
 
 CREATE TABLE IF NOT EXISTS collaborators (
@@ -38,8 +38,8 @@ CREATE TABLE IF NOT EXISTS collaborators (
   display_name TEXT NOT NULL,
   role TEXT NOT NULL,
   wallet_address TEXT NOT NULL,
-  split_percentage REAL NOT NULL CHECK (split_percentage >= 0 AND split_percentage <= 100),
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  split_percentage DOUBLE PRECISION NOT NULL CHECK (split_percentage >= 0 AND split_percentage <= 100),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS resources (
   type TEXT NOT NULL CHECK (type IN ('link', 'file', 'text')),
   url TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
@@ -59,16 +59,15 @@ CREATE TABLE IF NOT EXISTS passes (
   id TEXT PRIMARY KEY,
   event_id TEXT NOT NULL,
   owner_wallet TEXT NOT NULL,
-  token_id TEXT,
+  token_id TEXT UNIQUE,
   metadata_uri TEXT,
   metadata_hash TEXT,
   mint_tx_hash TEXT,
   source TEXT NOT NULL CHECK (source IN ('purchase', 'free_claim')),
-  checked_in INTEGER NOT NULL DEFAULT 0 CHECK (checked_in IN (0, 1)),
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  checked_in BOOLEAN NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
-  UNIQUE (event_id, owner_wallet),
-  UNIQUE (token_id)
+  UNIQUE (event_id, owner_wallet)
 );
 
 CREATE TABLE IF NOT EXISTS purchases (
@@ -77,11 +76,10 @@ CREATE TABLE IF NOT EXISTS purchases (
   buyer_wallet TEXT NOT NULL,
   amount_usdc TEXT NOT NULL,
   token_id TEXT,
-  tx_hash TEXT,
+  tx_hash TEXT UNIQUE,
   status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
-  UNIQUE (tx_hash)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS withdrawals (
@@ -90,7 +88,7 @@ CREATE TABLE IF NOT EXISTS withdrawals (
   collaborator_wallet TEXT NOT NULL,
   amount_usdc TEXT NOT NULL,
   tx_hash TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
@@ -101,7 +99,7 @@ CREATE TABLE IF NOT EXISTS check_ins (
   owner_wallet TEXT NOT NULL,
   checked_in_by_wallet TEXT NOT NULL,
   tx_hash TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
   UNIQUE (event_id, token_id)
 );
@@ -115,10 +113,17 @@ CREATE INDEX IF NOT EXISTS idx_purchases_event_id ON purchases(event_id);
 CREATE INDEX IF NOT EXISTS idx_withdrawals_event_id ON withdrawals(event_id);
 CREATE INDEX IF NOT EXISTS idx_check_ins_event_id ON check_ins(event_id);
 
-CREATE TRIGGER IF NOT EXISTS trg_events_updated_at
-AFTER UPDATE ON events
-FOR EACH ROW
-WHEN NEW.updated_at = OLD.updated_at
+CREATE OR REPLACE FUNCTION quorum_set_updated_at()
+RETURNS TRIGGER AS $$
 BEGIN
-  UPDATE events SET updated_at = datetime('now') WHERE id = OLD.id;
+  NEW.updated_at = now();
+  RETURN NEW;
 END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_events_updated_at ON events;
+
+CREATE TRIGGER trg_events_updated_at
+BEFORE UPDATE ON events
+FOR EACH ROW
+EXECUTE FUNCTION quorum_set_updated_at();

@@ -34,14 +34,14 @@ function sourceLabel(source: string) {
 
 export default async function PassPage({ params }: PassPageProps) {
   const { tokenId } = await params;
-  const proof = getPassByTokenId(decodeURIComponent(tokenId));
+  const proof = await getPassByTokenId(decodeURIComponent(tokenId));
 
   if (!proof) {
     notFound();
   }
 
   const { event, pass, purchase } = proof;
-  const resources = listResources(event.id);
+  const resources = await listResources(event.id);
 
   return (
     <AppShell>

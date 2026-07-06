@@ -48,7 +48,7 @@ The live hackathon acceptance criteria add two gated requirements:
 
 | Requirement | Current status | Evidence |
 |---|---|---|
-| App is deployed | Gated | Requires hosted deployment URL, the `docs/PRODUCTION_ENV_HANDOFF.md` checklist, and a production storage decision because the current DB client is file-based SQLite. |
+| App is deployed | Gated | Requires hosted deployment URL, Supabase project credentials, Vercel env configuration, hosted Postgres migrations, and the `docs/PRODUCTION_ENV_HANDOFF.md` checklist. |
 | Contracts are deployed on Stellar testnet | Read-only verified | `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json` records deployed contract IDs, admin wallet, deployment/init transaction hashes, and decoded init/set-core evidence; `npm run live:deployment:validate` validates it against Horizon, Soroban RPC events, and fetched contract interfaces without signing. |
 | Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
 | Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `npm run browser:qa` verifies desktop/mobile marketplace rendering. |
@@ -59,7 +59,7 @@ The live hackathon acceptance criteria add two gated requirements:
 | Organizer can check in pass | Verified local, contract-ready | `npm run demo:smoke` covers organizer check-in and duplicate guard; `QuorumCore` tests cover organizer-only, unknown token, cross-event mismatch, idempotent duplicate check-in, and check-in proof events. |
 | Collaborator can see balance and withdraw | Verified local, contract-ready | `npm run demo:smoke` covers collaborator withdraw and duplicate empty-balance guard; `QuorumCore` tests cover collaborator balance, token transfer out of escrow, platform fee withdrawal, zero-balance rejection, and withdraw proof events. |
 | Dashboards show proof surfaces | Verified local | `npm run demo:smoke` covers `dashboard-proof`; `npm run browser:qa` verifies dashboard proof mode and readiness panels. |
-| DB schema protects live proof identity | Verified local | `npm run db:smoke` verifies unique live proof indexes for core event IDs plus publish, pass mint, and check-in transaction hashes. Purchases and withdrawals also retain table-level unique transaction hash constraints. |
+| DB schema protects live proof identity | Verified local | `npm run db:smoke` verifies Postgres constraints, partial unique indexes, and the global `live_proof_hashes` registry across publish, pass, check-in, purchase, and withdrawal transaction hashes. |
 | Wallet auth HTTP flow issues signed sessions | Verified local | `npm run wallet:auth:smoke` covers invalid wallet challenge rejection, wallet-bound challenge cookie issuance, encoded multiline challenge cookies, signed challenge verification, session cookie creation, `/api/me` session reads, and logout. |
 | Cookie-backed mutation routes are same-origin guarded | Verified local | `npm run api:origin:smoke` covers same-origin, missing-origin, and forwarded same-origin mutation allowance; cross-origin and invalid-origin rejection; and static guard wiring across all POST/PATCH API routes that mutate auth, event, or live transaction state. |
 | Live contract argument encoding is deterministic | Verified local | `npm run live:args:smoke` covers USDC decimal-to-atomic and atomic-to-decimal conversion, event ID derivation, split bps, metadata hashes, and publish/checkout/check-in/withdraw argument DTOs without signing. |
@@ -86,15 +86,16 @@ The contracts are already deployed on Stellar testnet and read-only validated in
 the full final definition of done is hosted app readiness plus manual
 Freighter-signed app-flow evidence:
 
-1. Choose the production storage path described in
+1. Create/configure the Supabase Postgres and Vercel projects described in
    `docs/PRODUCTION_ENV_HANDOFF.md`.
-2. Configure the hosted runtime env with the recorded testnet contract IDs, the
+2. Run hosted Postgres migrations against Supabase.
+3. Configure the hosted runtime env with the recorded testnet contract IDs, the
    confirmed USDC contract ID, and a non-placeholder `QUORUM_SESSION_SECRET` of
    at least 32 characters.
-3. Run `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
-4. After explicit approval for the current live testnet wallet session, follow
+4. Run `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
+5. After explicit approval for the current live testnet wallet session, follow
    `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md`.
-5. Record hosted URLs, deployment transaction hashes, and Freighter-signed app
+6. Record hosted URLs, deployment transaction hashes, and Freighter-signed app
    flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
    `npm run live:evidence:audit`.
 
@@ -107,8 +108,8 @@ approval sequence.
 ## Current Submission State
 
 The current repository is suitable for a local hackathon demo and technical
-review. It is not yet a complete live testnet submission because funded signing
-hosted environment variables, production storage confirmation, and real app
-flow transaction hashes are intentionally outside the local repo state. The
-machine-readable template for that future live proof is
+review. It is not yet a complete live testnet submission because Supabase/Vercel
+cloud resources, funded Freighter signing, hosted environment variables, and
+real app-flow transaction hashes are intentionally outside the local repo state.
+The machine-readable template for that future live proof is
 `docs/LIVE_TESTNET_EVIDENCE.example.json`.

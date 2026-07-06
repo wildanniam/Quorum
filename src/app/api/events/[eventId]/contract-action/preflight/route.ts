@@ -69,7 +69,7 @@ export async function POST(
   const { eventId } = await context.params;
 
   try {
-    const preparedAction = prepareLiveContractAction({
+    const preparedAction = await prepareLiveContractAction({
       action: parsed.data.action,
       eventId,
       signerWallet: session.walletAddress,

@@ -156,6 +156,7 @@ const requiredSmokeCoverage = [
 
 const requiredDbSmokeCoverage = [
   "unique-live-proof-indexes",
+  "live-proof-hash-registry",
   "event-crud",
   "collaborator-split-total",
   "resource-crud",
@@ -202,6 +203,7 @@ const requiredLivePersistenceCoverage = [
   "reject-stub-live-hash",
   "reject-duplicate-live-publish-tx",
   "reject-duplicate-live-pass-tx",
+  "reject-cross-table-live-hash-replay",
   "reject-duplicate-live-check-in",
   "reject-duplicate-live-check-in-tx",
   "reject-live-withdrawal-overdraw",
@@ -300,14 +302,17 @@ const requiredLiveEvidenceAuditCoverage = [
   "reject-filled-live-evidence-duplicate-tx",
   "reject-filled-live-evidence-token-mismatch",
   "reject-filled-live-evidence-origin-mismatch",
+  "reject-filled-live-evidence-duplicate-publish-url",
   "reject-filled-live-evidence-zero-withdraw",
 ];
 
 const requiredHostedPreflightCoverage = [
   "hosted-url-public-https",
   "production-session-secret-present",
+  "server-postgres-database-url-present",
   "runtime-env-matches-deployment-evidence",
   "operator-signing-env-absent",
+  "browser-supabase-env-absent",
   "contract-status-live-proof-mode",
   "contract-status-rpc-reachable",
   "contract-status-actions-live-required",
@@ -315,6 +320,10 @@ const requiredHostedPreflightCoverage = [
   "reject-contract-id-mismatch",
   "reject-operator-signing-env",
   "reject-invalid-production-session-secret",
+  "reject-non-postgres-database-url",
+  "reject-hosted-postgres-url-without-sslmode",
+  "reject-browser-supabase-env",
+  "reject-supabase-service-role-env",
   "reject-local-contract-status",
   "reject-non-live-action-policy",
 ];
@@ -455,6 +464,8 @@ function checkEnvExample() {
   const envExample = readFile(".env.example");
   const requiredEnvExampleTerms = [
     "DATABASE_URL",
+    "DIRECT_DATABASE_URL",
+    "QUORUM_DB_SCHEMA",
     "QUORUM_SESSION_SECRET",
     "NEXT_PUBLIC_STELLAR_NETWORK",
     "NEXT_PUBLIC_STELLAR_RPC_URL",
@@ -478,6 +489,10 @@ function checkEnvExample() {
 
   if (!envExample.includes("non-placeholder value of at least 32 characters")) {
     fail(".env.example does not document the hosted session secret requirement.");
+  }
+
+  if (!envExample.includes("Do not add NEXT_PUBLIC_SUPABASE_*")) {
+    fail(".env.example does not document the server-only Supabase boundary.");
   }
 }
 
@@ -701,6 +716,7 @@ function checkLiveBoundaries() {
     "QuorumCore.purchase",
     "QuorumCore.check_in",
     "QuorumCore.withdraw",
+    "liveFlows.publishFreeEvent.txHash",
     "docs/LIVE_TESTNET_EVIDENCE.json",
     "npm run live:evidence:audit",
   ]) {
@@ -711,9 +727,11 @@ function checkLiveBoundaries() {
 
   for (const term of [
     "npm run deploy:hosted:preflight",
-    "Do not add them to the normal hosted app runtime",
-    "production-storage ready",
-    "persistent disk",
+    "Supabase Postgres",
+    "DATABASE_URL",
+    "DIRECT_DATABASE_URL",
+    "Do not add `NEXT_PUBLIC_SUPABASE_*`",
+    "Vercel",
     "public HTTPS",
   ]) {
     if (!productionHandoff.includes(term)) {

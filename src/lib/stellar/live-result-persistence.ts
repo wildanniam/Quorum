@@ -19,27 +19,27 @@ import type {
 
 type PersistedPublish = {
   action: "publish_event";
-  result: ReturnType<typeof recordLivePublishedEvent>;
+  result: Awaited<ReturnType<typeof recordLivePublishedEvent>>;
   txHash: string;
 };
 
 type PersistedPass = {
   action: "checkout_pass";
-  result: ReturnType<typeof recordLivePass>;
+  result: Awaited<ReturnType<typeof recordLivePass>>;
   tokenId: string;
   txHash: string;
 };
 
 type PersistedCheckIn = {
   action: "check_in_pass";
-  result: ReturnType<typeof recordLiveCheckIn>;
+  result: Awaited<ReturnType<typeof recordLiveCheckIn>>;
   txHash: string;
 };
 
 type PersistedWithdrawal = {
   action: "withdraw_balance";
   amountUsdc: string;
-  result: ReturnType<typeof recordLiveWithdrawal>;
+  result: Awaited<ReturnType<typeof recordLiveWithdrawal>>;
   txHash: string;
 };
 
@@ -110,7 +110,7 @@ function withdrawUsdcFromReturn(returnValue: LiveTransactionReturnValue) {
   return atomicUnitsToUsdc(returnValue.value);
 }
 
-export function persistLiveTransactionResult({
+export async function persistLiveTransactionResult({
   eventId,
   preparedAction,
   submission,
@@ -118,7 +118,7 @@ export function persistLiveTransactionResult({
   eventId: string;
   preparedAction: PreparedLiveContractAction;
   submission: LiveTransactionSubmissionResult;
-}): PersistedLiveTransactionResult {
+}): Promise<PersistedLiveTransactionResult> {
   assertPreparedSubmissionMatch({ preparedAction, submission });
 
   if (preparedAction.action === "publish_event") {
@@ -128,7 +128,7 @@ export function persistLiveTransactionResult({
 
     return {
       action: "publish_event",
-      result: recordLivePublishedEvent({
+      result: await recordLivePublishedEvent({
         coreEventId: args.eventIdHex,
         eventId,
         metadataHash: args.metadataHashHex,
@@ -145,7 +145,7 @@ export function persistLiveTransactionResult({
 
     return {
       action: "checkout_pass",
-      result: recordLivePass({
+      result: await recordLivePass({
         eventId,
         metadataHash: args.metadataHashHex,
         metadataUri: args.metadataUri,
@@ -165,7 +165,7 @@ export function persistLiveTransactionResult({
 
     return {
       action: "check_in_pass",
-      result: recordLiveCheckIn({
+      result: await recordLiveCheckIn({
         checkedInByWallet: args.organizer,
         eventId,
         tokenId: args.tokenId,
@@ -182,7 +182,7 @@ export function persistLiveTransactionResult({
     return {
       action: "withdraw_balance",
       amountUsdc,
-      result: recordLiveWithdrawal({
+      result: await recordLiveWithdrawal({
         amountUsdc,
         collaboratorWallet: args.collaborator,
         eventId,

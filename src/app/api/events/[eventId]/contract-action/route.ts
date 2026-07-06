@@ -86,7 +86,7 @@ export async function GET(
   const { eventId } = await context.params;
 
   try {
-    const preparedAction = prepareLiveContractAction({
+    const preparedAction = await prepareLiveContractAction({
       action: parsed.data.action,
       eventId,
       signerWallet: session.walletAddress,
@@ -160,7 +160,7 @@ export async function POST(
   let preparedAction: PreparedLiveContractAction | null = null;
 
   try {
-    preparedAction = prepareLiveContractAction({
+    preparedAction = await prepareLiveContractAction({
       action: parsed.data.action,
       eventId,
       signerWallet: session.walletAddress,
@@ -182,7 +182,7 @@ export async function POST(
         signerAddress: session.walletAddress,
       },
     });
-    const persisted = persistLiveTransactionResult({
+    const persisted = await persistLiveTransactionResult({
       eventId,
       preparedAction,
       submission,

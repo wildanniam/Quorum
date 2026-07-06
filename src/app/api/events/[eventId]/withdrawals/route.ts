@@ -39,7 +39,7 @@ export async function POST(request: NextRequest, context: WithdrawalRouteContext
 
   try {
     const policy = assertLocalProofAction("withdraw_balance");
-    const result = createLocalWithdrawalProof(eventId, session.walletAddress);
+    const result = await createLocalWithdrawalProof(eventId, session.walletAddress);
 
     return NextResponse.json(
       { ...result, executionMode: policy.executionMode, proofMode: policy.proofMode },

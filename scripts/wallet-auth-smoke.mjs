@@ -58,6 +58,21 @@ async function waitForServer(child) {
   throw new Error(`Timed out waiting for ${baseUrl}: ${lastError}`);
 }
 
+async function stopServer(child) {
+  if (process.platform === "win32" && child.pid) {
+    await new Promise((resolve) => {
+      const killer = spawn("taskkill", ["/PID", String(child.pid), "/T", "/F"], {
+        stdio: "ignore",
+      });
+      killer.on("close", resolve);
+      killer.on("error", resolve);
+    });
+    return;
+  }
+
+  child.kill("SIGTERM");
+}
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -65,17 +80,18 @@ function assert(condition, message) {
 }
 
 async function main() {
-  const databaseUrl = `file:./data/quorum-wallet-auth-smoke-${randomUUID()}.db`;
+  const databaseSchema = `quorum_wallet_auth_smoke_${randomUUID().replaceAll("-", "_")}`;
   const server = spawn("npm", ["run", "dev", "--", "--port", String(port)], {
     cwd: projectRoot,
     env: {
       ...process.env,
-      DATABASE_URL: databaseUrl,
       NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: "",
       NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: "",
       NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
       NEXT_TELEMETRY_DISABLED: "1",
+      QUORUM_DB_SCHEMA: databaseSchema,
     },
+    shell: process.platform === "win32",
     stdio: ["ignore", "pipe", "pipe"],
   });
   let serverOutput = "";
@@ -210,7 +226,7 @@ async function main() {
     );
     process.exitCode = 1;
   } finally {
-    server.kill("SIGTERM");
+    await stopServer(server);
     await delay(500);
   }
 }
