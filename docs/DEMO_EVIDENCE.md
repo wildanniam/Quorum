@@ -1,11 +1,11 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-06-09T12:27:58.605Z`
+Generated at: `2026-07-04T07:17:17.473Z`
 
 ## Source State
 
-- Branch: `codex/supabase-live-evidence`
-- Commit: `dec586b`
+- Branch: `codex/pr-2-3-5-research`
+- Commit: `46cb683`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -26,6 +26,7 @@ Generated at: `2026-06-09T12:27:58.605Z`
 | API origin smoke | `npm run api:origin:smoke` | PASS | 0 |
 | Demo smoke | `npm run demo:smoke` | PASS | 0 |
 | Live policy smoke | `npm run demo:live-policy` | PASS | 0 |
+| Settlement smoke | `npm run settlement:smoke` | PASS | 0 |
 | Browser QA | `npm run browser:qa` | PASS | 0 |
 | Deploy env smoke | `npm run deploy:env:smoke` | PASS | 0 |
 | Deploy hosted preflight smoke | `npm run deploy:hosted:preflight:smoke` | PASS | 0 |
@@ -53,7 +54,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-8711c2`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-093613`
 
 Covered checks:
 
@@ -108,6 +109,7 @@ the `npm run contracts:test` output:
 
 Blockers:
 
+- STELLAR_ACCOUNT is missing. Set a funded Stellar identity/secret before deploy.
 - Set QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING only after explicit approval for live testnet signing.
 
 Warnings:
@@ -130,10 +132,10 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > quorum@0.1.0 db:migrate
 > node scripts/db-migrate.mjs
 {
-  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum",
+  "databaseUrl": "postgresql://REDACTED:REDACTED@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
   "schema": "public",
   "applied": [],
-  "totalMigrations": 2
+  "totalMigrations": 3
 }
 ```
 
@@ -149,7 +151,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 {
   "seededEventId": "evt_apac_stellar_builder_meetup",
   "seededFreeEventId": "evt_stellar_open_office_hours",
-  "publishedCount": 2
+  "publishedCount": 4
 }
 ```
 
@@ -164,8 +166,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_c1ec4e24-c97b-48bb-9739-0a5ec750a748",
-    "slug": "smoke-c1ec4e24",
+    "id": "evt_df6201f6-178c-4c4d-9529-aacd03a8bba8",
+    "slug": "smoke-df6201f6",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -174,6 +176,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
   "checks": [
     "unique-live-proof-indexes",
     "live-proof-hash-registry",
+    "indexer-tables",
     "event-crud",
     "collaborator-split-total",
     "resource-crud",
@@ -205,15 +208,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 ▲ Next.js 16.2.7 (Turbopack)
 - Environments: .env.local
   Creating an optimized production build ...
-✓ Compiled successfully in 9.9s
+✓ Compiled successfully in 9.0s
   Running TypeScript ...
-  Finished TypeScript in 10.9s ...
+  Finished TypeScript in 13.3s ...
   Collecting page data using 15 workers ...
   Generating static pages using 15 workers (0/10) ...
   Generating static pages using 15 workers (2/10)
   Generating static pages using 15 workers (4/10)
   Generating static pages using 15 workers (7/10)
-✓ Generating static pages using 15 workers (10/10) in 1036ms
+✓ Generating static pages using 15 workers (10/10) in 956ms
   Finalizing page optimization ...
 Route (app)
 ┌ ƒ /
@@ -230,14 +233,18 @@ Route (app)
 ├ ƒ /api/events/[eventId]/passes
 ├ ƒ /api/events/[eventId]/publish
 ├ ƒ /api/events/[eventId]/withdrawals
+├ ƒ /api/indexer/stellar-events
 ├ ƒ /api/me
 ├ ƒ /check-in/[eventId]
 ├ ƒ /dashboard
 ├ ○ /dashboard/events/new
+├ ƒ /dashboard/ledger
 ├ ƒ /discover
 ├ ƒ /events/[slug]
 ├ ƒ /events/[slug]/checkout
+├ ƒ /events/[slug]/proof
 ├ ƒ /events/[slug]/resources
+├ ƒ /evidence
 ├ ƒ /passes
 └ ƒ /passes/[tokenId]
 ○  (Static)   prerendered as static content
@@ -266,7 +273,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3042",
-  "walletAddress": "GAFWD4KJYDOP7W3DJUW2R7SKB5MHUVL5PZKCQ5N45U2PPDXS3DKD274N",
+  "walletAddress": "GCF2EZNDX53KFVTYCM2HDS5X74GMUYIRN5WL6HAGHU5ZGOV2LCK7O7TA",
   "checks": [
     "reject-invalid-wallet-challenge-request",
     "issue-wallet-bound-challenge-cookie",
@@ -314,9 +321,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databaseSchema": "quorum_demo_smoke_88c82d79_6ffa_4e65_aa9e_79c4c88e6648",
+  "databaseSchema": "quorum_demo_smoke_14e45ace_6894_412a_86d8_1ee526e5ad9d",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-8711c2",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-093613",
   "checks": [
     "marketplace",
     "event-detail",
@@ -385,6 +392,46 @@ found 0 vulnerabilities
 }
 ```
 
+### Settlement smoke
+
+- Command: `npm run settlement:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 settlement:smoke
+> tsx scripts/settlement-smoke.ts
+{
+  "checks": [
+    "indexer-schema",
+    "indexer-idempotent-ingest",
+    "indexer-state-cursor",
+    "global-event-evidence-read-model",
+    "event-proof-filter",
+    "stellar-explorer-links",
+    "collaborator-credit-ledger",
+    "collaborator-debit-ledger",
+    "collaborator-withdrawable-balance"
+  ],
+  "evidenceKinds": [
+    "check_in",
+    "indexed_event",
+    "paid_checkout",
+    "publish",
+    "withdrawal"
+  ],
+  "indexedEvents": 4,
+  "ledgerEntries": 2,
+  "summary": {
+    "totalEarnedUsdc": "3",
+    "totalWithdrawnUsdc": "3",
+    "withdrawableUsdc": "0",
+    "eventCount": 1,
+    "entryCount": 2
+  }
+}
+```
+
 ### Browser QA
 
 - Command: `npm run browser:qa`
@@ -397,7 +444,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "D:\\AAL\\Coding\\Quorum\\docs\\BROWSER_QA.md",
-  "generatedAt": "2026-06-09T12:30:29.001Z",
+  "generatedAt": "2026-07-04T07:21:26.606Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 8,
   "failures": []
@@ -532,8 +579,8 @@ found 0 vulnerabilities
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databaseSchema": "quorum_live_flow_smoke_0fdef5c0_27ea_4a73_b09b_969cf55f7269",
-  "persistedEventId": "evt_a05ffe5e-2885-47ee-a2d4-9255138a5993",
+  "databaseSchema": "quorum_live_flow_smoke_d59eb577_cf8d_463f_837b_c46ff650d78d",
+  "persistedEventId": "evt_dd34d8cb-78ec-47ba-9dd2-c255946217da",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -558,7 +605,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databaseSchema": "quorum_live_persistence_smoke_7e1e820c_387f_4881_9db5_cde83b7bf39d",
+  "databaseSchema": "quorum_live_persistence_smoke_779368a8_eef8_4d5a_9f93_ea84caf664bf",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -633,6 +680,7 @@ found 0 vulnerabilities
   "ok": true,
   "checks": [
     "freighter-sign-transaction-options",
+    "reject-mainnet-freighter-before-signing",
     "signed-xdr-parseable",
     "reject-signer-mismatch",
     "normalize-wallet-rejection",
@@ -805,7 +853,10 @@ found 0 vulnerabilities
     "stellar-cli-contract-interfaces",
     "recorded-read-only-validation-evidence"
   ],
-  "failures": []
+  "failures": [],
+  "warnings": [
+    "set_core event RPC lookup skipped because the recorded deployment ledger is outside the current Stellar RPC retention window."
+  ]
 }
 ```
 
@@ -864,28 +915,28 @@ found 0 vulnerabilities
 > quorum@0.1.0 contracts:test
 > cargo test
 running 19 tests
-test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
+test test::rejects_check_in_for_unknown_token - should panic ... ok
+test test::organizer_can_check_in_pass ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
-test test::rejects_duplicate_free_claim - should panic ... ok
-test test::admin_can_withdraw_platform_fee ... ok
-test test::free_event_claim_mints_pass_without_balances ... ok
-test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::organizer_can_check_in_pass ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
-test test::purchase_mints_pass_and_splits_balance ... ok
 test test::collaborator_can_withdraw_balance ... ok
-test test::duplicate_check_in_is_idempotent ... ok
 test test::emits_core_and_pass_proof_events ... ok
-test test::rejects_withdraw_without_balance - should panic ... ok
+test test::free_event_claim_mints_pass_without_balances ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::duplicate_check_in_is_idempotent ... ok
+test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
+test test::admin_can_withdraw_platform_fee ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.36s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.34s
 running 7 tests
-test test::rejects_unauthorize
+test test::set_core_emits_even
 ... [truncated]
 ```
 
@@ -900,7 +951,7 @@ test test::rejects_unauthorize
 > stellar contract build
 ⚠️  Cargo home directory contains whitespace. Dependency paths will not be remapped; builds may not be reproducible.
 ℹ️  SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts\quorum_core\Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.50s
+    Finished `release` profile [optimized] target(s) in 0.85s
 ℹ️  Build Summary:
     Wasm File: target\wasm32v1-none\release\quorum_core.wasm (11189 bytes optimized (original size was 14312 bytes))
     Wasm Hash: 784375b2d7ad722ee7beff0e660e529c7236c0b392c769e30ee989873c7f0dac
@@ -921,7 +972,7 @@ test test::rejects_unauthorize
 ✅ Build Complete
 ⚠️  Cargo home directory contains whitespace. Dependency paths will not be remapped; builds may not be reproducible.
 ℹ️  SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts\quorum_pass_nft\Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.43s
+    Finished `release` profile [optimized] target(s) in 0.61s
 ℹ️  Build Summary:
     Wasm File: target\wasm32v1-none\release\q
 ... [truncated]

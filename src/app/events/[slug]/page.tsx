@@ -174,6 +174,12 @@ export default async function EventPage({ params }: EventPageProps) {
               >
                 {primaryAction} <ArrowRight size={16} />
               </Link>
+              <Link
+                href={`/events/${event.slug}/proof`}
+                className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-full border border-foreground/10 bg-foreground/[0.045] px-4 text-sm font-semibold transition hover:border-accent/45 hover:text-accent"
+              >
+                Settlement proof <ArrowRight size={16} />
+              </Link>
 
               <div className="mt-5 grid gap-3">
                 {eventFacts.map((fact) => {

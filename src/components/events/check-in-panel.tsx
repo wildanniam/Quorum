@@ -50,9 +50,13 @@ export function CheckInPanel({ eventId }: CheckInPanelProps) {
 
   const isConnected = Boolean(sessionWalletAddress);
   const isBusy = isSubmitting || walletStatus === "checking";
+  const hasCompletedCheckIn = Boolean(txHash);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (hasCompletedCheckIn) return;
+
     setCheckInError(null);
     setTxHash(null);
 
@@ -165,21 +169,32 @@ export function CheckInPanel({ eventId }: CheckInPanelProps) {
       ) : null}
 
       {txHash ? (
-        <ProofDisplay
-          className="mt-4"
-          compact
-          label="Check-in proof"
-          value={txHash}
-        />
+        <div className="mt-4 grid gap-3">
+          <ProofDisplay compact label="Check-in proof" value={txHash} />
+          <button
+            className="inline-flex min-h-10 w-full items-center justify-center rounded-[8px] border border-line px-4 text-sm font-semibold transition hover:border-accent hover:text-accent"
+            onClick={() => {
+              setCheckInError(null);
+              setTxHash(null);
+            }}
+            type="button"
+          >
+            Check another pass
+          </button>
+        </div>
       ) : null}
 
       <button
         className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-[8px] bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-wait disabled:opacity-70"
-        disabled={isBusy}
+        disabled={isBusy || hasCompletedCheckIn}
         type="submit"
       >
         {isBusy ? <Loader2 className="animate-spin" size={16} /> : null}
-        {!isConnected ? "Connect organizer wallet" : "Mark checked in"}
+        {!isConnected
+          ? "Connect organizer wallet"
+          : hasCompletedCheckIn
+            ? "Checked in"
+            : "Mark checked in"}
       </button>
     </form>
   );

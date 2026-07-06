@@ -6,6 +6,7 @@ import {
   Compass,
   PanelTop,
   PlusCircle,
+  RadioTower,
   TicketCheck,
   type LucideIcon,
 } from "lucide-react";
@@ -46,6 +47,13 @@ const navItems: NavItem[] = [
     icon: TicketCheck,
     label: "Passes",
     match: (pathname) => pathname.startsWith("/passes"),
+  },
+  {
+    href: "/evidence",
+    icon: RadioTower,
+    label: "Evidence",
+    match: (pathname) =>
+      pathname.startsWith("/evidence") || pathname.endsWith("/proof"),
   },
 ];
 
@@ -105,7 +113,7 @@ export function MobileNavigation() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="sticky top-[4.25rem] z-10 mx-3 mt-3 grid grid-cols-4 gap-1 rounded-full border border-foreground/10 bg-background/88 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:hidden"
+      className="sticky top-[4.25rem] z-10 mx-3 mt-3 grid grid-cols-5 gap-1 rounded-full border border-foreground/10 bg-background/88 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:hidden"
     >
       {navItems.map((item) => {
         const Icon = item.icon;

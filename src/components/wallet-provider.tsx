@@ -8,6 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Networks, StrKey } from "@stellar/stellar-sdk";
 
 type WalletState = {
   status: "idle" | "checking" | "connected" | "error" | "unavailable";
@@ -42,6 +43,12 @@ function normalizeError(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     return String((error as { message: unknown }).message);
   }
+  if (error && typeof error === "object" && "error" in error) {
+    return normalizeError((error as { error: unknown }).error);
+  }
+  if (error && typeof error === "object" && "errorMessage" in error) {
+    return String((error as { errorMessage: unknown }).errorMessage);
+  }
   return "Wallet request failed.";
 }
 
@@ -49,6 +56,41 @@ function normalizeSignedMessage(signature: string | Buffer | null) {
   if (!signature) return null;
   if (typeof signature === "string") return signature;
   return signature.toString("base64");
+}
+
+function normalizeWalletAddress(value: unknown): string | null {
+  if (typeof value === "string") {
+    return StrKey.isValidEd25519PublicKey(value) ? value : null;
+  }
+
+  if (!value || typeof value !== "object") return null;
+
+  for (const key of [
+    "address",
+    "publicKey",
+    "public_key",
+    "signerAddress",
+    "accountId",
+  ]) {
+    if (key in value) {
+      const normalized = normalizeWalletAddress(
+        (value as Record<string, unknown>)[key],
+      );
+      if (normalized) return normalized;
+    }
+  }
+
+  return null;
+}
+
+function isTestnetNetworkDetails(details: {
+  network?: string;
+  networkPassphrase?: string;
+}) {
+  return (
+    details.network?.trim().toUpperCase() === "TESTNET" &&
+    details.networkPassphrase?.trim() === Networks.TESTNET
+  );
 }
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
@@ -85,33 +127,60 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       }
 
       const access = await freighter.requestAccess();
+      const accessAddress = normalizeWalletAddress(access);
 
-      if (access.error || !access.address) {
+      if (access.error || !accessAddress) {
         setState((current) => ({
           ...current,
           status: "error",
-          error: access.error ? String(access.error) : "Wallet access rejected.",
+          error: access.error
+            ? normalizeError(access.error)
+            : "Freighter did not return a valid Stellar public key.",
         }));
         return;
       }
 
       const networkDetails = await freighter.getNetworkDetails();
-      const challengeResponse = await fetch("/api/auth/challenge", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: access.address }),
-      });
-      const challenge = (await challengeResponse.json()) as { message: string };
-      const signed = await freighter.signMessage(challenge.message, {
-        address: access.address,
-        networkPassphrase: networkDetails.networkPassphrase,
-      });
 
-      if (signed.error || !signed.signedMessage) {
+      if (networkDetails.error) {
         setState((current) => ({
           ...current,
           status: "error",
-          error: signed.error ? String(signed.error) : "Signature rejected.",
+          error: normalizeError(networkDetails.error),
+        }));
+        return;
+      }
+
+      if (!isTestnetNetworkDetails(networkDetails)) {
+        setState((current) => ({
+          ...current,
+          status: "error",
+          error: `Switch Freighter to Stellar Testnet before signing. Current network: ${
+            networkDetails.network || "unknown"
+          }.`,
+        }));
+        return;
+      }
+
+      const challengeResponse = await fetch("/api/auth/challenge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: accessAddress }),
+      });
+      const challenge = (await challengeResponse.json()) as { message: string };
+      const signed = await freighter.signMessage(challenge.message, {
+        address: accessAddress,
+        networkPassphrase: networkDetails.networkPassphrase,
+      });
+      const signerAddress = normalizeWalletAddress(signed.signerAddress);
+
+      if (signed.error || !signed.signedMessage || !signerAddress) {
+        setState((current) => ({
+          ...current,
+          status: "error",
+          error: signed.error
+            ? normalizeError(signed.error)
+            : "Freighter signature did not include a valid signer address.",
         }));
         return;
       }
@@ -120,8 +189,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          walletAddress: access.address,
-          signerAddress: signed.signerAddress,
+          walletAddress: accessAddress,
+          signerAddress,
           signedMessage: normalizeSignedMessage(signed.signedMessage),
           message: challenge.message,
         }),
@@ -143,7 +212,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
       setState({
         status: "connected",
-        walletAddress: access.address,
+        walletAddress: accessAddress,
         sessionWalletAddress: verified.walletAddress,
         network: networkDetails.network,
         networkPassphrase: networkDetails.networkPassphrase,

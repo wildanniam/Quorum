@@ -16,6 +16,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { ContractReadiness } from "@/components/contract-readiness";
 import { WalletReadiness } from "@/components/wallet-readiness";
+import { PublishButton } from "@/components/events/publish-button";
 import { WithdrawButton } from "@/components/events/withdraw-button";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
@@ -292,17 +293,16 @@ export default async function DashboardPage() {
                               {event.status} / {event.capacity} capacity
                             </p>
                           </div>
-                          <Link
-                            href={
-                              event.status === "draft"
-                                ? `/dashboard/events/new?eventId=${event.id}`
-                                : `/events/${event.slug}`
-                            }
-                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm transition hover:border-accent/45 hover:text-accent"
-                          >
-                            {event.status === "draft" ? "Edit" : "Open"}
-                            <ArrowUpRight size={13} />
-                          </Link>
+                          {event.status === "draft" ? (
+                            <PublishButton eventId={event.id} />
+                          ) : (
+                            <Link
+                              href={`/events/${event.slug}`}
+                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm transition hover:border-accent/45 hover:text-accent"
+                            >
+                              Open <ArrowUpRight size={13} />
+                            </Link>
+                          )}
                         </div>
                         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {metricCards.map((metric) => (
@@ -331,11 +331,19 @@ export default async function DashboardPage() {
             </section>
 
             <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
-              <div>
-                <p className="eyebrow">Collaborator payouts</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                  Balances ready for withdrawal
-                </h2>
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="eyebrow">Collaborator payouts</p>
+                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                    Balances ready for withdrawal
+                  </h2>
+                </div>
+                <Link
+                  href="/dashboard/ledger"
+                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm text-muted transition hover:border-accent/45 hover:text-accent"
+                >
+                  Ledger <ArrowUpRight size={13} />
+                </Link>
               </div>
               <div className="mt-5 grid gap-3">
                 {collaborations.length > 0 ? (

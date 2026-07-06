@@ -27,6 +27,9 @@ Set these in the Vercel runtime environment.
 | `DIRECT_DATABASE_URL` | Server-only secret | Supabase direct Postgres URL with `sslmode=require` | Optional, but preferred for migrations when runtime uses a pooler. |
 | `QUORUM_DB_SCHEMA` | Server-only | `public` unless an isolated schema is intentionally used | Must be a simple Postgres identifier. |
 | `QUORUM_SESSION_SECRET` | Server-only secret | 32+ random characters | Must not be the placeholder, local fallback, or a short value. |
+| `QUORUM_INDEXER_CRON_SECRET` | Server-only secret | Random bearer secret | Optional but recommended. Protects manual/cron calls to `/api/indexer/stellar-events`. |
+| `QUORUM_INDEXER_START_LEDGER` | Server-only | First ledger to index | Optional. Use when backfilling from a known live-demo ledger. |
+| `QUORUM_INDEXER_RECENT_LEDGER_WINDOW` | Server-only | Recent ledger window size | Optional. Defaults to a conservative recent window when no cursor/start ledger exists. |
 | `NEXT_PUBLIC_STELLAR_NETWORK` | Browser public | `TESTNET` | Public because the browser needs network context. |
 | `NEXT_PUBLIC_STELLAR_RPC_URL` | Browser public | `https://soroban-testnet.stellar.org` | Public RPC endpoint used by readiness surfaces and live flow preparation. |
 | `NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE` | Browser public | `Test SDF Network ; September 2015` | Must match Stellar testnet. |
@@ -88,6 +91,7 @@ Examples:
 echo "<supabase-pooled-postgres-url?sslmode=require>" | vercel env add DATABASE_URL production preview --sensitive
 echo "<supabase-direct-postgres-url?sslmode=require>" | vercel env add DIRECT_DATABASE_URL production preview --sensitive
 echo "<32-plus-character-secret>" | vercel env add QUORUM_SESSION_SECRET production preview --sensitive
+echo "<random-indexer-bearer-secret>" | vercel env add QUORUM_INDEXER_CRON_SECRET production preview --sensitive
 echo "TESTNET" | vercel env add NEXT_PUBLIC_STELLAR_NETWORK production preview
 echo "https://soroban-testnet.stellar.org" | vercel env add NEXT_PUBLIC_STELLAR_RPC_URL production preview
 echo "Test SDF Network ; September 2015" | vercel env add NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE production preview
@@ -104,6 +108,32 @@ vercel env pull .env.local --environment=production --yes
 
 `vercel env pull` replaces the target file. Preserve local-only variables before
 pulling if they are not present in the Vercel project.
+
+## Vercel Cron And Indexer
+
+The repository includes `vercel.json` with a daily cron for:
+
+```text
+/api/indexer/stellar-events
+```
+
+Vercel calls this route on the production deployment. If
+`QUORUM_INDEXER_CRON_SECRET` or `CRON_SECRET` is set, the route requires:
+
+```text
+Authorization: Bearer <secret>
+```
+
+For live-demo evidence, run or trigger the indexer after the Freighter signing
+sequence so newly persisted contract events are copied into Postgres:
+
+```bash
+npm run indexer:run -- --start-ledger <known-live-demo-ledger>
+```
+
+or call the hosted route with the bearer header. The indexer stores its cursor
+and latest ledger in `indexer_state`, and stores idempotent contract events in
+`stellar_events`.
 
 ## Verification Checklist
 

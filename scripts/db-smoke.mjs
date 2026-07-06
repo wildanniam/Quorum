@@ -13,6 +13,7 @@ const requiredUniqueIndexes = {
     "idx_events_publish_tx_hash_unique",
   ],
   passes: ["idx_passes_mint_tx_hash_unique"],
+  stellar_events: ["stellar_events_pkey", "stellar_events_paging_token_key"],
 };
 
 async function tableIndexNames(client, tableName) {
@@ -49,6 +50,17 @@ async function assertUniqueLiveProofIndexes(client) {
     [databaseSchema()],
   );
   assert.equal(registry.rowCount, 1, "live_proof_hashes registry is missing");
+
+  const indexerTables = await client.query(
+    `
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = $1
+      AND table_name IN ('indexer_state', 'stellar_events')
+    `,
+    [databaseSchema()],
+  );
+  assert.equal(indexerTables.rowCount, 2, "indexer tables are missing");
 }
 
 await withClient(async (client) => {
@@ -173,6 +185,7 @@ await withClient(async (client) => {
       checks: [
         "unique-live-proof-indexes",
         "live-proof-hash-registry",
+        "indexer-tables",
         "event-crud",
         "collaborator-split-total",
         "resource-crud",

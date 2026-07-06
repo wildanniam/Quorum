@@ -1,4 +1,5 @@
 import {
+  Networks,
   StrKey,
   Transaction,
   TransactionBuilder,
@@ -7,6 +8,11 @@ import {
 import type { LiveTransactionForSigning } from "@/lib/stellar/live-preflight";
 
 export type FreighterLiveSigner = {
+  getNetworkDetails?: () => Promise<{
+    error?: unknown;
+    network?: string;
+    networkPassphrase?: string;
+  }>;
   signTransaction(
     transactionXdr: string,
     options?: {
@@ -35,7 +41,66 @@ function normalizeError(error: unknown) {
   if (error && typeof error === "object" && "message" in error) {
     return String((error as { message: unknown }).message);
   }
+  if (error && typeof error === "object" && "error" in error) {
+    return normalizeError((error as { error: unknown }).error);
+  }
+  if (error && typeof error === "object" && "errorMessage" in error) {
+    return String((error as { errorMessage: unknown }).errorMessage);
+  }
   return "Freighter transaction signing failed.";
+}
+
+function normalizeWalletAddress(value: unknown): string | null {
+  if (typeof value === "string") {
+    return StrKey.isValidEd25519PublicKey(value) ? value : null;
+  }
+
+  if (!value || typeof value !== "object") return null;
+
+  for (const key of [
+    "address",
+    "publicKey",
+    "public_key",
+    "signerAddress",
+    "accountId",
+  ]) {
+    if (key in value) {
+      const normalized = normalizeWalletAddress(
+        (value as Record<string, unknown>)[key],
+      );
+      if (normalized) return normalized;
+    }
+  }
+
+  return null;
+}
+
+async function assertFreighterNetworkMatchesPrepared(
+  signer: FreighterLiveSigner,
+  preparedTransaction: LiveTransactionForSigning,
+) {
+  if (!signer.getNetworkDetails) return;
+
+  const networkDetails = await signer.getNetworkDetails();
+
+  if (networkDetails.error) {
+    throw new FreighterLiveSigningError(normalizeError(networkDetails.error));
+  }
+
+  const network = networkDetails.network?.trim().toUpperCase();
+  const networkPassphrase = networkDetails.networkPassphrase?.trim();
+
+  if (
+    network !== "TESTNET" ||
+    networkPassphrase !== Networks.TESTNET ||
+    networkPassphrase !== preparedTransaction.networkPassphrase
+  ) {
+    throw new FreighterLiveSigningError(
+      `Switch Freighter to Stellar Testnet before signing. Current network: ${
+        networkDetails.network || "unknown"
+      }.`,
+    );
+  }
 }
 
 export class FreighterLiveSigningError extends Error {
@@ -101,7 +166,9 @@ function assertTransactionMatchesPrepared({
     );
   }
 
-  const contractId = StrKey.encodeContract(contractAddress.contractId());
+  const contractId = StrKey.encodeContract(
+    Buffer.from(contractAddress.contractId() as unknown as Uint8Array),
+  );
   const functionName = invocation.functionName().toString();
 
   if (contractId !== preparedTransaction.contractId) {
@@ -161,6 +228,8 @@ export async function signPreparedLiveTransaction({
     transaction: parsedPreparedTransaction,
   });
 
+  await assertFreighterNetworkMatchesPrepared(liveSigner, preparedTransaction);
+
   const signed = await liveSigner.signTransaction(
     preparedTransaction.preparedTransactionXdr,
     {
@@ -173,7 +242,15 @@ export async function signPreparedLiveTransaction({
     throw new FreighterLiveSigningError(normalizeError(signed.error));
   }
 
-  if (signed.signerAddress !== preparedTransaction.source) {
+  const signerAddress = normalizeWalletAddress(signed.signerAddress);
+
+  if (!signerAddress) {
+    throw new FreighterLiveSigningError(
+      "Freighter did not return a valid signer address.",
+    );
+  }
+
+  if (signerAddress !== preparedTransaction.source) {
     throw new FreighterLiveSigningError(
       "Freighter signed with a different wallet than the prepared transaction source.",
     );
@@ -200,6 +277,6 @@ export async function signPreparedLiveTransaction({
     invocationArgsXdr: preparedTransaction.invocationArgsXdr,
     networkPassphrase: preparedTransaction.networkPassphrase,
     signedTransactionXdr: signed.signedTxXdr,
-    signerAddress: signed.signerAddress,
+    signerAddress,
   };
 }

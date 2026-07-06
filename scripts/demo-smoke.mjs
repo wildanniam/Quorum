@@ -7,6 +7,7 @@ import { withClient } from "./postgres-utils.mjs";
 const projectRoot = process.cwd();
 const port = Number(process.env.DEMO_SMOKE_PORT ?? 3035);
 const baseUrl = `http://127.0.0.1:${port}`;
+const readinessUrl = `${baseUrl}/api/contracts/status`;
 const databaseSchema =
   process.env.DEMO_SMOKE_DB_SCHEMA ??
   `quorum_demo_smoke_${randomUUID().replaceAll("-", "_")}`;
@@ -97,7 +98,7 @@ async function waitForServer(child) {
     }
 
     try {
-      const response = await fetch(baseUrl);
+      const response = await fetch(readinessUrl);
       if (response.ok) return;
       lastError = `HTTP ${response.status}`;
     } catch (error) {
@@ -107,7 +108,7 @@ async function waitForServer(child) {
     await delay(400);
   }
 
-  throw new Error(`Timed out waiting for ${baseUrl}: ${lastError}`);
+  throw new Error(`Timed out waiting for ${readinessUrl}: ${lastError}`);
 }
 
 async function stopServer(child) {

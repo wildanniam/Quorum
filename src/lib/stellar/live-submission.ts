@@ -139,7 +139,9 @@ function assertSignedTransactionInvocation({
     );
   }
 
-  const contractId = StrKey.encodeContract(contractAddress.contractId());
+  const contractId = StrKey.encodeContract(
+    Buffer.from(contractAddress.contractId() as unknown as Uint8Array),
+  );
   const functionName = invocation.functionName().toString();
 
   if (contractId !== signedTransaction.contractId) {

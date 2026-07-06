@@ -3,6 +3,14 @@ export type LocationType = "physical" | "virtual" | "hybrid";
 export type ResourceType = "link" | "file" | "text";
 export type PassSource = "purchase" | "free_claim";
 export type PurchaseStatus = "pending" | "succeeded" | "failed";
+export type EvidenceKind =
+  | "check_in"
+  | "free_claim"
+  | "indexed_event"
+  | "paid_checkout"
+  | "publish"
+  | "withdrawal";
+export type LedgerEntryKind = "credit" | "debit";
 
 export type UserRecord = {
   id: string;
@@ -98,4 +106,75 @@ export type CheckInRecord = {
   checkedInByWallet: string;
   txHash: string | null;
   createdAt: string;
+};
+
+export type IndexerStateRecord = {
+  id: string;
+  network: string;
+  rpcUrl: string;
+  contractIds: string[];
+  cursor: string | null;
+  latestLedger: number | null;
+  lastStartedAt: string | null;
+  lastSuccessAt: string | null;
+  lastError: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type StellarEventRecord = {
+  eventKey: string;
+  contractId: string;
+  eventType: string;
+  topicKey: string | null;
+  appEventId: string | null;
+  coreEventId: string | null;
+  txHash: string | null;
+  ledger: number;
+  eventIndex: number;
+  pagingToken: string;
+  successful: boolean;
+  topicsJson: unknown;
+  valueJson: unknown;
+  valueXdr: string | null;
+  rawEventJson: unknown;
+  observedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type EvidenceRecord = {
+  id: string;
+  kind: EvidenceKind;
+  eventId: string | null;
+  eventSlug: string | null;
+  eventTitle: string | null;
+  actorWallet: string | null;
+  amountUsdc: string | null;
+  asset: "USDC" | null;
+  explorerUrl: string | null;
+  ledger: number | null;
+  sourceLabel: string;
+  status: string;
+  tokenId: string | null;
+  txHash: string | null;
+  occurredAt: string;
+};
+
+export type LedgerEntryRecord = {
+  id: string;
+  kind: LedgerEntryKind;
+  eventId: string;
+  eventSlug: string;
+  eventTitle: string;
+  walletAddress: string;
+  amountUsdc: string;
+  asset: "USDC";
+  balanceAfterUsdc: string;
+  explorerUrl: string | null;
+  sourceId: string;
+  sourceLabel: string;
+  tokenId: string | null;
+  txHash: string | null;
+  occurredAt: string;
 };

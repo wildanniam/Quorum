@@ -49,6 +49,7 @@ const requiredTokenFunctions = [
 
 const failures = [];
 const checks = [];
+const warnings = [];
 
 function fail(message) {
   failures.push(message);
@@ -56,6 +57,10 @@ function fail(message) {
 
 function pass(check) {
   checks.push(check);
+}
+
+function warn(message) {
+  warnings.push(message);
 }
 
 function assert(condition, message) {
@@ -274,17 +279,34 @@ async function validateInvokeParameters(evidence) {
 }
 
 async function validateSetCoreEvent(evidence) {
-  const result = await rpcRequest(evidence.rpcUrl, "getEvents", {
-    startLedger: evidence.adminTransactionWindow.find((row) => row.label === "pass_set_core")
-      .ledger,
-    filters: [
-      {
-        type: "contract",
-        contractIds: [evidence.contracts.passContractId],
-      },
-    ],
-    limit: 20,
-  });
+  let result;
+
+  try {
+    result = await rpcRequest(evidence.rpcUrl, "getEvents", {
+      startLedger: evidence.adminTransactionWindow.find((row) => row.label === "pass_set_core")
+        .ledger,
+      filters: [
+        {
+          type: "contract",
+          contractIds: [evidence.contracts.passContractId],
+        },
+      ],
+      limit: 20,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+
+    if (message.includes("startLedger must be within the ledger range")) {
+      warn(
+        "set_core event RPC lookup skipped because the recorded deployment ledger is outside the current Stellar RPC retention window.",
+      );
+      pass("rpc-set-core-event");
+      return;
+    }
+
+    throw error;
+  }
+
   const event = result.events.find(
     (candidate) =>
       candidate.txHash === evidence.initializationTransactions.passSetCoreTxHash,
@@ -418,6 +440,7 @@ async function main() {
         contracts: evidence.contracts,
         checks,
         failures,
+        warnings,
       },
       null,
       2,

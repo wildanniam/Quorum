@@ -1,4 +1,6 @@
 import { Pool, types, type PoolClient, type QueryResultRow } from "pg";
+import fs from "node:fs";
+import path from "node:path";
 
 const DEFAULT_DATABASE_URL =
   "postgresql://postgres:postgres@127.0.0.1:5432/quorum";
@@ -7,6 +9,35 @@ const TIMESTAMPTZ_OID = 1184;
 
 types.setTypeParser(TIMESTAMP_OID, (value) => value);
 types.setTypeParser(TIMESTAMPTZ_OID, (value) => value);
+
+function loadEnvLocalIfNeeded() {
+  if (process.env.DATABASE_URL) return;
+
+  const envPath = path.join(process.cwd(), ".env.local");
+  if (!fs.existsSync(envPath)) return;
+
+  const lines = fs.readFileSync(envPath, "utf8").split(/\r?\n/);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const separatorIndex = trimmed.indexOf("=");
+    if (separatorIndex === -1) continue;
+
+    const key = trimmed.slice(0, separatorIndex);
+    const value = trimmed
+      .slice(separatorIndex + 1)
+      .trim()
+      .replace(/^"|"$/g, "");
+
+    if (!process.env[key]) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvLocalIfNeeded();
 
 type GlobalWithDatabase = typeof globalThis & {
   quorumDatabasePool?: Pool;
@@ -20,6 +51,18 @@ function optionalEnv(value: string | undefined) {
 }
 
 export function getDatabaseUrl(databaseUrl = process.env.DATABASE_URL) {
+  const schema = optionalEnv(process.env.QUORUM_DB_SCHEMA);
+  const directDatabaseUrl = optionalEnv(process.env.DIRECT_DATABASE_URL);
+
+  if (
+    schema &&
+    schema !== "public" &&
+    directDatabaseUrl &&
+    databaseUrl === process.env.DATABASE_URL
+  ) {
+    return directDatabaseUrl;
+  }
+
   return optionalEnv(databaseUrl) ?? DEFAULT_DATABASE_URL;
 }
 

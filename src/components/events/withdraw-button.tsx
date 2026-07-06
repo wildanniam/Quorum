@@ -30,8 +30,11 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const hasCompletedWithdrawal = Boolean(txHash);
 
   async function handleWithdraw() {
+    if (hasCompletedWithdrawal) return;
+
     setError(null);
     setTxHash(null);
     setIsSubmitting(true);
@@ -81,7 +84,7 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
     <div className="grid gap-2">
       <button
         className="inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-[8px] bg-accent px-3 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
-        disabled={isSubmitting || amountUsdc === "0"}
+        disabled={isSubmitting || amountUsdc === "0" || hasCompletedWithdrawal}
         onClick={handleWithdraw}
         type="button"
       >
@@ -90,7 +93,7 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
         ) : (
           <BanknoteArrowUp size={15} />
         )}
-        Withdraw
+        {hasCompletedWithdrawal ? "Withdrawn" : "Withdraw"}
       </button>
       {error ? (
         <p className="text-right text-xs leading-5 text-coral" role="alert">
