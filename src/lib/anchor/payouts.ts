@@ -7,6 +7,10 @@ import type {
 } from "@/lib/db/models";
 import { query, queryOne, withTransaction, type DatabaseClient } from "@/lib/db/client";
 import { getAnchorPayoutProvider } from "@/lib/anchor/provider";
+import {
+  fetchMoneyGramSep24Transaction,
+  type MoneyGramSep24Transaction,
+} from "@/lib/anchor/moneygram/sep24";
 
 type AnchorPayoutRow = {
   id: string;
@@ -71,6 +75,17 @@ export type CreateAnchorPayoutInput = {
   collaboratorWallet: string;
   eventId: string;
   moneyGramAuthToken?: string | null;
+};
+
+export type SyncMoneyGramAnchorPayoutInput = {
+  collaboratorWallet: string;
+  moneyGramAuthToken?: string | null;
+  payoutId: string;
+};
+
+export type SyncMoneyGramAnchorPayoutResult = {
+  payout: AnchorPayoutRecord;
+  transaction: MoneyGramSep24Transaction;
 };
 
 function assertWalletAddress(walletAddress: string) {
@@ -184,7 +199,10 @@ async function getReservedAnchorPayoutUsdc(
     FROM anchor_payouts
     WHERE event_id = $1
       AND collaborator_wallet = $2
-      AND status IN ('requested', 'pending_anchor')
+      AND (
+        status IN ('requested', 'pending_anchor')
+        OR (status = 'ready_for_pickup' AND withdrawal_id IS NULL)
+      )
     `,
     [eventId, collaboratorWallet],
     db,
@@ -225,6 +243,44 @@ export async function getAnchorPayoutAvailability(
 
 function shouldCreateWithdrawalForPayout(status: AnchorPayoutStatus) {
   return status === "completed" || status === "ready_for_pickup";
+}
+
+function normalizeLiveTransactionHash(value: string | null) {
+  if (!value || !/^[a-fA-F0-9]{64}$/.test(value)) return null;
+
+  return value.toLowerCase();
+}
+
+export function mapMoneyGramSep24Status(status: string): AnchorPayoutStatus {
+  const normalized = status.trim().toLowerCase();
+
+  if (normalized === "completed") return "completed";
+  if (normalized === "pending_user_transfer_complete") return "ready_for_pickup";
+  if (normalized === "refunded") return "cancelled";
+  if (
+    [
+      "error",
+      "expired",
+      "no_market",
+      "too_large",
+      "too_small",
+      "transaction_error",
+    ].includes(normalized)
+  ) {
+    return "failed";
+  }
+  if (normalized === "incomplete") return "requested";
+
+  return "pending_anchor";
+}
+
+function failureReasonForMoneyGramTransaction(
+  status: AnchorPayoutStatus,
+  transaction: MoneyGramSep24Transaction,
+) {
+  if (status !== "failed" && status !== "cancelled") return null;
+
+  return transaction.message ?? `MoneyGram transaction status: ${transaction.status}`;
 }
 
 export async function createAnchorPayout({
@@ -339,6 +395,120 @@ export async function createAnchorPayout({
 }
 
 export const createMockAnchorPayout = createAnchorPayout;
+
+export async function syncMoneyGramAnchorPayout({
+  collaboratorWallet,
+  moneyGramAuthToken,
+  payoutId,
+}: SyncMoneyGramAnchorPayoutInput): Promise<SyncMoneyGramAnchorPayoutResult> {
+  assertWalletAddress(collaboratorWallet);
+
+  if (!moneyGramAuthToken?.trim()) {
+    throw new Error("MoneyGram wallet authorization required.");
+  }
+
+  return withTransaction(async (db) => {
+    const payout = await queryOne<AnchorPayoutRow>(
+      `
+      SELECT *
+      FROM anchor_payouts
+      WHERE id = $1 AND collaborator_wallet = $2
+      FOR UPDATE
+      `,
+      [payoutId, collaboratorWallet],
+      db,
+    );
+
+    if (!payout) {
+      throw new Error("Anchor payout not found.");
+    }
+
+    if (payout.provider !== "moneygram") {
+      throw new Error("Only MoneyGram anchor payouts can be synced.");
+    }
+
+    if (!payout.anchor_transaction_id) {
+      throw new Error("MoneyGram anchor transaction id is missing.");
+    }
+
+    const transaction = await fetchMoneyGramSep24Transaction({
+      authToken: moneyGramAuthToken,
+      id: payout.anchor_transaction_id,
+    });
+    const status = mapMoneyGramSep24Status(transaction.status);
+    const txHash = normalizeLiveTransactionHash(transaction.stellarTransactionId);
+    let withdrawalId = payout.withdrawal_id;
+
+    if (txHash && shouldCreateWithdrawalForPayout(status) && !withdrawalId) {
+      const fallbackWithdrawalId = createId("wdr");
+      const withdrawal = await queryOne<{ id: string }>(
+        `
+        INSERT INTO withdrawals (
+          id, event_id, collaborator_wallet, amount_usdc, tx_hash
+        )
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (tx_hash) DO UPDATE
+        SET tx_hash = EXCLUDED.tx_hash
+        RETURNING id
+        `,
+        [
+          fallbackWithdrawalId,
+          payout.event_id,
+          payout.collaborator_wallet,
+          payout.amount_usdc,
+          txHash,
+        ],
+        db,
+      );
+
+      withdrawalId = withdrawal?.id ?? fallbackWithdrawalId;
+    }
+
+    const metadataPatch = {
+      moneygramStatus: transaction.status,
+      moneygramTransaction: {
+        amountIn: transaction.amountIn,
+        externalTransactionId: transaction.externalTransactionId,
+        id: transaction.id,
+        kind: transaction.kind,
+        moreInfoUrl: transaction.moreInfoUrl,
+        status: transaction.status,
+        stellarTransactionId: transaction.stellarTransactionId,
+        withdrawAnchorAccount: transaction.withdrawAnchorAccount,
+        withdrawMemo: transaction.withdrawMemo,
+        withdrawMemoType: transaction.withdrawMemoType,
+      },
+      syncedAt: new Date().toISOString(),
+    };
+    const updated = await queryOne<AnchorPayoutRow>(
+      `
+      UPDATE anchor_payouts
+      SET
+        status = $2,
+        pickup_url = COALESCE($3, pickup_url),
+        withdrawal_id = COALESCE($4, withdrawal_id),
+        failure_reason = $5,
+        metadata_json = COALESCE(metadata_json, '{}'::jsonb) || $6::jsonb
+      WHERE id = $1
+      RETURNING *
+      `,
+      [
+        payout.id,
+        status,
+        transaction.moreInfoUrl,
+        withdrawalId,
+        failureReasonForMoneyGramTransaction(status, transaction),
+        JSON.stringify(metadataPatch),
+      ],
+      db,
+    );
+
+    return {
+      payout: toAnchorPayoutRecord(updated as AnchorPayoutRow),
+      transaction,
+    };
+  });
+}
 
 export async function listAnchorPayoutsByWallet(walletAddress: string) {
   assertWalletAddress(walletAddress);

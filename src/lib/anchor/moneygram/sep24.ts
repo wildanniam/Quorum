@@ -25,6 +25,21 @@ export type MoneyGramSep24Withdrawal = {
   url: string | null;
 };
 
+export type MoneyGramSep24Transaction = {
+  amountIn: string | null;
+  externalTransactionId: string | null;
+  id: string;
+  kind: string | null;
+  message: string | null;
+  moreInfoUrl: string | null;
+  raw: Record<string, unknown>;
+  status: string;
+  stellarTransactionId: string | null;
+  withdrawAnchorAccount: string | null;
+  withdrawMemo: string | null;
+  withdrawMemoType: string | null;
+};
+
 function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -182,5 +197,70 @@ export async function initiateMoneyGramSep24Withdrawal({
     raw: payload,
     type,
     url,
+  };
+}
+
+export async function fetchMoneyGramSep24Transaction({
+  authToken,
+  config = resolveMoneyGramAnchorConfig(),
+  discovery,
+  fetcher = fetch,
+  id,
+}: {
+  authToken: string;
+  config?: MoneyGramAnchorConfig;
+  discovery?: MoneyGramSep1Info;
+  fetcher?: MoneyGramSep24Fetcher;
+  id: string;
+}): Promise<MoneyGramSep24Transaction> {
+  const trimmedId = id.trim();
+
+  if (!trimmedId) {
+    throw new Error("MoneyGram transaction id is required.");
+  }
+
+  const sep1 = await discoveryOrFetch({ config, discovery, fetcher });
+  const url = new URL(`${sep1.transferServerSep24}/transaction`);
+
+  url.searchParams.set("id", trimmedId);
+
+  const response = await fetcher(url, {
+    headers: {
+      Authorization: bearerToken(authToken),
+    },
+    signal: AbortSignal.timeout(config.timeoutMs),
+  });
+  const payload = asRecord(await readJson(response));
+
+  if (!response.ok) {
+    throw new Error(
+      responseError(
+        payload,
+        `MoneyGram SEP-24 transaction status failed with HTTP ${response.status}.`,
+      ),
+    );
+  }
+
+  const transaction = asRecord(payload.transaction);
+  const transactionId = asString(transaction.id);
+  const status = asString(transaction.status);
+
+  if (!transactionId || !status) {
+    throw new Error("MoneyGram SEP-24 transaction response is incomplete.");
+  }
+
+  return {
+    amountIn: asString(transaction.amount_in),
+    externalTransactionId: asString(transaction.external_transaction_id),
+    id: transactionId,
+    kind: asString(transaction.kind),
+    message: asString(transaction.message),
+    moreInfoUrl: asString(transaction.more_info_url),
+    raw: transaction,
+    status,
+    stellarTransactionId: asString(transaction.stellar_transaction_id),
+    withdrawAnchorAccount: asString(transaction.withdraw_anchor_account),
+    withdrawMemo: asString(transaction.withdraw_memo),
+    withdrawMemoType: asString(transaction.withdraw_memo_type),
   };
 }

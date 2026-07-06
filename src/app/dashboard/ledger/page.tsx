@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { AnchorPayoutButton } from "@/components/anchor/anchor-payout-button";
+import { AnchorPayoutSyncButton } from "@/components/anchor/anchor-payout-sync-button";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
@@ -221,6 +222,20 @@ export default async function CollaboratorLedgerPage() {
                       <p className="mt-2 break-all font-mono text-xs leading-5 text-muted">
                         {payout.referenceNumber ?? payout.anchorTransactionId}
                       </p>
+                      <div className="mt-3 flex flex-wrap items-center gap-2">
+                        {payout.pickupUrl ? (
+                          <Link
+                            className="inline-flex min-h-8 items-center justify-center gap-2 rounded-full bg-quorum-cyan px-3 text-xs font-semibold text-background transition hover:bg-foreground"
+                            href={payout.pickupUrl}
+                            target="_blank"
+                          >
+                            MoneyGram <ArrowUpRight size={13} />
+                          </Link>
+                        ) : null}
+                        {payout.provider === "moneygram" ? (
+                          <AnchorPayoutSyncButton payoutId={payout.id} />
+                        ) : null}
+                      </div>
                       <Link
                         className="mt-3 inline-flex text-sm text-quorum-cyan-soft transition hover:text-foreground"
                         href={`/events/${payout.eventSlug}/proof`}
