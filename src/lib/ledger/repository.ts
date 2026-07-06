@@ -97,13 +97,18 @@ async function listLedgerRows(walletAddress: string) {
         e.title AS event_title,
         w.collaborator_wallet AS wallet_address,
         w.amount_usdc AS amount_usdc,
-        w.id AS source_id,
-        'Collaborator withdrawal'::text AS source_label,
+        COALESCE(a.id, w.id) AS source_id,
+        CASE
+          WHEN a.provider = 'moneygram' THEN 'MoneyGram payout debit'
+          WHEN a.provider = 'mock' THEN 'Anchor payout debit'
+          ELSE 'Collaborator withdrawal'
+        END::text AS source_label,
         NULL::text AS token_id,
         w.tx_hash AS tx_hash,
         w.created_at AS occurred_at
       FROM withdrawals w
       JOIN events e ON e.id = w.event_id
+      LEFT JOIN anchor_payouts a ON a.withdrawal_id = w.id
       WHERE w.collaborator_wallet = $1
     )
     SELECT *

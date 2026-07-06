@@ -190,12 +190,32 @@ async function main() {
     tokenId,
     txHash: checkInTx,
   });
-  await repository.recordLiveWithdrawal({
+  const withdrawalResult = await repository.recordLiveWithdrawal({
     amountUsdc: "3",
     collaboratorWallet,
     eventId: event.id,
     txHash: withdrawalTx,
   });
+  await execute(
+    `
+    INSERT INTO anchor_payouts (
+      id, event_id, collaborator_wallet, amount_usdc, provider, status,
+      anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
+      metadata_json
+    )
+    VALUES ($1, $2, $3, $4, 'moneygram', 'ready_for_pickup', $5, $5, $6, $7, $8::jsonb)
+    `,
+    [
+      `apo_${randomUUID().replaceAll("-", "").slice(0, 16)}`,
+      event.id,
+      collaboratorWallet,
+      "3",
+      "mg-settlement-smoke",
+      "https://extstellar.moneygram.com/mock-interactive",
+      withdrawalResult.withdrawal.id,
+      JSON.stringify({ mode: "moneygram", smoke: true }),
+    ],
+  );
 
   const rawEvents = [
     mockRpcEvent({
@@ -267,6 +287,7 @@ async function main() {
     "publish",
     "paid_checkout",
     "check_in",
+    "anchor_payout",
     "withdrawal",
     "indexed_event",
   ]) {

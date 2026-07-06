@@ -12,6 +12,7 @@ export type AnchorPayoutStatus =
   | "ready_for_pickup"
   | "requested";
 export type EvidenceKind =
+  | "anchor_payout"
   | "check_in"
   | "free_claim"
   | "indexed_event"

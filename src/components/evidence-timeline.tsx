@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowUpRight,
   BadgeCheck,
+  BanknoteArrowUp,
   CircleDollarSign,
   Fingerprint,
   RadioTower,
@@ -19,6 +20,11 @@ const KIND_META: Record<
   EvidenceKind,
   { Icon: LucideIcon; label: string; tone: string }
 > = {
+  anchor_payout: {
+    Icon: BanknoteArrowUp,
+    label: "Anchor payout",
+    tone: "text-quorum-cyan-soft",
+  },
   check_in: {
     Icon: ScanLine,
     label: "Check-in",
@@ -79,8 +85,8 @@ export function EvidenceTimeline({ records }: EvidenceTimelineProps) {
         <RadioTower className="text-accent" size={24} />
         <h2 className="mt-4 text-2xl font-semibold">No evidence recorded yet</h2>
         <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-          Live publish, checkout, check-in, withdrawal, or indexed contract
-          events will appear here after they are persisted.
+          Live publish, checkout, check-in, anchor payout, withdrawal, or
+          indexed contract events will appear here after they are persisted.
         </p>
       </div>
     );

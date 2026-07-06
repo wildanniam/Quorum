@@ -140,12 +140,12 @@ export default async function CollaboratorLedgerPage() {
                   Anchor payout rail
                 </StatusPill>
                 <h2 className="mt-4 font-product text-2xl font-medium">
-                  Request mock anchor payouts from withdrawable USDC.
+                  Request anchor payouts from withdrawable USDC.
                 </h2>
                 <p className="mt-3 text-sm leading-6 text-muted">
-                  This is the MoneyGram-ready product path without live sandbox
-                  credentials. Mock payouts create local proof and debit the
-                  collaborator ledger through the existing withdrawal evidence.
+                  MoneyGram payouts start with wallet authorization, then open
+                  the anchor-hosted flow for pickup details. Local mock payouts
+                  stay available for development and still produce ledger proof.
                 </p>
               </div>
 

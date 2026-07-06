@@ -204,6 +204,30 @@ export async function listEvidence({
       UNION ALL
 
       SELECT
+        'anchor_payout:' || a.id AS id,
+        'anchor_payout'::text AS kind,
+        e.id AS event_id,
+        e.slug AS event_slug,
+        e.title AS event_title,
+        a.collaborator_wallet AS actor_wallet,
+        a.amount_usdc AS amount_usdc,
+        'USDC'::text AS asset,
+        NULL::int AS ledger,
+        CASE WHEN a.provider = 'moneygram'
+          THEN 'MoneyGram anchor payout'
+          ELSE 'Mock anchor payout'
+        END::text AS source_label,
+        a.status::text AS status,
+        NULL::text AS token_id,
+        w.tx_hash AS tx_hash,
+        a.updated_at AS occurred_at
+      FROM anchor_payouts a
+      JOIN events e ON e.id = a.event_id
+      LEFT JOIN withdrawals w ON w.id = a.withdrawal_id
+
+      UNION ALL
+
+      SELECT
         'indexed:' || s.event_key AS id,
         'indexed_event'::text AS kind,
         e.id AS event_id,
