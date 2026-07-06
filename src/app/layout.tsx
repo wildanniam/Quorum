@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { Geist, Geist_Mono, Outfit, Playfair_Display } from "next/font/google";
 import { WalletProvider } from "@/components/wallet-provider";
 import "./globals.css";
 
@@ -18,6 +18,11 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
 });
 
+const outfit = Outfit({
+  variable: "--font-outfit",
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
   title: "Quorum",
   description:
@@ -32,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} h-full`}
+      className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} ${outfit.variable} h-full`}
     >
       <body className="min-h-full">
         <WalletProvider>{children}</WalletProvider>

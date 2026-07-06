@@ -3,6 +3,14 @@ export type LocationType = "physical" | "virtual" | "hybrid";
 export type ResourceType = "link" | "file" | "text";
 export type PassSource = "purchase" | "free_claim";
 export type PurchaseStatus = "pending" | "succeeded" | "failed";
+export type AnchorPayoutProvider = "mock" | "moneygram";
+export type AnchorPayoutStatus =
+  | "cancelled"
+  | "completed"
+  | "failed"
+  | "pending_anchor"
+  | "ready_for_pickup"
+  | "requested";
 export type EvidenceKind =
   | "check_in"
   | "free_claim"
@@ -106,6 +114,24 @@ export type CheckInRecord = {
   checkedInByWallet: string;
   txHash: string | null;
   createdAt: string;
+};
+
+export type AnchorPayoutRecord = {
+  id: string;
+  eventId: string;
+  collaboratorWallet: string;
+  amountUsdc: string;
+  asset: "USDC";
+  provider: AnchorPayoutProvider;
+  status: AnchorPayoutStatus;
+  anchorTransactionId: string | null;
+  referenceNumber: string | null;
+  pickupUrl: string | null;
+  withdrawalId: string | null;
+  failureReason: string | null;
+  metadataJson: unknown;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type IndexerStateRecord = {
