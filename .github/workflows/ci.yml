@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-build:
+    name: Lint and build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/quorum
+      DIRECT_DATABASE_URL: ""
+      QUORUM_DB_SCHEMA: public
+      QUORUM_SESSION_SECRET: ci-session-secret-for-build-only-0000000000
+      ANCHOR_PROVIDER: mock
+      ANCHOR_CLIENT_DOMAIN: quorum-sandy-eight.vercel.app
+      MONEYGRAM_HOME_DOMAIN: extstellar.moneygram.com
+      MONEYGRAM_TIMEOUT_MS: "15000"
+      MONEYGRAM_USDC_ISSUER: GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5
+      NEXT_PUBLIC_STELLAR_NETWORK: TESTNET
+      NEXT_PUBLIC_STELLAR_RPC_URL: https://soroban-testnet.stellar.org
+      NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE: Test SDF Network ; September 2015
+      NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: ""
+      NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID: ""
+      NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: ""
+      STELLAR_NETWORK: testnet
+      QUORUM_PLATFORM_FEE_BPS: "0"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
