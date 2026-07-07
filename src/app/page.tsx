@@ -23,6 +23,7 @@ import { LandingSection } from "@/components/landing/landing-section";
 import { LogoStrip } from "@/components/landing/logo-strip";
 import { RevenueSplitPreview } from "@/components/landing/revenue-split-preview";
 import { SectionLabel } from "@/components/landing/section-label";
+import { StellarBadge } from "@/components/landing/stellar-badge";
 import { TestimonialCard } from "@/components/landing/testimonial-card";
 
 const workflowSteps = [
@@ -138,34 +139,7 @@ export default function LandingPage() {
       <main id="main-content">
         <section className="relative overflow-hidden border-b border-white/8">
           <div className="landing-container relative z-10 flex min-h-[760px] flex-col items-center pb-64 pt-12 text-center sm:min-h-[811px] sm:pb-72 sm:pt-[54px]">
-            <div className="landing-reveal inline-flex h-[46px] select-none items-center gap-2.5 rounded-full border border-white/18 bg-black/55 px-5 font-product text-sm font-semibold text-landing-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_32px_rgba(119,229,235,0.08)] backdrop-blur-xl">
-              <svg
-                aria-hidden="true"
-                className="h-5 w-5 text-landing-white"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M5 15.7 20 6.8"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-                <path
-                  d="M4 11.4a8.2 8.2 0 0 1 12.8-5.8"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-                <path
-                  d="M20 12.6a8.2 8.2 0 0 1-12.8 5.8"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeWidth="1.8"
-                />
-              </svg>
-              <span>Powered by Stellar</span>
-            </div>
+            <StellarBadge className="landing-reveal" />
 
             <h1
               className="landing-reveal mt-11 max-w-[65rem] font-product text-[clamp(2.8rem,8.4vw,4rem)] font-medium leading-[1.18] tracking-normal text-landing-white text-balance sm:text-[clamp(3rem,8.4vw,4rem)]"
@@ -198,7 +172,7 @@ export default function LandingPage() {
           </div>
 
           <HeroOrbit
-            className="bottom-[4.5rem] left-0 right-0 z-0 h-[245px] sm:bottom-[4.6rem] sm:h-[280px]"
+            className="inset-0 z-0"
             mode="background"
           />
         </section>

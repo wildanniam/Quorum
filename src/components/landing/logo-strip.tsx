@@ -10,7 +10,7 @@ function StripLogo() {
       alt=""
       className="h-10 w-auto select-none"
       height={40}
-      src="/figma/landing/quorum-logo.png"
+      src="/figma/landing/quorum-logo.svg"
       width={161}
     />
   );

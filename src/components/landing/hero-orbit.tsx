@@ -18,16 +18,33 @@ export function HeroOrbit({ className, mode = "flow" }: HeroOrbitProps) {
       aria-hidden="true"
       className={cn(wrapperClassName, className)}
     >
-      <div className="absolute left-1/2 top-0 h-full w-full min-w-[980px] -translate-x-1/2">
-        <Image
-          alt=""
-          className="object-fill"
-          fill
-          priority
-          sizes="100vw"
-          src="/figma/landing/hero-orbit.png"
-        />
-      </div>
+      <Image
+        alt=""
+        className="absolute left-1/2 top-[37rem] h-auto w-[980px] max-w-none -translate-x-1/2 select-none sm:top-[31rem] sm:w-[115vw] xl:w-[1662px]"
+        height={759}
+        priority
+        sizes="(min-width: 1280px) 1662px, (min-width: 640px) 115vw, 980px"
+        src="/figma/landing/hero-glow.svg"
+        width={1662}
+      />
+      <span
+        className="absolute left-[10%] top-0 hidden h-[11.75rem] w-px bg-gradient-to-b from-white/0 via-landing-cyan/38 to-white/0 sm:block"
+        data-orbit-dot="true"
+      >
+        <span className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-landing-cyan-soft shadow-[0_0_34px_rgba(119,229,235,0.95)]" />
+      </span>
+      <span
+        className="absolute left-[59.9%] top-[20rem] hidden h-[9.75rem] w-px bg-gradient-to-b from-white/0 via-landing-cyan/28 to-white/0 sm:block"
+        data-orbit-dot="true"
+      >
+        <span className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-landing-cyan-soft shadow-[0_0_34px_rgba(119,229,235,0.95)]" />
+      </span>
+      <span
+        className="absolute right-[10%] top-[29rem] hidden h-[10rem] w-px bg-gradient-to-b from-white/0 via-landing-cyan/30 to-white/0 md:block"
+        data-orbit-dot="true"
+      >
+        <span className="absolute bottom-0 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full bg-landing-cyan-soft shadow-[0_0_34px_rgba(119,229,235,0.95)]" />
+      </span>
     </div>
   );
 }

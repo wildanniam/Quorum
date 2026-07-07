@@ -24,7 +24,7 @@ export function LandingLogo({
         className={cn("h-10 w-auto select-none", imageClassName)}
         height={40}
         priority
-        src="/figma/landing/quorum-logo.png"
+        src="/figma/landing/quorum-logo.svg"
         width={161}
       />
     </Link>
