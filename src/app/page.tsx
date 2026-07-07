@@ -132,7 +132,7 @@ export default function LandingPage() {
       <LandingHeader />
 
       <main id="main-content">
-        <section className="relative isolate overflow-hidden bg-[#0c0b0b]">
+        <section className="landing-hero relative isolate overflow-hidden bg-[#0c0b0b]">
           <div className="landing-container relative z-10 flex min-h-[760px] flex-col items-center pb-64 pt-12 text-center sm:min-h-[811px] sm:pb-72 sm:pt-[54px]">
             <StellarBadge className="landing-reveal" />
 

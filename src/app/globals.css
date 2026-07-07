@@ -228,6 +228,48 @@ select {
   margin-inline: auto;
 }
 
+.landing-hero::before,
+.landing-hero::after {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.landing-hero::before {
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    radial-gradient(circle at 9.8% 34%, rgba(38, 198, 218, 0.18), transparent 17rem),
+    radial-gradient(circle at 89% 78%, rgba(38, 198, 218, 0.15), transparent 18rem),
+    radial-gradient(ellipse at 50% 100%, rgba(38, 198, 218, 0.18), transparent 34rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.012), transparent 36rem);
+  background-position:
+    top center,
+    top center,
+    center,
+    center,
+    center,
+    center;
+  background-size:
+    144px 154px,
+    153px 154px,
+    auto,
+    auto,
+    auto,
+    auto;
+  opacity: 0.78;
+}
+
+.landing-hero::after {
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 50% 22%, rgba(12, 11, 11, 0.98) 0%, rgba(12, 11, 11, 0.9) 15%, rgba(12, 11, 11, 0.28) 34%, transparent 54%),
+    radial-gradient(ellipse at 50% 42%, rgba(12, 11, 11, 0.5) 0%, rgba(12, 11, 11, 0.18) 28%, transparent 58%),
+    linear-gradient(180deg, rgba(12, 11, 11, 0.3) 0%, transparent 34%, rgba(11, 11, 11, 0.44) 100%);
+}
+
 .landing-section {
   position: relative;
   scroll-margin-top: 7rem;
