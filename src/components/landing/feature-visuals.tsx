@@ -1,12 +1,10 @@
 import Image from "next/image";
 
-const qrCells = new Set([0, 1, 3, 5, 6, 8, 11, 13, 15, 17, 18, 20, 23, 24]);
-
 function FeatureGridBackdrop() {
   return (
     <div
       aria-hidden="true"
-      className="absolute inset-0 opacity-85"
+      className="absolute inset-0 opacity-85 transition-opacity duration-300 group-hover:opacity-100"
       style={{
         backgroundImage:
           "linear-gradient(rgba(39,38,38,0.24) 1px, transparent 1px), linear-gradient(90deg, rgba(39,38,38,0.24) 1px, transparent 1px)",
@@ -21,7 +19,7 @@ export function SplitRailVisual() {
     <>
       <Image
         alt=""
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.015]"
         height={271}
         priority={false}
         sizes="(min-width: 1024px) 588px, calc(100vw - 32px)"
@@ -90,7 +88,7 @@ export function LedgerTableVisual() {
   return (
     <>
       <FeatureGridBackdrop />
-      <div className="absolute left-0 top-0 h-[11.5rem] w-[588px] origin-top-left scale-[0.62] overflow-hidden sm:inset-x-0 sm:w-full sm:scale-100">
+      <div className="absolute left-0 top-0 h-[11.5rem] w-[588px] origin-top-left scale-[0.62] overflow-hidden transition-transform duration-500 ease-out group-hover:-translate-y-1 sm:inset-x-0 sm:w-full sm:scale-100">
         <div className="grid grid-cols-[1fr_1.32fr_1.28fr_0.74fr_0.78fr_0.66fr] border-b border-white/[0.055] px-2.5 py-2.5 font-product text-[9px] leading-none text-white/90 sm:text-[10px]">
           <span>ID</span>
           <span>Event</span>
@@ -150,41 +148,24 @@ export function PassVisual() {
       <FeatureGridBackdrop />
       <div
         aria-hidden="true"
-        className="absolute inset-x-0 top-[3.35rem] h-24 bg-landing-cyan/8 blur-2xl"
+        className="absolute -left-8 -right-8 top-[2.7rem] h-24 bg-landing-cyan/8 blur-2xl transition-opacity duration-300 group-hover:opacity-90"
       />
       <Image
         alt=""
-        className="absolute -left-11 -top-5 h-auto w-[250px] max-w-none select-none opacity-95 transition-transform duration-500 ease-out group-hover:-translate-x-1 group-hover:-translate-y-1"
+        className="absolute left-[-34.5px] top-[-19.8px] h-auto w-[371px] max-w-none select-none opacity-95 transition-transform duration-500 ease-out group-hover:-translate-x-1 group-hover:-translate-y-1"
         height={162}
-        sizes="250px"
+        sizes="371px"
         src="/figma/landing/feature-pass-left.svg"
         width={341}
       />
       <Image
         alt=""
-        className="absolute -right-14 -top-1 h-auto w-[245px] max-w-none select-none opacity-95 transition-transform duration-500 ease-out group-hover:translate-x-1 group-hover:-translate-y-1"
+        className="absolute right-[-65.6px] top-[-2px] h-auto w-[260px] max-w-none select-none opacity-95 transition-transform duration-500 ease-out group-hover:translate-x-1 group-hover:-translate-y-1"
         height={143}
-        sizes="245px"
+        sizes="260px"
         src="/figma/landing/feature-pass-right.svg"
         width={208}
       />
-      <div
-        aria-hidden="true"
-        className="absolute left-1/2 top-[3.65rem] grid h-[5.8rem] w-[8.9rem] -translate-x-1/2 rotate-[3deg] place-items-center rounded-[14px] border border-landing-cyan/24 bg-[#0c0b0b]/92 shadow-[0_0_38px_rgba(38,198,218,0.38),inset_0_1px_0_rgba(255,255,255,0.08)]"
-      >
-        <div className="grid grid-cols-5 gap-1">
-          {Array.from({ length: 25 }).map((_, index) => (
-            <span
-              className={
-                qrCells.has(index)
-                  ? "h-2 w-2 rounded-[2px] bg-white/75"
-                  : "h-2 w-2 rounded-[2px] bg-white/14"
-              }
-              key={index}
-            />
-          ))}
-        </div>
-      </div>
     </>
   );
 }

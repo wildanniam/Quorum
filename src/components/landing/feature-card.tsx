@@ -19,7 +19,7 @@ export function FeatureCard({
   return (
     <article
       className={cn(
-        "group relative min-h-[271px] overflow-hidden rounded-[10px] border border-[#494949] bg-[#0b0a0a] shadow-[0_24px_70px_rgba(0,0,0,0.22)]",
+        "group relative min-h-[271px] overflow-hidden rounded-[10px] border border-[#494949] bg-[#0b0a0a] shadow-[0_24px_70px_rgba(0,0,0,0.22)] transition-[transform,border-color,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:border-landing-cyan/45 hover:shadow-[0_30px_90px_rgba(0,0,0,0.32),0_0_46px_rgba(38,198,218,0.08)]",
         className,
       )}
       data-landing-hover="true"
