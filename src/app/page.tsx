@@ -1,9 +1,5 @@
 import {
-  CircleDollarSign,
-  ReceiptText,
   ShieldCheck,
-  TicketCheck,
-  WalletCards,
 } from "lucide-react";
 import { FAQAccordion, type FAQItem } from "@/components/landing/faq-accordion";
 import { FeatureCard } from "@/components/landing/feature-card";
@@ -45,29 +41,25 @@ const workflowSteps = [
 const features = [
   {
     description:
-      "Automatically distribute every ticket purchase to organizers, speakers, venues, and partners according to the split you define.",
-    icon: CircleDollarSign,
+      "Automatically distribute every ticket purchase to every stakeholder based on predefined revenue rules, no manual transfers required.",
     title: "Automatic Revenue Split",
     visual: <SplitRailVisual />,
   },
   {
     description:
-      "Create paid community events with one checkout experience that supports multiple stakeholders from the start.",
-    icon: WalletCards,
+      "Create paid community events with a single checkout experience that supports multiple stakeholders from the very beginning.",
     title: "Collaborative Event Checkout",
     visual: <CheckoutOrbitVisual />,
   },
   {
     description:
-      "Give organizers and collaborators a shared record of every payout, recipient, and settlement status.",
-    icon: ReceiptText,
+      "Track every payment with an on-chain settlement history, giving organizers and collaborators a shared record of every payout.",
     title: "Transparent Settlement Ledger",
     visual: <LedgerTableVisual />,
   },
   {
     description:
-      "Issue passes that help attendees prove ownership, unlock event resources, and verify check-in access.",
-    icon: TicketCheck,
+      "Every successful purchase instantly issues a wallet-verifiable event pass for secure check-ins and exclusive event access.",
     title: "Wallet-Verifiable Event Pass",
     visual: <PassVisual />,
   },
@@ -206,30 +198,41 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <LandingSection
-          eyebrow="Features"
+        <section
+          className="landing-section-grid pb-24 pt-[6.25rem] sm:pb-[6.25rem]"
           id="features"
-          intro="From collaborative checkout to automatic revenue split and wallet-verifiable passes, Quorum brings your event payment workflow into one system."
-          title="Built for collaborative payments, not just ticketing"
         >
-          <div className="grid gap-5 lg:grid-cols-2">
-            {features.map((feature) => (
-              <FeatureCard
-                description={feature.description}
-                icon={feature.icon}
-                key={feature.title}
-                title={feature.title}
-                visual={feature.visual}
-              />
-            ))}
-          </div>
+          <div className="landing-container">
+            <div className="mx-auto max-w-[56rem] text-center">
+              <SectionLabel>Features</SectionLabel>
+              <h2 className="mt-7 font-product text-[clamp(2rem,2.78vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Built for collaborative payments, not just ticketing
+              </h2>
+              <p className="mx-auto mt-3 max-w-[45rem] text-base leading-[1.4] tracking-normal text-landing-white">
+                From collaborative checkout to automatic revenue splits and
+                wallet-verifiable event passes, Quorum brings every payment
+                workflow into one seamless platform powered by Stellar.
+              </p>
+            </div>
 
-          <div className="mt-9 flex justify-center">
-            <LandingButton href="/evidence" variant="secondary">
-              View Evidence
-            </LandingButton>
+            <div className="mt-7 grid gap-6 lg:grid-cols-2">
+              {features.map((feature) => (
+                <FeatureCard
+                  description={feature.description}
+                  key={feature.title}
+                  title={feature.title}
+                  visual={feature.visual}
+                />
+              ))}
+            </div>
+
+            <div className="mt-9 flex justify-center">
+              <LandingButton href="/evidence" icon={null} variant="secondary">
+                View Docs
+              </LandingButton>
+            </div>
           </div>
-        </LandingSection>
+        </section>
 
         <LandingSection
           eyebrow="Testimonial"

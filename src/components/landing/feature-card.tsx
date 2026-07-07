@@ -1,12 +1,10 @@
 import type React from "react";
-import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/ui";
 
 type FeatureCardProps = {
   children?: React.ReactNode;
   className?: string;
   description: string;
-  icon?: LucideIcon;
   title: string;
   visual?: React.ReactNode;
 };
@@ -15,30 +13,26 @@ export function FeatureCard({
   children,
   className,
   description,
-  icon: Icon,
   title,
   visual,
 }: FeatureCardProps) {
   return (
     <article
-      className={cn("landing-card overflow-hidden", className)}
+      className={cn(
+        "group relative min-h-[271px] overflow-hidden rounded-[10px] border border-[#494949] bg-[#0b0a0a] shadow-[0_24px_70px_rgba(0,0,0,0.22)]",
+        className,
+      )}
       data-landing-hover="true"
     >
-      {visual ? (
-        <div className="min-h-40 border-b border-white/8 bg-black/20">
-          {visual}
-        </div>
-      ) : null}
-      <div className="p-6">
-        {Icon ? (
-          <div className="mb-5 grid h-10 w-10 place-items-center rounded-full border border-landing-cyan/32 bg-landing-cyan/10 text-landing-cyan-soft">
-            <Icon size={18} />
-          </div>
-        ) : null}
-        <h3 className="font-product text-xl font-semibold leading-tight text-landing-white">
+      <div className="absolute inset-0">{visual}</div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 p-6 pt-20 sm:pt-16">
+        <div className="absolute inset-x-0 bottom-0 -z-10 h-[10rem] bg-gradient-to-t from-[#0b0a0a] via-[#0b0a0a]/92 to-transparent sm:h-[7.75rem]" />
+        <h3 className="font-product text-xl font-semibold leading-[1.35] tracking-normal text-landing-white">
           {title}
         </h3>
-        <p className="mt-3 text-sm leading-6 text-landing-muted">{description}</p>
+        <p className="mt-2.5 max-w-[31rem] text-base leading-[1.45] tracking-normal text-landing-muted">
+          {description}
+        </p>
         {children}
       </div>
     </article>
