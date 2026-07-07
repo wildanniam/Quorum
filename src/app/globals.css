@@ -347,6 +347,7 @@ select {
   pointer-events: none;
   position: absolute;
   inset: 3rem 5.25rem 3rem 4.75rem;
+  z-index: 0;
   content: "";
   background:
     radial-gradient(circle at 50% 45%, rgba(38, 198, 218, 0.16), transparent 12rem),
@@ -355,26 +356,56 @@ select {
   opacity: 0.75;
 }
 
-.settlement-line {
+.settlement-connectors {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: visible;
+}
+
+.settlement-connector {
+  fill: none;
+  stroke: #26c6da;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 7px rgba(38, 198, 218, 0.72));
   opacity: 0;
-  clip-path: inset(0 0 100% 0);
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
   transition:
-    clip-path 620ms cubic-bezier(0.16, 1, 0.3, 1),
+    stroke-dashoffset 680ms cubic-bezier(0.16, 1, 0.3, 1),
     opacity 260ms ease-out;
   transition-delay: 0ms;
 }
 
-.settlement-line[data-direction="horizontal"] {
-  clip-path: inset(0 100% 0 0);
-}
-
-.how-visual-state[data-active="true"] .settlement-line {
+.how-visual-state[data-active="true"] .settlement-connector {
   opacity: 1;
-  clip-path: inset(0 0 0 0);
+  stroke-dashoffset: 0;
   transition-delay: var(--line-delay, 0ms);
 }
 
+.settlement-connector-dot {
+  fill: #26c6da;
+  filter: drop-shadow(0 0 8px rgba(38, 198, 218, 0.85));
+  opacity: 0;
+  transform: scale(0.72);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 240ms ease-out,
+    transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.how-visual-state[data-active="true"] .settlement-connector-dot {
+  opacity: 1;
+  transform: scale(1);
+  transition-delay: var(--dot-delay, 0ms);
+}
+
 .settlement-node {
+  z-index: 2;
   opacity: 0;
   transform: translate3d(0, 12px, 0) scale(0.94);
   transition:
@@ -623,7 +654,7 @@ select {
     transition-duration: 0.01ms !important;
   }
 
-  .settlement-line {
-    clip-path: inset(0 0 0 0) !important;
+  .settlement-connector {
+    stroke-dashoffset: 0 !important;
   }
 }

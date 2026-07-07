@@ -284,19 +284,7 @@ function SettlementGraphVisual({ active }: { active: boolean }) {
   return (
     <div className="how-visual-state" data-active={active}>
       <div className="settlement-graph absolute left-1/2 top-4 h-[32.5rem] w-[31.25rem] origin-top scale-[0.72] -translate-x-1/2 sm:left-[5.25rem] sm:top-6 sm:scale-100 sm:translate-x-0">
-        <GraphLine className="left-[15.55rem] top-[4.875rem] h-[5.875rem]" delay="60ms" />
-        <GraphLine className="left-[15.55rem] top-[15.25rem] h-[9.4rem]" delay="180ms" />
-        <GraphLine
-          className="left-[10.55rem] top-[16.75rem] h-[0.125rem] w-[7.2rem] origin-right rotate-[141deg]"
-          delay="260ms"
-          horizontal
-        />
-        <GraphLine
-          className="left-[17.85rem] top-[16.75rem] h-[0.125rem] w-[7.2rem] origin-left rotate-[39deg]"
-          delay="340ms"
-          horizontal
-        />
-
+        <GraphConnections />
         <TicketNode />
         <QuorumNode />
         <GraphRecipient
@@ -308,14 +296,14 @@ function SettlementGraphVisual({ active }: { active: boolean }) {
         />
         <GraphRecipient
           avatar="/figma/landing/john-avatar.webp"
-          className="left-[18rem] top-[19.4rem]"
+          className="left-[20.35rem] top-[19.4rem]"
           delay="640ms"
           name="John Doe"
           share="25%"
         />
         <GraphRecipient
           avatar="/figma/landing/sarah-avatar.webp"
-          className="left-[9.8rem] top-[27.1rem]"
+          className="left-[11rem] top-[27.1rem]"
           delay="720ms"
           name="Sarah"
           share="60%"
@@ -401,25 +389,52 @@ function GraphRecipient({
   );
 }
 
-function GraphLine({
-  className,
-  delay,
-  horizontal = false,
-}: {
-  className: string;
-  delay: string;
-  horizontal?: boolean;
-}) {
+function GraphConnections() {
   return (
-    <span
+    <svg
       aria-hidden="true"
-      className={cn(
-        "settlement-line absolute rounded-full bg-[#26c6da] shadow-[0_0_12px_rgba(38,198,218,0.7)]",
-        horizontal ? "origin-left" : "w-[0.125rem] origin-top",
-        className,
-      )}
-      data-direction={horizontal ? "horizontal" : "vertical"}
-      style={{ "--line-delay": delay } as CSSProperties}
-    />
+      className="settlement-connectors"
+      viewBox="0 0 500 520"
+    >
+      <path
+        className="settlement-connector"
+        d="M250 90 L250 173"
+        pathLength={1}
+        style={{ "--line-delay": "80ms" } as CSSProperties}
+      />
+      <path
+        className="settlement-connector"
+        d="M250 294 L250 442"
+        pathLength={1}
+        style={{ "--line-delay": "180ms" } as CSSProperties}
+      />
+      <path
+        className="settlement-connector"
+        d="M250 338 L168 350"
+        pathLength={1}
+        style={{ "--line-delay": "280ms" } as CSSProperties}
+      />
+      <path
+        className="settlement-connector"
+        d="M250 338 L336 350"
+        pathLength={1}
+        style={{ "--line-delay": "360ms" } as CSSProperties}
+      />
+      {[
+        [250, 90],
+        [250, 173],
+        [250, 294],
+        [250, 338],
+      ].map(([cx, cy], index) => (
+        <circle
+          className="settlement-connector-dot"
+          cx={cx}
+          cy={cy}
+          key={`${cx}-${cy}`}
+          r="4.5"
+          style={{ "--dot-delay": `${220 + index * 55}ms` } as CSSProperties}
+        />
+      ))}
+    </svg>
   );
 }
