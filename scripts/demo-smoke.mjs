@@ -213,7 +213,7 @@ async function main() {
     const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
     const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
 
-    const marketplace = await fetch(baseUrl);
+    const marketplace = await fetch(`${baseUrl}/discover`);
     const marketplaceHtml = await marketplace.text();
     assert(marketplace.status === 200, "marketplace should render");
     assert(

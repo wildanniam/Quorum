@@ -683,7 +683,8 @@ function checkEvidence() {
   }
 
   for (const term of [
-    "Marketplace",
+    "Landing",
+    "Discover",
     "Paid event detail",
     "Locked resources",
     "Dashboard readiness",
