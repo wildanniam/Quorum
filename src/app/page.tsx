@@ -1,11 +1,8 @@
 import {
-  ArrowDown,
-  ArrowRight,
   BadgeCheck,
   CircleDollarSign,
   ReceiptText,
   ShieldCheck,
-  Sparkles,
   TicketCheck,
   UsersRound,
   WalletCards,
@@ -140,14 +137,38 @@ export default function LandingPage() {
 
       <main id="main-content">
         <section className="relative overflow-hidden border-b border-white/8">
-          <div className="landing-container relative z-10 flex min-h-[calc(100svh-5.75rem)] flex-col items-center justify-center pb-36 pt-14 text-center sm:pb-44 sm:pt-18 lg:pb-48 lg:pt-20">
-            <div className="landing-reveal inline-flex min-h-11 items-center gap-2 rounded-full border border-white/14 bg-white/[0.025] px-5 font-product text-xs font-semibold text-landing-white/82 shadow-[0_0_40px_rgba(38,198,218,0.08)]">
-              <Sparkles size={14} className="text-landing-cyan-soft" />
-              Powered by Stellar
+          <div className="landing-container relative z-10 flex min-h-[760px] flex-col items-center pb-64 pt-12 text-center sm:min-h-[811px] sm:pb-72 sm:pt-[54px]">
+            <div className="landing-reveal inline-flex h-[46px] select-none items-center gap-2.5 rounded-full border border-white/18 bg-black/55 px-5 font-product text-sm font-semibold text-landing-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_0_32px_rgba(119,229,235,0.08)] backdrop-blur-xl">
+              <svg
+                aria-hidden="true"
+                className="h-5 w-5 text-landing-white"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M5 15.7 20 6.8"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M4 11.4a8.2 8.2 0 0 1 12.8-5.8"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M20 12.6a8.2 8.2 0 0 1-12.8 5.8"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeWidth="1.8"
+                />
+              </svg>
+              <span>Powered by Stellar</span>
             </div>
 
             <h1
-              className="landing-reveal mt-8 max-w-6xl font-product text-[clamp(3rem,5.45vw,5.75rem)] font-semibold leading-[0.98] tracking-normal text-landing-white text-balance"
+              className="landing-reveal mt-11 max-w-[65rem] font-product text-[clamp(2.8rem,8.4vw,4rem)] font-medium leading-[1.18] tracking-normal text-landing-white text-balance sm:text-[clamp(3rem,8.4vw,4rem)]"
               style={{ "--landing-reveal-delay": "90ms" } as React.CSSProperties}
             >
               Where Web3 Events{" "}
@@ -156,15 +177,15 @@ export default function LandingPage() {
             </h1>
 
             <p
-              className="landing-reveal mx-auto mt-7 max-w-3xl text-base leading-7 text-landing-muted sm:text-lg"
+              className="landing-reveal mx-auto mt-7 max-w-4xl text-sm leading-6 text-landing-white/88 sm:text-base"
               style={{ "--landing-reveal-delay": "160ms" } as React.CSSProperties}
             >
               From selling event access to instant payouts, Quorum unifies every
-              payment workflow into one checkout built for community events.
+              payment workflow into one seamless checkout.
             </p>
 
             <div
-              className="landing-reveal mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              className="landing-reveal mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row"
               style={{ "--landing-reveal-delay": "230ms" } as React.CSSProperties}
             >
               <LandingButton href="#features" variant="secondary">
@@ -174,17 +195,10 @@ export default function LandingPage() {
                 Get Started
               </LandingButton>
             </div>
-
-            <div className="mt-8 inline-flex items-center gap-2 font-product text-xs font-semibold text-landing-muted">
-              <ArrowDown size={14} className="text-landing-cyan-soft" />
-              Follow the settlement path
-              <ArrowRight size={14} className="text-landing-cyan-soft" />
-            </div>
-
           </div>
 
           <HeroOrbit
-            className="bottom-[-2.75rem] left-0 right-0 z-0 h-[230px] sm:h-[270px] lg:h-[320px]"
+            className="bottom-[4.5rem] left-0 right-0 z-0 h-[245px] sm:bottom-[4.6rem] sm:h-[280px]"
             mode="background"
           />
         </section>

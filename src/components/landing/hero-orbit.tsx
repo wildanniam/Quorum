@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { cn } from "@/lib/ui";
 
 type HeroOrbitProps = {
@@ -17,8 +18,16 @@ export function HeroOrbit({ className, mode = "flow" }: HeroOrbitProps) {
       aria-hidden="true"
       className={cn(wrapperClassName, className)}
     >
-      <div className="absolute left-1/2 top-10 h-[42rem] w-[128vw] min-w-[980px] -translate-x-1/2 rounded-[100%] border-t border-landing-cyan/75 bg-[radial-gradient(ellipse_at_top,rgba(38,198,218,0.3)_0%,rgba(38,198,218,0.16)_18%,rgba(11,11,11,0)_58%)] shadow-[0_-28px_110px_rgba(38,198,218,0.4)]" />
-      <div className="absolute left-1/2 top-[4.35rem] h-[44rem] w-[120vw] min-w-[920px] -translate-x-1/2 rounded-[100%] border-t border-landing-cyan/32" />
+      <div className="absolute left-1/2 top-0 h-full w-full min-w-[980px] -translate-x-1/2">
+        <Image
+          alt=""
+          className="object-fill"
+          fill
+          priority
+          sizes="100vw"
+          src="/figma/landing/hero-orbit.png"
+        />
+      </div>
     </div>
   );
 }

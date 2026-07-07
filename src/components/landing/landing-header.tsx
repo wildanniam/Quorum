@@ -3,6 +3,7 @@ import { LandingButton } from "@/components/landing/landing-button";
 import { LandingLogo } from "@/components/landing/landing-logo";
 
 const navItems = [
+  { href: "/", label: "Home" },
   { href: "#about", label: "About Us" },
   { href: "#how-it-works", label: "How It Works" },
   { href: "#features", label: "Features" },
@@ -13,12 +14,12 @@ const navItems = [
 export function LandingHeader() {
   return (
     <header className="sticky top-0 z-30 border-b border-white/8 bg-landing-bg/78 backdrop-blur-2xl">
-      <div className="landing-container flex min-h-[5.75rem] items-center justify-between gap-4">
-        <LandingLogo className="text-[1.05rem] sm:text-[1.15rem]" markClassName="h-6 w-6" />
+      <div className="landing-container flex min-h-[6.375rem] items-center justify-between gap-4">
+        <LandingLogo imageClassName="h-9 sm:h-10" />
 
         <nav
           aria-label="Landing"
-          className="hidden items-center gap-9 font-product text-xs font-semibold text-landing-white/78 lg:flex"
+          className="hidden items-center gap-8 font-product text-sm font-medium text-landing-white/86 lg:flex xl:gap-10"
         >
           {navItems.map((item) => (
             <Link
@@ -32,14 +33,8 @@ export function LandingHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link
-            className="hidden font-product text-xs font-semibold text-landing-white/76 transition hover:text-landing-cyan-soft sm:inline-flex"
-            href="/discover"
-          >
-            Discover
-          </Link>
           <LandingButton
-            className="min-h-10 px-4 text-xs sm:px-5"
+            className="min-h-[46px] px-5 text-sm"
             href="/dashboard/events/new"
             icon={null}
             variant="secondary"
