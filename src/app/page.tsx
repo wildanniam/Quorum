@@ -1,10 +1,8 @@
 import {
-  BadgeCheck,
   CircleDollarSign,
   ReceiptText,
   ShieldCheck,
   TicketCheck,
-  UsersRound,
   WalletCards,
 } from "lucide-react";
 import { FAQAccordion, type FAQItem } from "@/components/landing/faq-accordion";
@@ -29,21 +27,18 @@ import { TestimonialCard } from "@/components/landing/testimonial-card";
 const workflowSteps = [
   {
     description:
-      "Set who gets paid, what percentage they receive, and why they are part of the event.",
-    icon: UsersRound,
-    title: "Configure revenue split",
+      "Define how ticket revenue should be distributed among organizers, speakers, partners, or any collaborators before your event goes live.",
+    title: "Configure Revenue Split",
   },
   {
     description:
-      "Every checkout routes the paid event revenue through the split you defined up front.",
-    icon: CircleDollarSign,
-    title: "Sell access with shared payouts",
+      "Every ticket purchase instantly distributes funds to each collaborator's wallet according to the predefined split rules.",
+    title: "Automatic Settlement",
   },
   {
     description:
-      "Keep a clean settlement trail for organizers, speakers, venues, and partners.",
-    icon: ReceiptText,
-    title: "Track every settlement",
+      "Monitor every completed payout with a transparent on-chain ledger, giving every collaborator verifiable proof of settlement.",
+    title: "Track Every Settlement",
   },
 ];
 
@@ -142,12 +137,10 @@ export default function LandingPage() {
             <StellarBadge className="landing-reveal" />
 
             <h1
-              className="landing-reveal mt-11 max-w-[65rem] font-product text-[clamp(2.8rem,8.4vw,4rem)] font-medium leading-[1.18] tracking-normal text-landing-white text-balance sm:text-[clamp(3rem,8.4vw,4rem)]"
+              className="landing-reveal mt-11 max-w-[55.45rem] bg-[linear-gradient(90deg,#fff_29%,#9be5ee_100%)] bg-clip-text font-product text-[clamp(2.8rem,8.4vw,4rem)] font-medium leading-[1.4] tracking-normal text-transparent text-balance sm:text-[clamp(3rem,8.4vw,4rem)]"
               style={{ "--landing-reveal-delay": "90ms" } as React.CSSProperties}
             >
-              Where Web3 Events{" "}
-              <span className="landing-cyan-text">Pay Every</span>{" "}
-              Collaborator Seamlessly
+              Where Web3 Events Pay Every Collaborator Seamlessly
             </h1>
 
             <p
@@ -179,94 +172,94 @@ export default function LandingPage() {
 
         <LogoStrip />
 
-        <LandingSection className="pb-10 sm:pb-16" id="about">
-          <div className="mx-auto max-w-5xl">
+        <LandingSection className="pb-24 pt-[7.5rem] sm:pb-[6.25rem]" id="about">
+          <div>
             <SectionLabel>About Us</SectionLabel>
-            <p className="mt-8 font-product text-[clamp(2rem,4.4vw,4.75rem)] font-semibold leading-[1.08] tracking-normal text-landing-white text-balance">
+            <p className="mt-6 max-w-[75rem] font-product text-[clamp(1.9rem,2.78vw,2.5rem)] font-normal leading-[1.4] tracking-normal text-landing-white text-balance">
               Quorum is the collaborative checkout layer for Web3 community
               events.{" "}
               <span className="text-landing-muted">
-                Every ticket payment can be split among collaborators through
-                one clear checkout.
+                Every ticket payment is automatically split among collaborators
+                all through one seamless checkout.
               </span>
             </p>
           </div>
         </LandingSection>
 
-        <LandingSection
-          align="left"
-          className="pt-10 sm:pt-16"
-          eyebrow="How It Works"
+        <section
+          className="landing-section-grid pb-24 sm:pb-[6.25rem]"
           id="how-it-works"
-          intro="From creating your event to automatically splitting payouts and verifying attendance."
-          title="Run your event in three simple steps"
         >
-          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-18">
-            <RevenueSplitPreview
-              className="mx-auto w-full max-w-[32rem]"
-              rows={[
-                {
-                  avatar: "ST",
-                  name: "Steven",
-                  role: "Hackathon Organizer",
-                  share: "25%",
-                },
-                {
-                  avatar: "SA",
-                  name: "Sarah",
-                  role: "Community Lead",
-                  share: "60%",
-                },
-                {
-                  avatar: "SI",
-                  name: "Stellar ID",
-                  role: "Partner",
-                  share: "15%",
-                },
-              ]}
-            />
+          <div className="landing-container">
+            <SectionLabel>How It Works</SectionLabel>
+            <div className="mt-6">
+              <h2 className="font-product text-[clamp(2rem,2.78vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Run your event in three simple steps
+              </h2>
+              <p className="mt-2 text-base leading-[1.4] text-landing-white">
+                From creating your event to automatically splitting payouts and
+                verifying attendees.
+              </p>
+            </div>
 
-            <ol className="relative ml-10 space-y-7 border-l border-white/12 pl-8 sm:ml-0">
-              {workflowSteps.map((step, index) => {
-                const Icon = step.icon;
+            <div className="mt-6 grid min-h-[35.2rem] items-start gap-12 lg:grid-cols-[36.375rem_26.125rem] lg:gap-[7.5rem]">
+              <RevenueSplitPreview
+                className="mx-auto w-full lg:ml-[5.125rem] lg:mt-[5.375rem]"
+                rows={[
+                  {
+                    avatar: "JD",
+                    name: "John Doe",
+                    role: "Speaker",
+                    share: "25%",
+                  },
+                  {
+                    avatar: "SA",
+                    name: "Sarah",
+                    role: "Organizer",
+                    share: "60%",
+                  },
+                  {
+                    avatar: "SI",
+                    name: "Stellar ID",
+                    role: "Partner",
+                    share: "15%",
+                  },
+                ]}
+              />
 
-                return (
-                  <li className="relative" key={step.title}>
-                    <span className="absolute -left-[2.5rem] top-0 grid h-8 w-8 place-items-center rounded-full border border-landing-cyan/35 bg-landing-cyan/14 font-mono text-xs text-landing-cyan-soft sm:-left-[3.05rem]">
+              <ol className="relative mx-auto w-full max-w-[26.125rem] lg:mt-[5.1875rem]">
+                <span
+                  aria-hidden="true"
+                  className="absolute left-[1.5625rem] top-[-4.4375rem] h-[30.6875rem] w-px bg-gradient-to-b from-transparent via-white/18 to-transparent"
+                />
+                {workflowSteps.map((step, index) => (
+                  <li
+                    className="relative grid grid-cols-[3.125rem_1fr] gap-[1.4375rem] pb-12 last:pb-0 lg:pb-[3rem]"
+                    key={step.title}
+                  >
+                    <span
+                      className={
+                        index === 0
+                          ? "relative z-10 grid h-[3.125rem] w-[3.125rem] place-items-center rounded-[10px] bg-[#10535c]/80 font-product text-xl font-medium leading-[1.4] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur"
+                          : "relative z-10 grid h-[3.125rem] w-[3.125rem] place-items-center rounded-[10px] bg-[#191919] font-product text-xl font-medium leading-[1.4] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur"
+                      }
+                    >
                       {index + 1}
                     </span>
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-landing-cyan-soft">
-                        <Icon size={18} />
-                      </div>
-                      <div>
-                        <h3 className="font-product text-xl font-semibold leading-tight text-landing-white">
-                          {step.title}
-                        </h3>
-                        <p className="mt-2 max-w-xl text-sm leading-6 text-landing-muted">
-                          {step.description}
-                        </p>
-                      </div>
+                    <div className={index === 0 ? "" : "opacity-40"}>
+                      <h3 className="font-product text-[1.1875rem] font-medium leading-[1.4] text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 max-w-[21.5625rem] font-product text-base font-normal leading-[1.4] text-[#979696]">
+                        {step.description}
+                      </p>
                     </div>
                   </li>
-                );
-              })}
-            </ol>
+                ))}
+              </ol>
+            </div>
           </div>
-
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-8 lg:justify-start">
-            {[
-              "Transparent collaborator shares",
-              "Wallet-verifiable passes",
-              "Settlement evidence for every event",
-            ].map((item) => (
-              <span className="landing-pill" key={item}>
-                <BadgeCheck size={16} className="text-landing-cyan-soft" />
-                {item}
-              </span>
-            ))}
-          </div>
-        </LandingSection>
+        </section>
 
         <LandingSection
           eyebrow="Features"

@@ -215,8 +215,9 @@ select {
   height: calc(6.375rem + 811px);
   content: "";
   background:
-    radial-gradient(circle at 10% 33%, rgba(38, 198, 218, 0.13), transparent 10.5rem),
-    radial-gradient(circle at 92% 50%, rgba(38, 198, 218, 0.1), transparent 13rem),
+    radial-gradient(circle at -1rem 15rem, rgba(38, 198, 218, 0.18), transparent 18rem),
+    radial-gradient(circle at calc(100% + 2rem) 27rem, rgba(38, 198, 218, 0.14), transparent 20rem),
+    radial-gradient(circle at 58% 34rem, rgba(38, 198, 218, 0.16), transparent 8rem),
     linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 33rem),
     linear-gradient(180deg, transparent 0%, rgba(11, 11, 11, 0.88) 84%, var(--landing-bg) 100%);
   opacity: 0.9;
@@ -229,8 +230,45 @@ select {
 
 .landing-section {
   position: relative;
+  scroll-margin-top: 7rem;
   padding-block: clamp(4.75rem, 8vw, 8.5rem);
   background: var(--landing-bg);
+}
+
+.landing-section > .landing-container,
+.landing-section-grid > .landing-container {
+  position: relative;
+  z-index: 1;
+}
+
+.landing-section-grid {
+  position: relative;
+  overflow: hidden;
+  scroll-margin-top: 7rem;
+  background: var(--landing-bg);
+}
+
+.landing-section-grid::before,
+.landing-section-grid::after {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  content: "";
+}
+
+.landing-section-grid::before {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-position: top center;
+  background-size: 144px 144px;
+  opacity: 0.72;
+}
+
+.landing-section-grid::after {
+  background:
+    radial-gradient(circle at 90% 16%, rgba(38, 198, 218, 0.08), transparent 17rem),
+    linear-gradient(180deg, rgba(11, 11, 11, 0.16), var(--landing-bg) 88%);
 }
 
 .landing-card {
@@ -277,8 +315,8 @@ select {
   border-radius: 999px;
   padding-inline: 1.45rem;
   color: var(--landing-cyan-soft);
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   line-height: 1.4;
   text-transform: uppercase;
 }
@@ -496,6 +534,15 @@ select {
 
   .landing-shell::after {
     height: calc(6.375rem + 760px);
+    background:
+      radial-gradient(circle at -3rem 10rem, rgba(38, 198, 218, 0.15), transparent 15rem),
+      radial-gradient(circle at calc(100% + 4rem) 28rem, rgba(38, 198, 218, 0.12), transparent 16rem),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 30rem),
+      linear-gradient(180deg, transparent 0%, rgba(11, 11, 11, 0.88) 84%, var(--landing-bg) 100%);
+  }
+
+  .landing-section-grid::before {
+    background-size: 72px 72px;
   }
 
   .landing-container {
