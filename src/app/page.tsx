@@ -18,7 +18,10 @@ import { LandingSection } from "@/components/landing/landing-section";
 import { LogoStrip } from "@/components/landing/logo-strip";
 import { SectionLabel } from "@/components/landing/section-label";
 import { StellarBadge } from "@/components/landing/stellar-badge";
-import { TestimonialCard } from "@/components/landing/testimonial-card";
+import {
+  TestimonialCarousel,
+  type Testimonial,
+} from "@/components/landing/testimonial-carousel";
 
 const workflowSteps = [
   {
@@ -65,28 +68,31 @@ const features = [
   },
 ];
 
-const testimonials = [
+const testimonials: Testimonial[] = [
   {
+    avatar: "/figma/landing/john-avatar.webp",
     name: "Steven",
     quote: "Quorum saved us hours of manual payout work.",
-    role: "Hackathon Organizer, Indonesia",
+    role: "Hackathon Organizer | Indonesia",
   },
   {
-    name: "Maya R.",
-    quote: "I can finally see who gets paid before the event goes live.",
-    role: "Community Lead, Singapore",
+    avatar: "/figma/landing/john-avatar.webp",
+    name: "John Doe",
+    quote: "I can finally see my payout without asking the organizer.",
+    role: "Web3 Speaker | Philippines",
   },
   {
+    avatar: "/figma/landing/john-avatar.webp",
     name: "Kevin T.",
-    quote: "Buying a ticket and getting my access pass felt effortless.",
-    role: "Hackathon Participant, Australia",
+    quote: "Buying a ticket and getting my pass felt effortless.",
+    role: "Hackathon Participant | Australia",
   },
 ];
 
 const faqItems: FAQItem[] = [
   {
     answer:
-      "Quorum stores the collaborator split for an event, then routes each paid checkout according to that split. The organizer, speakers, venue, or partners can all have predefined shares.",
+      "Quorum automatically distributes every ticket payment based on the revenue split you define when creating your event. Organizers, speakers, and partners receive their respective shares without manual transfers.",
     question: "How does Quorum split payments?",
   },
   {
@@ -234,33 +240,44 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <LandingSection
-          eyebrow="Testimonial"
+        <section
+          className="landing-section-grid overflow-hidden py-[5.2rem] sm:py-[5.6rem]"
           id="testimonial"
-          intro="See how communities use Quorum to simplify ticket sales, automate revenue sharing, and manage event access."
-          title="Trusted by Web3 event organizers"
         >
-          <div className="grid gap-5 lg:grid-cols-3">
-            {testimonials.map((testimonial) => (
-              <TestimonialCard
-                key={testimonial.name}
-                name={testimonial.name}
-                quote={testimonial.quote}
-                role={testimonial.role}
-              />
-            ))}
-          </div>
-        </LandingSection>
+          <div className="landing-container">
+            <div className="mx-auto max-w-[75rem] text-center">
+              <SectionLabel>Testimonial</SectionLabel>
+              <h2 className="mt-8 font-product text-[clamp(2.3rem,3.35vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Trusted by Web3 Event Organizers
+              </h2>
+              <p className="mt-2 text-base leading-[1.4] text-landing-white">
+                See how communities use Quorum to simplify ticket sales,
+                automate revenue sharing, and manage event access.
+              </p>
+            </div>
 
-        <LandingSection
-          align="left"
-          className="pb-18"
-          eyebrow="FAQ"
+            <TestimonialCarousel testimonials={testimonials} />
+          </div>
+        </section>
+
+        <section
+          className="landing-section-grid relative overflow-hidden pb-0 pt-[5.8rem] sm:pt-[6rem]"
           id="faq"
-          title="Got questions? We've got you covered"
         >
-          <FAQAccordion items={faqItems} />
-        </LandingSection>
+          <div className="landing-container relative z-10">
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="mt-9 max-w-[75rem] font-product text-[clamp(2.5rem,4.7vw,3rem)] font-normal leading-[1.4] tracking-normal text-landing-white text-balance">
+              Got questions? We&apos;ve got you covered
+            </h2>
+            <FAQAccordion className="mt-[3.25rem]" items={faqItems} />
+          </div>
+          <p
+            aria-hidden="true"
+            className="pointer-events-none relative z-0 -mb-8 mt-10 select-none text-center font-product text-[clamp(8rem,21vw,17.5rem)] font-semibold leading-none text-white/[0.065]"
+          >
+            Quorum.
+          </p>
+        </section>
 
         <footer className="relative overflow-hidden border-t border-white/8 pt-12 sm:pt-16">
           <div className="landing-container relative z-10 flex flex-col gap-8 pb-12 sm:flex-row sm:items-center sm:justify-between">
