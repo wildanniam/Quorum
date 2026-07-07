@@ -4,16 +4,29 @@ import {
   BadgeCheck,
   CircleDollarSign,
   ReceiptText,
+  ShieldCheck,
   Sparkles,
+  TicketCheck,
   UsersRound,
+  WalletCards,
 } from "lucide-react";
+import { FAQAccordion, type FAQItem } from "@/components/landing/faq-accordion";
+import { FeatureCard } from "@/components/landing/feature-card";
+import {
+  CheckoutOrbitVisual,
+  LedgerTableVisual,
+  PassVisual,
+  SplitRailVisual,
+} from "@/components/landing/feature-visuals";
 import { HeroOrbit } from "@/components/landing/hero-orbit";
 import { LandingButton } from "@/components/landing/landing-button";
 import { LandingHeader } from "@/components/landing/landing-header";
+import { LandingLogo } from "@/components/landing/landing-logo";
 import { LandingSection } from "@/components/landing/landing-section";
 import { LogoStrip } from "@/components/landing/logo-strip";
 import { RevenueSplitPreview } from "@/components/landing/revenue-split-preview";
 import { SectionLabel } from "@/components/landing/section-label";
+import { TestimonialCard } from "@/components/landing/testimonial-card";
 
 const workflowSteps = [
   {
@@ -33,6 +46,83 @@ const workflowSteps = [
       "Keep a clean settlement trail for organizers, speakers, venues, and partners.",
     icon: ReceiptText,
     title: "Track every settlement",
+  },
+];
+
+const features = [
+  {
+    description:
+      "Automatically distribute every ticket purchase to organizers, speakers, venues, and partners according to the split you define.",
+    icon: CircleDollarSign,
+    title: "Automatic Revenue Split",
+    visual: <SplitRailVisual />,
+  },
+  {
+    description:
+      "Create paid community events with one checkout experience that supports multiple stakeholders from the start.",
+    icon: WalletCards,
+    title: "Collaborative Event Checkout",
+    visual: <CheckoutOrbitVisual />,
+  },
+  {
+    description:
+      "Give organizers and collaborators a shared record of every payout, recipient, and settlement status.",
+    icon: ReceiptText,
+    title: "Transparent Settlement Ledger",
+    visual: <LedgerTableVisual />,
+  },
+  {
+    description:
+      "Issue passes that help attendees prove ownership, unlock event resources, and verify check-in access.",
+    icon: TicketCheck,
+    title: "Wallet-Verifiable Event Pass",
+    visual: <PassVisual />,
+  },
+];
+
+const testimonials = [
+  {
+    name: "Steven",
+    quote: "Quorum saved us hours of manual payout work.",
+    role: "Hackathon Organizer, Indonesia",
+  },
+  {
+    name: "Maya R.",
+    quote: "I can finally see who gets paid before the event goes live.",
+    role: "Community Lead, Singapore",
+  },
+  {
+    name: "Kevin T.",
+    quote: "Buying a ticket and getting my access pass felt effortless.",
+    role: "Hackathon Participant, Australia",
+  },
+];
+
+const faqItems: FAQItem[] = [
+  {
+    answer:
+      "Quorum stores the collaborator split for an event, then routes each paid checkout according to that split. The organizer, speakers, venue, or partners can all have predefined shares.",
+    question: "How does Quorum split payments?",
+  },
+  {
+    answer:
+      "For the wallet-native flow, attendees connect a Stellar-compatible wallet so the pass and payment proof can be verified. The product can still explain the flow in plain checkout language.",
+    question: "Do attendees need a crypto wallet?",
+  },
+  {
+    answer:
+      "Quorum is best for paid meetups, workshops, hackathons, community dinners, side events, and partner-led events where several people or teams share revenue.",
+    question: "What types of events can I host?",
+  },
+  {
+    answer:
+      "Quorum is built on Stellar testnet for the hackathon demo, using wallet approval, USDC-style settlement flows, and Soroban-ready proof surfaces.",
+    question: "What blockchain does Quorum use?",
+  },
+  {
+    answer:
+      "Yes. Organizers can define collaborator shares before publishing the event, then use the same split as the settlement source of truth.",
+    question: "Can I customize the revenue split?",
   },
 ];
 
@@ -180,6 +270,95 @@ export default function LandingPage() {
             ))}
           </div>
         </LandingSection>
+
+        <LandingSection
+          eyebrow="Features"
+          id="features"
+          intro="From collaborative checkout to automatic revenue split and wallet-verifiable passes, Quorum brings your event payment workflow into one system."
+          title="Built for collaborative payments, not just ticketing"
+        >
+          <div className="grid gap-5 lg:grid-cols-2">
+            {features.map((feature) => (
+              <FeatureCard
+                description={feature.description}
+                icon={feature.icon}
+                key={feature.title}
+                title={feature.title}
+                visual={feature.visual}
+              />
+            ))}
+          </div>
+
+          <div className="mt-9 flex justify-center">
+            <LandingButton href="/evidence" variant="secondary">
+              View Evidence
+            </LandingButton>
+          </div>
+        </LandingSection>
+
+        <LandingSection
+          eyebrow="Testimonial"
+          id="testimonial"
+          intro="See how communities use Quorum to simplify ticket sales, automate revenue sharing, and manage event access."
+          title="Trusted by Web3 event organizers"
+        >
+          <div className="grid gap-5 lg:grid-cols-3">
+            {testimonials.map((testimonial) => (
+              <TestimonialCard
+                key={testimonial.name}
+                name={testimonial.name}
+                quote={testimonial.quote}
+                role={testimonial.role}
+              />
+            ))}
+          </div>
+        </LandingSection>
+
+        <LandingSection
+          align="left"
+          className="pb-18"
+          eyebrow="FAQ"
+          id="faq"
+          title="Got questions? We've got you covered"
+        >
+          <FAQAccordion items={faqItems} />
+        </LandingSection>
+
+        <footer className="relative overflow-hidden border-t border-white/8 pt-12 sm:pt-16">
+          <div className="landing-container relative z-10 flex flex-col gap-8 pb-12 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <LandingLogo />
+              <p className="mt-4 max-w-md text-sm leading-6 text-landing-muted">
+                Collaborative checkout, event access, and settlement evidence
+                for Web3 communities building on Stellar.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <LandingButton href="/discover" icon={null} variant="ghost">
+                Discover
+              </LandingButton>
+              <LandingButton href="/dashboard/events/new" icon={null}>
+                Start Splitting
+              </LandingButton>
+            </div>
+          </div>
+
+          <div className="landing-container flex items-center justify-between border-t border-white/8 py-5 text-xs text-landing-muted">
+            <span>Quorum on Stellar testnet</span>
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck size={14} className="text-landing-cyan-soft" />
+              Wallet-native proof
+            </span>
+          </div>
+
+          <p
+            aria-hidden="true"
+            className="pointer-events-none -mb-8 select-none text-center font-product text-[clamp(5rem,20vw,18rem)] font-semibold leading-none text-white/[0.045]"
+          >
+            Quorum.
+          </p>
+        </footer>
       </main>
     </div>
   );
