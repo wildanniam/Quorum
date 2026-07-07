@@ -7,6 +7,7 @@ type LandingSectionProps = {
   children: React.ReactNode;
   className?: string;
   eyebrow?: string;
+  id?: string;
   intro?: string;
   title?: string;
 };
@@ -16,11 +17,12 @@ export function LandingSection({
   children,
   className,
   eyebrow,
+  id,
   intro,
   title,
 }: LandingSectionProps) {
   return (
-    <section className={cn("landing-section", className)}>
+    <section className={cn("landing-section", className)} id={id}>
       <div className="landing-container">
         {eyebrow || title || intro ? (
           <div

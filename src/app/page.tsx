@@ -1,8 +1,40 @@
-import { ArrowDown, ArrowRight, Sparkles } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  BadgeCheck,
+  CircleDollarSign,
+  ReceiptText,
+  Sparkles,
+  UsersRound,
+} from "lucide-react";
 import { HeroOrbit } from "@/components/landing/hero-orbit";
 import { LandingButton } from "@/components/landing/landing-button";
 import { LandingHeader } from "@/components/landing/landing-header";
+import { LandingSection } from "@/components/landing/landing-section";
 import { LogoStrip } from "@/components/landing/logo-strip";
+import { RevenueSplitPreview } from "@/components/landing/revenue-split-preview";
+import { SectionLabel } from "@/components/landing/section-label";
+
+const workflowSteps = [
+  {
+    description:
+      "Set who gets paid, what percentage they receive, and why they are part of the event.",
+    icon: UsersRound,
+    title: "Configure revenue split",
+  },
+  {
+    description:
+      "Every checkout routes the paid event revenue through the split you defined up front.",
+    icon: CircleDollarSign,
+    title: "Sell access with shared payouts",
+  },
+  {
+    description:
+      "Keep a clean settlement trail for organizers, speakers, venues, and partners.",
+    icon: ReceiptText,
+    title: "Track every settlement",
+  },
+];
 
 export default function LandingPage() {
   return (
@@ -59,6 +91,95 @@ export default function LandingPage() {
         </section>
 
         <LogoStrip />
+
+        <LandingSection className="pb-10 sm:pb-16" id="about">
+          <div className="mx-auto max-w-5xl">
+            <SectionLabel>About Us</SectionLabel>
+            <p className="mt-8 font-product text-[clamp(2rem,4.4vw,4.75rem)] font-semibold leading-[1.08] tracking-normal text-landing-white text-balance">
+              Quorum is the collaborative checkout layer for Web3 community
+              events.{" "}
+              <span className="text-landing-muted">
+                Every ticket payment can be split among collaborators through
+                one clear checkout.
+              </span>
+            </p>
+          </div>
+        </LandingSection>
+
+        <LandingSection
+          align="left"
+          className="pt-10 sm:pt-16"
+          eyebrow="How It Works"
+          id="how-it-works"
+          intro="From creating your event to automatically splitting payouts and verifying attendance."
+          title="Run your event in three simple steps"
+        >
+          <div className="grid items-center gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-18">
+            <RevenueSplitPreview
+              className="mx-auto w-full max-w-[32rem]"
+              rows={[
+                {
+                  avatar: "ST",
+                  name: "Steven",
+                  role: "Hackathon Organizer",
+                  share: "25%",
+                },
+                {
+                  avatar: "SA",
+                  name: "Sarah",
+                  role: "Community Lead",
+                  share: "60%",
+                },
+                {
+                  avatar: "SI",
+                  name: "Stellar ID",
+                  role: "Partner",
+                  share: "15%",
+                },
+              ]}
+            />
+
+            <ol className="relative ml-10 space-y-7 border-l border-white/12 pl-8 sm:ml-0">
+              {workflowSteps.map((step, index) => {
+                const Icon = step.icon;
+
+                return (
+                  <li className="relative" key={step.title}>
+                    <span className="absolute -left-[2.5rem] top-0 grid h-8 w-8 place-items-center rounded-full border border-landing-cyan/35 bg-landing-cyan/14 font-mono text-xs text-landing-cyan-soft sm:-left-[3.05rem]">
+                      {index + 1}
+                    </span>
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1 grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-landing-cyan-soft">
+                        <Icon size={18} />
+                      </div>
+                      <div>
+                        <h3 className="font-product text-xl font-semibold leading-tight text-landing-white">
+                          {step.title}
+                        </h3>
+                        <p className="mt-2 max-w-xl text-sm leading-6 text-landing-muted">
+                          {step.description}
+                        </p>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-3 border-t border-white/10 pt-8 lg:justify-start">
+            {[
+              "Transparent collaborator shares",
+              "Wallet-verifiable passes",
+              "Settlement evidence for every event",
+            ].map((item) => (
+              <span className="landing-pill" key={item}>
+                <BadgeCheck size={16} className="text-landing-cyan-soft" />
+                {item}
+              </span>
+            ))}
+          </div>
+        </LandingSection>
       </main>
     </div>
   );
