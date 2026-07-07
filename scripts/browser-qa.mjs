@@ -22,8 +22,19 @@ const viewports = [
 
 const pages = [
   {
-    label: "Marketplace",
+    label: "Landing",
     path: "/",
+    requiredText: [
+      "Where Web3 Events",
+      "Pay Every",
+      "Built for collaborative payments",
+      "Got questions?",
+      "Start Splitting",
+    ],
+  },
+  {
+    label: "Discover",
+    path: "/discover",
     requiredText: [
       "APAC Stellar Builder Meetup",
       "Stellar Open Office Hours",
@@ -269,7 +280,9 @@ ${renderPageRows(results, "Mobile")}
 
 ## Readiness Signals
 
-- Marketplace renders paid and free seeded events.
+- Landing renders the Figma-aligned Quorum value proposition, feature section,
+  FAQ, and primary start CTA.
+- Discover renders paid and free seeded events.
 - Event detail shows checkout, capacity, and collaborator split information.
 - Resource page renders a locked state without a pass session.
 - Dashboard renders wallet readiness, contract readiness, \`Local proof mode\`,

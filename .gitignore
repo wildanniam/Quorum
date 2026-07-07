@@ -50,3 +50,4 @@ pnpm-debug.log*
 
 # Local AI assistant tooling
 .codex/
+.vercel

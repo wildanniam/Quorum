@@ -1,314 +1,320 @@
-import Link from "next/link";
 import {
-  ArrowRight,
-  CalendarDays,
-  CircleDollarSign,
-  MapPin,
   ShieldCheck,
-  TicketCheck,
-  Users,
-  WalletCards,
 } from "lucide-react";
-import { AppShell } from "@/components/app-shell";
-import { LandingScrollStory } from "@/components/landing/landing-scroll-story";
-import { Reveal } from "@/components/motion/reveal";
+import { FAQAccordion, type FAQItem } from "@/components/landing/faq-accordion";
+import { FeatureCard } from "@/components/landing/feature-card";
 import {
-  countMintedPasses,
-  countPassesForEvent,
-  getSucceededPurchaseTotalUsdc,
-  listCollaborators,
-  listPublishedEvents,
-} from "@/lib/events/repository";
-import { eventCoverStyle, eventThemeStyle } from "@/lib/events/theme";
-import type { EventRecord } from "@/lib/db/models";
+  CheckoutOrbitVisual,
+  LedgerTableVisual,
+  PassVisual,
+  SplitRailVisual,
+} from "@/components/landing/feature-visuals";
+import { HeroOrbit } from "@/components/landing/hero-orbit";
+import { HowItWorksInteractive } from "@/components/landing/how-it-works-interactive";
+import { LandingButton } from "@/components/landing/landing-button";
+import { LandingHeader } from "@/components/landing/landing-header";
+import { LandingLogo } from "@/components/landing/landing-logo";
+import { LandingSection } from "@/components/landing/landing-section";
+import { LogoStrip } from "@/components/landing/logo-strip";
+import { SectionLabel } from "@/components/landing/section-label";
+import { StellarBadge } from "@/components/landing/stellar-badge";
+import {
+  TestimonialCarousel,
+  type Testimonial,
+} from "@/components/landing/testimonial-carousel";
 
-export const dynamic = "force-dynamic";
+const workflowSteps = [
+  {
+    description:
+      "Define how ticket revenue should be distributed among organizers, speakers, partners, or any collaborators before your event goes live.",
+    title: "Configure Revenue Split",
+  },
+  {
+    description:
+      "Every ticket purchase instantly distributes funds to each collaborator's wallet according to the predefined split rules.",
+    title: "Automatic Settlement",
+  },
+  {
+    description:
+      "Monitor every completed payout with a transparent on-chain ledger, giving every collaborator verifiable proof of settlement.",
+    title: "Track Every Settlement",
+  },
+];
 
-const numberFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-});
+const features = [
+  {
+    description:
+      "Automatically distribute every ticket purchase to every stakeholder based on predefined revenue rules, no manual transfers required.",
+    title: "Automatic Revenue Split",
+    visual: <SplitRailVisual />,
+  },
+  {
+    description:
+      "Create paid community events with a single checkout experience that supports multiple stakeholders from the very beginning.",
+    title: "Collaborative Event Checkout",
+    visual: <CheckoutOrbitVisual />,
+  },
+  {
+    description:
+      "Track every payment with an on-chain settlement history, giving organizers and collaborators a shared record of every payout.",
+    title: "Transparent Settlement Ledger",
+    visual: <LedgerTableVisual />,
+  },
+  {
+    description:
+      "Every successful purchase instantly issues a wallet-verifiable event pass for secure check-ins and exclusive event access.",
+    title: "Wallet-Verifiable Event Pass",
+    visual: <PassVisual />,
+  },
+];
 
-function formatUsdc(value: number) {
-  return value > 0 ? `${numberFormatter.format(value)} USDC` : "0 USDC";
-}
+const testimonials: Testimonial[] = [
+  {
+    avatar: "/figma/landing/john-avatar.webp",
+    name: "Steven",
+    quote: "Quorum saved us hours of manual payout work.",
+    role: "Hackathon Organizer | Indonesia",
+  },
+  {
+    avatar: "/figma/landing/john-avatar.webp",
+    name: "John Doe",
+    quote: "I can finally see my payout without asking the organizer.",
+    role: "Web3 Speaker | Philippines",
+  },
+  {
+    avatar: "/figma/landing/john-avatar.webp",
+    name: "Kevin T.",
+    quote: "Buying a ticket and getting my pass felt effortless.",
+    role: "Hackathon Participant | Australia",
+  },
+];
 
-function priceLabel(event: EventRecord) {
-  return event.isFree ? "Free" : `${event.priceUsdc} USDC`;
-}
+const faqItems: FAQItem[] = [
+  {
+    answer:
+      "Quorum automatically distributes every ticket payment based on the revenue split you define when creating your event. Organizers, speakers, and partners receive their respective shares without manual transfers.",
+    question: "How does Quorum split payments?",
+  },
+  {
+    answer:
+      "For the wallet-native flow, attendees connect a Stellar-compatible wallet so the pass and payment proof can be verified. The product can still explain the flow in plain checkout language.",
+    question: "Do attendees need a crypto wallet?",
+  },
+  {
+    answer:
+      "Quorum is best for paid meetups, workshops, hackathons, community dinners, side events, and partner-led events where several people or teams share revenue.",
+    question: "What types of events can I host?",
+  },
+  {
+    answer:
+      "Quorum is built on Stellar testnet for the hackathon demo, using wallet approval, USDC-style settlement flows, and Soroban-ready proof surfaces.",
+    question: "What blockchain does Quorum use?",
+  },
+  {
+    answer:
+      "Yes. Organizers can define collaborator shares before publishing the event, then use the same split as the settlement source of truth.",
+    question: "Can I customize the revenue split?",
+  },
+];
 
-function formatDate(event: EventRecord) {
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-    timeZone: event.timezone,
-  }).format(new Date(event.startDateTime));
-}
-
-function formatTime(event: EventRecord) {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: event.timezone,
-  }).format(new Date(event.startDateTime));
-}
-
-function locationLabel(event: EventRecord) {
-  return event.locationText ?? (event.locationType === "virtual" ? "Virtual" : "Venue TBA");
-}
-
-export default async function LandingPage() {
-  const publishedEvents = await listPublishedEvents();
-  const featuredEvent = publishedEvents[0] ?? null;
-  const secondaryEvents = publishedEvents.slice(1, 3);
-  const mintedPasses = await countMintedPasses();
-  const routedUsdc = await getSucceededPurchaseTotalUsdc();
-  const collaboratorCounts = await Promise.all(
-    publishedEvents.map((event) => listCollaborators(event.id)),
-  );
-  const collaboratorCount = collaboratorCounts.reduce(
-    (total, collaborators) => total + collaborators.length,
-    0,
-  );
-  const featuredMintedPasses = featuredEvent
-    ? await countPassesForEvent(featuredEvent.id)
-    : 0;
-
+export default function LandingPage() {
   return (
-    <AppShell>
-      <section
-        className="relative overflow-hidden border-b border-foreground/8"
-        style={featuredEvent ? eventThemeStyle(featuredEvent) : undefined}
+    <div className="landing-shell">
+      <a
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-landing-cyan focus:px-4 focus:py-2 focus:font-product focus:text-sm focus:font-semibold focus:text-black"
+        href="#main-content"
       >
-        <div className="mx-auto grid min-h-[calc(100svh-4.5rem)] max-w-7xl gap-10 px-5 py-12 sm:py-16 lg:grid-cols-[0.86fr_1.14fr] lg:items-center lg:px-8">
-          <Reveal className="max-w-2xl">
-            <p className="eyebrow">Quorum for paid events</p>
-            <h1 className="mt-5 text-5xl font-semibold leading-[0.98] tracking-tight text-balance md:text-7xl">
-              Beautiful event pages with wallet-native access.
+        Skip to content
+      </a>
+
+      <LandingHeader />
+
+      <main id="main-content">
+        <section className="landing-hero relative isolate overflow-hidden bg-[#0c0b0b]">
+          <div className="landing-container relative z-10 flex min-h-[calc(760px+6.375rem)] flex-col items-center pb-64 pt-[calc(6.375rem+3rem)] text-center sm:min-h-[calc(811px+6.375rem)] sm:pb-72 sm:pt-[calc(6.375rem+54px)]">
+            <StellarBadge className="landing-reveal" />
+
+            <h1
+              className="landing-reveal mt-11 max-w-[55.45rem] bg-[linear-gradient(90deg,#fff_29%,#9be5ee_100%)] bg-clip-text font-product text-[clamp(2.8rem,8.4vw,4rem)] font-medium leading-[1.4] tracking-normal text-transparent text-balance sm:text-[clamp(3rem,8.4vw,4rem)]"
+              style={{ "--landing-reveal-delay": "90ms" } as React.CSSProperties}
+            >
+              Where Web3 Events Pay Every Collaborator Seamlessly
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
-              Publish an event, route USDC to collaborators, mint a
-              non-transferable pass, and unlock attendee resources without
-              making the product feel like a contract console.
+
+            <p
+              className="landing-reveal mx-auto mt-7 max-w-4xl text-sm leading-6 text-landing-white/88 sm:text-base"
+              style={{ "--landing-reveal-delay": "160ms" } as React.CSSProperties}
+            >
+              From selling event access to instant payouts, Quorum unifies every
+              payment workflow into one seamless checkout.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-accent-ink shadow-[0_18px_70px_var(--event-glow)] transition hover:bg-foreground"
-                href="/discover"
-              >
-                Discover events <ArrowRight size={16} />
-              </Link>
-              <Link
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-foreground/12 bg-foreground/[0.045] px-5 text-sm font-semibold text-foreground transition hover:border-accent/55 hover:text-accent"
-                href="/dashboard/events/new"
-              >
-                Create event <ArrowRight size={16} />
-              </Link>
+            <div
+              className="landing-reveal mt-12 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ "--landing-reveal-delay": "230ms" } as React.CSSProperties}
+            >
+              <LandingButton href="#features" variant="secondary">
+                Explore Features
+              </LandingButton>
+              <LandingButton href="/dashboard/events/new">
+                Get Started
+              </LandingButton>
+            </div>
+          </div>
+
+          <HeroOrbit
+            className="inset-0 z-0"
+            mode="background"
+          />
+        </section>
+
+        <LogoStrip />
+
+        <LandingSection className="pb-24 pt-[7.5rem] sm:pb-[6.25rem]" id="about">
+          <div>
+            <SectionLabel>About Us</SectionLabel>
+            <p className="mt-6 max-w-[75rem] font-product text-[clamp(1.9rem,2.78vw,2.5rem)] font-normal leading-[1.4] tracking-normal text-landing-white text-balance">
+              Quorum is the collaborative checkout layer for Web3 community
+              events.{" "}
+              <span className="text-landing-muted">
+                Every ticket payment is automatically split among collaborators
+                all through one seamless checkout.
+              </span>
+            </p>
+          </div>
+        </LandingSection>
+
+        <section
+          className="landing-section-grid pb-24 sm:pb-[6.25rem]"
+          id="how-it-works"
+        >
+          <div className="landing-container">
+            <SectionLabel>How It Works</SectionLabel>
+            <div className="mt-6">
+              <h2 className="font-product text-[clamp(2rem,2.78vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Run your event in three simple steps
+              </h2>
+              <p className="mt-2 text-base leading-[1.4] text-landing-white">
+                From creating your event to automatically splitting payouts and
+                verifying attendees.
+              </p>
             </div>
 
-            <div className="mt-10 hidden max-w-xl grid-cols-3 gap-3 sm:grid">
-              {[
-                { label: "Events", value: String(publishedEvents.length) },
-                { label: "Wallets", value: String(collaboratorCount) },
-                { label: "Routed", value: formatUsdc(routedUsdc) },
-              ].map((stat) => (
-                <div
-                  className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3"
-                  key={stat.label}
-                >
-                  <p className="text-xl font-semibold text-accent">
-                    {stat.value}
-                  </p>
-                  <p className="mt-1 text-xs text-muted">{stat.label}</p>
-                </div>
+            <HowItWorksInteractive steps={workflowSteps} />
+          </div>
+        </section>
+
+        <section
+          className="landing-section-grid pb-24 pt-[6.25rem] sm:pb-[6.25rem]"
+          id="features"
+        >
+          <div className="landing-container">
+            <div className="mx-auto max-w-[56rem] text-center">
+              <SectionLabel>Features</SectionLabel>
+              <h2 className="mt-7 font-product text-[clamp(2rem,2.78vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Built for collaborative payments, not just ticketing
+              </h2>
+              <p className="mx-auto mt-3 max-w-[45rem] text-base leading-[1.4] tracking-normal text-landing-white">
+                From collaborative checkout to automatic revenue splits and
+                wallet-verifiable event passes, Quorum brings every payment
+                workflow into one seamless platform powered by Stellar.
+              </p>
+            </div>
+
+            <div className="mt-7 grid gap-6 lg:grid-cols-2">
+              {features.map((feature) => (
+                <FeatureCard
+                  description={feature.description}
+                  key={feature.title}
+                  title={feature.title}
+                  visual={feature.visual}
+                />
               ))}
             </div>
-          </Reveal>
 
-          <div className="relative">
-            <div className="absolute -inset-x-8 bottom-0 top-14 bg-[linear-gradient(90deg,transparent,rgba(217,168,92,0.08),transparent)]" />
-            {featuredEvent ? (
-              <div className="relative mx-auto max-w-3xl">
-                <Link
-                  className="group block overflow-hidden rounded-[8px] border border-foreground/12 bg-panel shadow-[0_34px_120px_rgba(0,0,0,0.42)]"
-                  href={`/events/${featuredEvent.slug}`}
-                >
-                  <div
-                    className="event-cover min-h-[420px] p-5 sm:min-h-[520px] sm:p-7"
-                    style={eventCoverStyle(featuredEvent)}
-                  >
-                    <div className="flex h-full flex-col justify-between">
-                      <div className="flex flex-wrap gap-2">
-                        <span className="rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-ink">
-                          Featured
-                        </span>
-                        <span className="rounded-full border border-foreground/18 bg-background/70 px-3 py-1 text-xs font-semibold text-foreground">
-                          {priceLabel(featuredEvent)}
-                        </span>
-                      </div>
-
-                      <div>
-                        <p className="text-sm font-semibold text-accent">
-                          {locationLabel(featuredEvent)}
-                        </p>
-                        <h2 className="mt-3 max-w-2xl text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-6xl">
-                          {featuredEvent.title}
-                        </h2>
-                        <p className="mt-4 max-w-2xl text-base leading-7 text-foreground/82">
-                          {featuredEvent.shortDescription}
-                        </p>
-                        <div className="mt-5 grid gap-2 text-sm text-foreground sm:grid-cols-3">
-                          <div className="flex min-h-11 items-center gap-2 rounded-full border border-foreground/16 bg-background/70 px-3">
-                            <CalendarDays className="text-accent" size={16} />
-                            <span>
-                              {formatDate(featuredEvent)}, {formatTime(featuredEvent)}
-                            </span>
-                          </div>
-                          <div className="flex min-h-11 items-center gap-2 rounded-full border border-foreground/16 bg-background/70 px-3">
-                            <TicketCheck className="text-accent" size={16} />
-                            <span>
-                              {Math.max(
-                                featuredEvent.capacity - featuredMintedPasses,
-                                0,
-                              )}{" "}
-                              seats left
-                            </span>
-                          </div>
-                          <div className="flex min-h-11 items-center gap-2 rounded-full border border-foreground/16 bg-background/70 px-3">
-                            <ArrowRight className="text-accent" size={16} />
-                            <span>Open event</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="relative z-10 -mt-8 grid gap-3 px-4 sm:grid-cols-3">
-                  {[
-                    {
-                      icon: WalletCards,
-                      label: "Wallet approval",
-                      value: "Explicit Freighter sign",
-                    },
-                    {
-                      icon: CircleDollarSign,
-                      label: "Split-ready",
-                      value: "USDC routing",
-                    },
-                    {
-                      icon: ShieldCheck,
-                      label: "Pass access",
-                      value: `${mintedPasses} minted`,
-                    },
-                  ].map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <div
-                        className="rounded-[8px] border border-foreground/10 bg-background/88 p-4 shadow-[0_20px_70px_rgba(0,0,0,0.24)] backdrop-blur-xl"
-                        key={item.label}
-                      >
-                        <Icon className="text-accent" size={18} />
-                        <p className="mt-3 text-sm font-semibold">
-                          {item.label}
-                        </p>
-                        <p className="mt-1 text-xs text-muted">{item.value}</p>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ) : (
-              <div className="relative rounded-[8px] border border-foreground/12 bg-foreground/[0.045] p-8">
-                <p className="text-sm text-muted">
-                  Create the first published event to preview Quorum here.
-                </p>
-              </div>
-            )}
+            <div className="mt-9 flex justify-center">
+              <LandingButton href="/evidence" icon={null} variant="secondary">
+                View Docs
+              </LandingButton>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <LandingScrollStory />
+        <section
+          className="landing-section-grid overflow-hidden py-[5.2rem] sm:py-[5.6rem]"
+          id="testimonial"
+        >
+          <div className="landing-container">
+            <div className="mx-auto max-w-[75rem] text-center">
+              <SectionLabel>Testimonial</SectionLabel>
+              <h2 className="mt-8 font-product text-[clamp(2.3rem,3.35vw,2.5rem)] font-medium leading-[1.4] tracking-normal text-landing-white text-balance">
+                Trusted by Web3 Event Organizers
+              </h2>
+              <p className="mt-2 text-base leading-[1.4] text-landing-white">
+                See how communities use Quorum to simplify ticket sales,
+                automate revenue sharing, and manage event access.
+              </p>
+            </div>
 
-      <section className="border-t border-foreground/8">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 py-14 lg:grid-cols-[0.72fr_1.28fr] lg:px-8 lg:py-18">
-          <div>
-            <p className="eyebrow">Discover next</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight md:text-4xl">
-              A cleaner front door, then a focused marketplace.
+            <TestimonialCarousel testimonials={testimonials} />
+          </div>
+        </section>
+
+        <section
+          className="landing-section-grid relative overflow-hidden pb-0 pt-[5.8rem] sm:pt-[6rem]"
+          id="faq"
+        >
+          <div className="landing-container relative z-10">
+            <SectionLabel>FAQ</SectionLabel>
+            <h2 className="mt-9 max-w-[75rem] font-product text-[clamp(2.5rem,4.7vw,3rem)] font-normal leading-[1.4] tracking-normal text-landing-white text-balance">
+              Got questions? We&apos;ve got you covered
             </h2>
-            <p className="mt-4 text-sm leading-6 text-muted">
-              The homepage now sets the emotional and product context. The
-              Discover page can stay focused on browsing, comparison, and event
-              selection.
-            </p>
-            <Link
-              className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full border border-foreground/12 bg-foreground/[0.045] px-4 text-sm font-semibold transition hover:border-accent/55 hover:text-accent"
-              href="/discover"
-            >
-              View all events <ArrowRight size={15} />
-            </Link>
+            <FAQAccordion className="mt-[3.25rem]" items={faqItems} />
+          </div>
+          <p
+            aria-hidden="true"
+            className="pointer-events-none relative z-0 -mb-8 mt-10 select-none text-center font-product text-[clamp(8rem,21vw,17.5rem)] font-semibold leading-none text-white/[0.065]"
+          >
+            Quorum.
+          </p>
+        </section>
+
+        <footer className="relative overflow-hidden border-t border-white/8 pt-12 sm:pt-16">
+          <div className="landing-container relative z-10 flex flex-col gap-8 pb-12 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <LandingLogo />
+              <p className="mt-4 max-w-md text-sm leading-6 text-landing-muted">
+                Collaborative checkout, event access, and settlement evidence
+                for Web3 communities building on Stellar.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <LandingButton href="/discover" icon={null} variant="ghost">
+                Discover
+              </LandingButton>
+              <LandingButton href="/dashboard/events/new" icon={null}>
+                Start Splitting
+              </LandingButton>
+            </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2">
-            {secondaryEvents.length > 0
-              ? secondaryEvents.map((event) => (
-                  <Link
-                    className="group overflow-hidden rounded-[8px] border border-foreground/10 bg-foreground/[0.045] transition hover:border-accent/45"
-                    href={`/events/${event.slug}`}
-                    key={event.id}
-                    style={eventThemeStyle(event)}
-                  >
-                    <div
-                      className="event-cover min-h-56"
-                      style={eventCoverStyle(event)}
-                    />
-                    <div className="p-5">
-                      <div className="flex flex-wrap gap-2 text-xs text-muted">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-foreground/10 px-2.5 py-1">
-                          <MapPin size={13} /> {locationLabel(event)}
-                        </span>
-                        <span className="rounded-full border border-foreground/10 px-2.5 py-1">
-                          {priceLabel(event)}
-                        </span>
-                      </div>
-                      <h3 className="mt-4 text-2xl font-semibold tracking-tight group-hover:text-accent">
-                        {event.title}
-                      </h3>
-                      <p className="mt-3 text-sm leading-6 text-muted">
-                        {event.shortDescription}
-                      </p>
-                    </div>
-                  </Link>
-                ))
-              : [
-                  {
-                    title: "Publish paid workshops",
-                    body: "Share collaborator splits before checkout starts.",
-                  },
-                  {
-                    title: "Gate attendee resources",
-                    body: "Let owned passes unlock decks, links, and notes.",
-                  },
-                ].map((item) => (
-                  <div
-                    className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-6"
-                    key={item.title}
-                  >
-                    <Users className="text-accent" size={20} />
-                    <h3 className="mt-6 text-2xl font-semibold tracking-tight">
-                      {item.title}
-                    </h3>
-                    <p className="mt-3 text-sm leading-6 text-muted">
-                      {item.body}
-                    </p>
-                  </div>
-                ))}
+          <div className="landing-container flex items-center justify-between border-t border-white/8 py-5 text-xs text-landing-muted">
+            <span>Quorum on Stellar testnet</span>
+            <span className="inline-flex items-center gap-2">
+              <ShieldCheck size={14} className="text-landing-cyan-soft" />
+              Wallet-native proof
+            </span>
           </div>
-        </div>
-      </section>
-    </AppShell>
+
+          <p
+            aria-hidden="true"
+            className="pointer-events-none -mb-8 select-none text-center font-product text-[clamp(5rem,20vw,18rem)] font-semibold leading-none text-white/[0.045]"
+          >
+            Quorum.
+          </p>
+        </footer>
+      </main>
+    </div>
   );
 }
