@@ -22,6 +22,7 @@ export function TestimonialCard({
         "landing-card flex min-h-[22.75rem] flex-col items-center justify-between p-8 text-center",
         className,
       )}
+      data-landing-hover="true"
     >
       <div>
         <div className="flex justify-center gap-3 text-landing-white">

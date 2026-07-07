@@ -281,6 +281,10 @@ select {
   text-shadow: 0 0 28px rgba(38, 198, 218, 0.22);
 }
 
+.landing-reveal {
+  opacity: 1;
+}
+
 .landing-fade-x {
   mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
 }
@@ -387,6 +391,42 @@ select {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  @keyframes landing-reveal-in {
+    from {
+      opacity: 0;
+      transform: translate3d(0, 16px, 0);
+    }
+
+    to {
+      opacity: 1;
+      transform: translate3d(0, 0, 0);
+    }
+  }
+
+  @keyframes landing-orbit-pulse {
+    0%,
+    100% {
+      opacity: 0.72;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @keyframes landing-dot-pulse {
+    0%,
+    100% {
+      opacity: 0.58;
+      transform: scale(0.94);
+    }
+
+    50% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   html {
     scroll-behavior: smooth;
   }
@@ -399,6 +439,39 @@ select {
     transition-duration: 220ms;
     transition-property: background-color, border-color, color, opacity, box-shadow, transform;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .landing-reveal {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+    animation: landing-reveal-in 720ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation-delay: var(--landing-reveal-delay, 0ms);
+    will-change: opacity, transform;
+  }
+
+  .landing-card {
+    transition-duration: 260ms;
+    transition-property: border-color, box-shadow, transform;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .landing-card[data-landing-hover="true"]:hover {
+    border-color: color-mix(in srgb, var(--landing-cyan) 38%, rgba(255, 255, 255, 0.16));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      0 26px 90px rgba(38, 198, 218, 0.1),
+      0 28px 90px rgba(0, 0, 0, 0.32);
+    transform: translate3d(0, -4px, 0);
+  }
+
+  [data-hero-orbit="true"] > :first-child {
+    animation: landing-orbit-pulse 7.5s ease-in-out infinite;
+    will-change: opacity;
+  }
+
+  [data-orbit-dot="true"] {
+    animation: landing-dot-pulse 3.8s ease-in-out infinite;
+    will-change: opacity, transform;
   }
 }
 

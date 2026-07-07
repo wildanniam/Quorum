@@ -32,6 +32,7 @@ export function CheckoutOrbitVisual() {
       ].map(([x, y], index) => (
         <div
           className={`absolute ${x} ${y} grid h-8 w-8 place-items-center rounded-full border border-landing-cyan/34 bg-landing-panel text-xs text-landing-cyan-soft`}
+          data-orbit-dot="true"
           key={`${x}-${y}`}
         >
           {index + 1}

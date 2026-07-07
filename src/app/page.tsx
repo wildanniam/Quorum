@@ -141,23 +141,32 @@ export default function LandingPage() {
       <main id="main-content">
         <section className="relative overflow-hidden border-b border-white/8">
           <div className="landing-container relative z-10 flex min-h-[calc(100svh-5.75rem)] flex-col items-center justify-center pb-36 pt-14 text-center sm:pb-44 sm:pt-18 lg:pb-48 lg:pt-20">
-            <div className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/14 bg-white/[0.025] px-5 font-product text-xs font-semibold text-landing-white/82 shadow-[0_0_40px_rgba(38,198,218,0.08)]">
+            <div className="landing-reveal inline-flex min-h-11 items-center gap-2 rounded-full border border-white/14 bg-white/[0.025] px-5 font-product text-xs font-semibold text-landing-white/82 shadow-[0_0_40px_rgba(38,198,218,0.08)]">
               <Sparkles size={14} className="text-landing-cyan-soft" />
               Powered by Stellar
             </div>
 
-            <h1 className="mt-8 max-w-6xl font-product text-[clamp(3rem,5.45vw,5.75rem)] font-semibold leading-[0.98] tracking-normal text-landing-white text-balance">
+            <h1
+              className="landing-reveal mt-8 max-w-6xl font-product text-[clamp(3rem,5.45vw,5.75rem)] font-semibold leading-[0.98] tracking-normal text-landing-white text-balance"
+              style={{ "--landing-reveal-delay": "90ms" } as React.CSSProperties}
+            >
               Where Web3 Events{" "}
               <span className="landing-cyan-text">Pay Every</span>{" "}
               Collaborator Seamlessly
             </h1>
 
-            <p className="mx-auto mt-7 max-w-3xl text-base leading-7 text-landing-muted sm:text-lg">
+            <p
+              className="landing-reveal mx-auto mt-7 max-w-3xl text-base leading-7 text-landing-muted sm:text-lg"
+              style={{ "--landing-reveal-delay": "160ms" } as React.CSSProperties}
+            >
               From selling event access to instant payouts, Quorum unifies every
               payment workflow into one checkout built for community events.
             </p>
 
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <div
+              className="landing-reveal mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
+              style={{ "--landing-reveal-delay": "230ms" } as React.CSSProperties}
+            >
               <LandingButton href="#features" variant="secondary">
                 Explore Features
               </LandingButton>

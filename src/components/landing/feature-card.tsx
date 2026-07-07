@@ -20,7 +20,10 @@ export function FeatureCard({
   visual,
 }: FeatureCardProps) {
   return (
-    <article className={cn("landing-card overflow-hidden", className)}>
+    <article
+      className={cn("landing-card overflow-hidden", className)}
+      data-landing-hover="true"
+    >
       {visual ? (
         <div className="min-h-40 border-b border-white/8 bg-black/20">
           {visual}
