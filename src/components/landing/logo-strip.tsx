@@ -17,11 +17,11 @@ function StripLogo() {
 }
 
 export function LogoStrip({
-  caption = "Trusted by leading blockchain innovators",
+  caption = "Trusted by Leading Blockchain Innovator",
 }: LogoStripProps) {
   return (
     <div
-      className="landing-fade-x relative overflow-hidden border-b border-white/8 py-7"
+      className="landing-fade-x relative isolate overflow-hidden bg-[#0c0b0b] py-7"
       data-logo-strip="true"
     >
       <p className="mb-5 text-center font-product text-xs font-medium text-landing-muted">
