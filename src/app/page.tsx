@@ -14,12 +14,12 @@ import {
   SplitRailVisual,
 } from "@/components/landing/feature-visuals";
 import { HeroOrbit } from "@/components/landing/hero-orbit";
+import { HowItWorksInteractive } from "@/components/landing/how-it-works-interactive";
 import { LandingButton } from "@/components/landing/landing-button";
 import { LandingHeader } from "@/components/landing/landing-header";
 import { LandingLogo } from "@/components/landing/landing-logo";
 import { LandingSection } from "@/components/landing/landing-section";
 import { LogoStrip } from "@/components/landing/logo-strip";
-import { RevenueSplitPreview } from "@/components/landing/revenue-split-preview";
 import { SectionLabel } from "@/components/landing/section-label";
 import { StellarBadge } from "@/components/landing/stellar-badge";
 import { TestimonialCard } from "@/components/landing/testimonial-card";
@@ -202,62 +202,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="mt-6 grid min-h-[35.2rem] items-start gap-12 lg:grid-cols-[36.375rem_26.125rem] lg:gap-[7.5rem]">
-              <RevenueSplitPreview
-                className="mx-auto w-full lg:ml-[5.125rem] lg:mt-[5.375rem]"
-                rows={[
-                  {
-                    avatar: "JD",
-                    name: "John Doe",
-                    role: "Speaker",
-                    share: "25%",
-                  },
-                  {
-                    avatar: "SA",
-                    name: "Sarah",
-                    role: "Organizer",
-                    share: "60%",
-                  },
-                  {
-                    avatar: "SI",
-                    name: "Stellar ID",
-                    role: "Partner",
-                    share: "15%",
-                  },
-                ]}
-              />
-
-              <ol className="relative mx-auto w-full max-w-[26.125rem] lg:mt-[5.1875rem]">
-                <span
-                  aria-hidden="true"
-                  className="absolute left-[1.5625rem] top-[-4.4375rem] h-[30.6875rem] w-px bg-gradient-to-b from-transparent via-white/18 to-transparent"
-                />
-                {workflowSteps.map((step, index) => (
-                  <li
-                    className="relative grid grid-cols-[3.125rem_1fr] gap-[1.4375rem] pb-12 last:pb-0 lg:pb-[3rem]"
-                    key={step.title}
-                  >
-                    <span
-                      className={
-                        index === 0
-                          ? "relative z-10 grid h-[3.125rem] w-[3.125rem] place-items-center rounded-[10px] bg-[#10535c]/80 font-product text-xl font-medium leading-[1.4] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur"
-                          : "relative z-10 grid h-[3.125rem] w-[3.125rem] place-items-center rounded-[10px] bg-[#191919] font-product text-xl font-medium leading-[1.4] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] backdrop-blur"
-                      }
-                    >
-                      {index + 1}
-                    </span>
-                    <div className={index === 0 ? "" : "opacity-40"}>
-                      <h3 className="font-product text-[1.1875rem] font-medium leading-[1.4] text-white">
-                        {step.title}
-                      </h3>
-                      <p className="mt-2 max-w-[21.5625rem] font-product text-base font-normal leading-[1.4] text-[#979696]">
-                        {step.description}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
+            <HowItWorksInteractive steps={workflowSteps} />
           </div>
         </section>
 
