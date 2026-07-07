@@ -386,8 +386,7 @@ select {
   transition-delay: var(--line-delay, 0ms);
 }
 
-.settlement-connector-dot {
-  fill: #26c6da;
+.settlement-connector-ring {
   filter: drop-shadow(0 0 8px rgba(38, 198, 218, 0.85));
   opacity: 0;
   transform: scale(0.72);
@@ -398,7 +397,17 @@ select {
     transform 360ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.how-visual-state[data-active="true"] .settlement-connector-dot {
+.settlement-connector-ring circle:first-child {
+  fill: #0c0b0b;
+  stroke: #26c6da;
+  stroke-width: 2;
+}
+
+.settlement-connector-ring circle:last-child {
+  fill: #26c6da;
+}
+
+.how-visual-state[data-active="true"] .settlement-connector-ring {
   opacity: 1;
   transform: scale(1);
   transition-delay: var(--dot-delay, 0ms);

@@ -105,13 +105,18 @@ export function HowItWorksInteractive({
         "mt-6 grid min-h-[35.2rem] items-start gap-12 lg:grid-cols-[36.375rem_26.125rem] lg:gap-[7.5rem]",
         className,
       )}
-      onPointerEnter={startSequence}
-      onPointerLeave={resetSequence}
+      onPointerEnter={(event) => {
+        if (event.pointerType === "mouse") {
+          startSequence();
+        }
+      }}
+      onPointerLeave={(event) => {
+        if (event.pointerType === "mouse") {
+          resetSequence();
+        }
+      }}
     >
-      <div
-        className="how-visual-stage relative mx-auto min-h-[31rem] w-full max-w-[36.375rem] lg:mx-0 lg:min-h-[35.2rem]"
-        onPointerEnter={startSequence}
-      >
+      <div className="how-visual-stage relative mx-auto min-h-[31rem] w-full max-w-[36.375rem] lg:mx-0 lg:min-h-[35.2rem]">
         <SplitListVisual active={activeStep === 0} />
         <SettlementGraphVisual active={activeStep === 1} />
         <PayoutCompleteVisual active={activeStep === 2} />
@@ -283,27 +288,27 @@ function ParticipantIdentity({ participant }: { participant: Participant }) {
 function SettlementGraphVisual({ active }: { active: boolean }) {
   return (
     <div className="how-visual-state" data-active={active}>
-      <div className="settlement-graph absolute left-1/2 top-4 h-[32.5rem] w-[31.25rem] origin-top scale-[0.72] -translate-x-1/2 sm:left-[5.25rem] sm:top-6 sm:scale-100 sm:translate-x-0">
+      <div className="settlement-graph absolute left-1/2 top-4 h-[32.125rem] w-[32.25rem] origin-top scale-[0.64] -translate-x-1/2 sm:left-[2.625rem] sm:top-6 sm:scale-100 sm:translate-x-0">
         <GraphConnections />
         <TicketNode />
         <QuorumNode />
         <GraphRecipient
           avatar="/figma/landing/stellar-avatar.svg"
-          className="left-0 top-[19.4rem]"
+          className="left-0 top-[19.375rem] w-[10.9375rem]"
           delay="560ms"
           name="Stellar ID"
           share="15%"
         />
         <GraphRecipient
           avatar="/figma/landing/john-avatar.webp"
-          className="left-[20.35rem] top-[19.4rem]"
+          className="left-[21.25rem] top-[19.375rem] w-[10.9375rem]"
           delay="640ms"
           name="John Doe"
           share="25%"
         />
         <GraphRecipient
           avatar="/figma/landing/sarah-avatar.webp"
-          className="left-[11rem] top-[27.1rem]"
+          className="left-[11.625rem] top-[27.1875rem] w-[9.1875rem]"
           delay="720ms"
           name="Sarah"
           share="60%"
@@ -316,7 +321,7 @@ function SettlementGraphVisual({ active }: { active: boolean }) {
 function TicketNode() {
   return (
     <div
-      className="settlement-node absolute left-[9.9rem] top-0 flex h-[5.6rem] items-center justify-center gap-4 rounded-[16px] border border-white/12 bg-[#141313]/60 p-[1.32rem] shadow-[inset_0_-10px_16px_rgba(38,198,218,0.25),0_0_24px_rgba(38,198,218,0.18)] backdrop-blur"
+      className="settlement-node absolute left-[10.25rem] top-0 flex h-[5.5rem] w-[11.75rem] items-center justify-center gap-[1.15rem] rounded-[16px] border border-white/12 bg-[#141313]/60 px-[1.25rem] py-[1.25rem] shadow-[inset_0_-10px_16px_rgba(38,198,218,0.25),0_0_24px_rgba(38,198,218,0.18)] backdrop-blur"
       style={{ "--node-delay": "420ms" } as CSSProperties}
     >
       <Image
@@ -326,8 +331,10 @@ function TicketNode() {
         src="/figma/landing/wallet.svg"
         width={47}
       />
-      <div className="font-product leading-[1.4]">
-        <p className="text-[1.1875rem] font-medium text-white">50 USDC</p>
+      <div className="min-w-[5.4rem] font-product leading-[1.4]">
+        <p className="whitespace-nowrap text-[1.1875rem] font-medium text-white">
+          50 USDC
+        </p>
         <p className="text-base font-normal text-[#979696]">Per ticket</p>
       </div>
     </div>
@@ -337,7 +344,7 @@ function TicketNode() {
 function QuorumNode() {
   return (
     <div
-      className="settlement-node absolute left-[12.25rem] top-[10.8rem] grid h-[7.55rem] w-[7.55rem] place-items-center rounded-[16px] border border-white/12 bg-[#141313]/60 shadow-[inset_0_0_26px_rgba(38,198,218,0.2),0_0_24px_rgba(38,198,218,0.2)] backdrop-blur"
+      className="settlement-node absolute left-[12.375rem] top-[10.5rem] grid h-[7.5rem] w-[7.5rem] place-items-center rounded-[16px] border border-white/12 bg-[#141313]/60 shadow-[inset_0_0_26px_rgba(38,198,218,0.2),0_0_24px_rgba(38,198,218,0.2)] backdrop-blur"
       style={{ "--node-delay": "500ms" } as CSSProperties}
     >
       <Image
@@ -367,7 +374,7 @@ function GraphRecipient({
   return (
     <div
       className={cn(
-        "settlement-node absolute flex h-[5rem] items-center justify-center gap-4 rounded-[15px] border border-white/12 bg-[#141313]/60 p-[1.2rem] shadow-[inset_0_0_18px_rgba(38,198,218,0.22),0_0_20px_rgba(38,198,218,0.16)] backdrop-blur",
+        "settlement-node absolute flex h-[4.9375rem] items-center justify-center gap-4 rounded-[15px] border border-white/12 bg-[#141313]/60 px-[1.2rem] py-[1rem] shadow-[inset_0_0_18px_rgba(38,198,218,0.22),0_0_20px_rgba(38,198,218,0.16)] backdrop-blur",
         className,
       )}
       style={{ "--node-delay": delay } as CSSProperties}
@@ -394,46 +401,48 @@ function GraphConnections() {
     <svg
       aria-hidden="true"
       className="settlement-connectors"
-      viewBox="0 0 500 520"
+      viewBox="0 0 516 514"
     >
       <path
         className="settlement-connector"
-        d="M250 90 L250 173"
+        d="M258 88 L258 168"
         pathLength={1}
         style={{ "--line-delay": "80ms" } as CSSProperties}
       />
       <path
         className="settlement-connector"
-        d="M250 294 L250 442"
+        d="M258 288 L258 435"
         pathLength={1}
         style={{ "--line-delay": "180ms" } as CSSProperties}
       />
       <path
         className="settlement-connector"
-        d="M250 338 L168 350"
+        d="M258 288 L175 350"
         pathLength={1}
         style={{ "--line-delay": "280ms" } as CSSProperties}
       />
       <path
         className="settlement-connector"
-        d="M250 338 L336 350"
+        d="M258 288 L340 350"
         pathLength={1}
         style={{ "--line-delay": "360ms" } as CSSProperties}
       />
       {[
-        [250, 90],
-        [250, 173],
-        [250, 294],
-        [250, 338],
+        [258, 88],
+        [258, 168],
+        [258, 288],
+        [175, 350],
+        [340, 350],
+        [258, 435],
       ].map(([cx, cy], index) => (
-        <circle
-          className="settlement-connector-dot"
-          cx={cx}
-          cy={cy}
+        <g
+          className="settlement-connector-ring"
           key={`${cx}-${cy}`}
-          r="4.5"
           style={{ "--dot-delay": `${220 + index * 55}ms` } as CSSProperties}
-        />
+        >
+          <circle cx={cx} cy={cy} r="8.5" />
+          <circle cx={cx} cy={cy} r="4.5" />
+        </g>
       ))}
     </svg>
   );
