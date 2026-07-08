@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import {
-  Activity,
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
@@ -18,6 +17,16 @@ import { ContractReadiness } from "@/components/contract-readiness";
 import { WalletReadiness } from "@/components/wallet-readiness";
 import { PublishButton } from "@/components/events/publish-button";
 import { WithdrawButton } from "@/components/events/withdraw-button";
+import {
+  EmptyState,
+  MetricTile,
+  ProductPage,
+  ProductPageHeader,
+  SectionHeader,
+} from "@/components/ui/product-layout";
+import { ProofSurface } from "@/components/ui/proof-surface";
+import { QuorumButton } from "@/components/ui/quorum-button";
+import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
   getEventById,
@@ -113,28 +122,28 @@ export default async function DashboardPage() {
       label: "Hosted events",
       value: String(organizerEvents.length),
       detail: `${organizerEvents.filter((event) => event.status === "published").length} published`,
-      tone: "text-accent",
+      tone: "cyan" as const,
     },
     {
       icon: Handshake,
       label: "Collaborations",
       value: String(collaborations.length),
       detail: `${formatUsdc(withdrawableUsdc)} USDC withdrawable`,
-      tone: "text-cyan",
+      tone: "cyan" as const,
     },
     {
       icon: TicketCheck,
       label: "Attendee passes",
       value: String(attendeePasses.length),
       detail: `${attendeePasses.filter(({ pass }) => pass.checkedIn).length} checked in`,
-      tone: "text-success",
+      tone: "success" as const,
     },
     {
       icon: BanknoteArrowUp,
       label: "Revenue routed",
       value: `${formatUsdc(organizerRevenue)} USDC`,
       detail: "from completed checkouts",
-      tone: "text-amber",
+      tone: "warning" as const,
     },
   ];
   const proofRows = [
@@ -168,47 +177,33 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
-                  <LayoutDashboard size={14} />
-                  Studio
-                </span>
-                <span className="inline-flex min-h-8 items-center gap-2 rounded-full border border-foreground/10 bg-background/42 px-3 text-xs text-muted">
-                  <WalletCards size={14} />
-                  {walletLabel}
-                </span>
-              </div>
-              <h1 className="mt-5 max-w-3xl text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
-                Run your events from one calm workspace.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                Track hosted events, collaborator payouts, attendee passes, and
-                wallet readiness without turning the product into a transaction
-                monitor.
-              </p>
-            </div>
-            <Link
-              href="/dashboard/events/new"
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-            >
-              Create event <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <div className="mt-6 grid gap-2 sm:grid-cols-3">
+      <ProductPage className="space-y-5">
+        <ProductPageHeader
+          actions={
+            <QuorumButton href="/dashboard/events/new" icon={<ArrowRight size={16} />}>
+              Create event
+            </QuorumButton>
+          }
+          description="Track hosted events, collaborator payouts, attendee passes, and readiness without turning the product into a transaction monitor."
+          eyebrow="Studio"
+          icon={LayoutDashboard}
+          meta={
+            <StatusPill icon={WalletCards} tone={session ? "ready" : "pending"}>
+              {walletLabel}
+            </StatusPill>
+          }
+          title="Run your events from one calm workspace."
+        >
+          <div className="grid gap-2 sm:grid-cols-3">
             {roleBadges.map((role) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-full border border-foreground/10 bg-background/32 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-background/36 px-4 py-3"
                 key={role.label}
               >
                 <span className="text-sm text-muted">{role.label}</span>
                 <span
                   className={`font-mono text-sm ${
-                    role.active ? "text-accent" : "text-muted"
+                    role.active ? "text-quorum-cyan-soft" : "text-muted"
                   }`}
                 >
                   {role.value}
@@ -216,47 +211,38 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
+        </ProductPageHeader>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {cards.map((card) => (
+            <MetricTile
+              detail={card.detail}
+              icon={card.icon}
+              key={card.label}
+              label={card.label}
+              tone={card.tone}
+              value={card.value}
+            />
+          ))}
         </div>
 
-        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <div
-                className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5"
-                key={card.label}
-              >
-                <div className="flex items-center justify-between gap-4">
-                  <Icon className={card.tone} size={20} />
-                  <Activity className="text-muted/50" size={16} />
-                </div>
-                <p className="mt-4 text-sm text-muted">{card.label}</p>
-                <p className={`mt-2 text-2xl font-semibold leading-tight ${card.tone}`}>
-                  {card.value}
-                </p>
-                <p className="mt-3 text-sm leading-6 text-muted">{card.detail}</p>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-5 grid gap-5 xl:items-start xl:grid-cols-[minmax(0,1.18fr)_0.82fr]">
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1.18fr)_0.82fr] xl:items-start">
           <div className="grid gap-5">
-            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="eyebrow">Hosted events</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Events you control
-                  </h2>
-                </div>
-                <Link
-                  href="/dashboard/events/new"
-                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm text-muted transition hover:border-accent/45 hover:text-accent"
-                >
-                  New event <ArrowUpRight size={13} />
-                </Link>
-              </div>
+            <ProofSurface elevated>
+              <SectionHeader
+                actions={
+                  <Link
+                    href="/dashboard/events/new"
+                    className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/12 px-3 text-sm text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+                  >
+                    New event <ArrowUpRight size={13} />
+                  </Link>
+                }
+                description="Draft, publish, and inspect event proof without leaving Studio."
+                eyebrow="Hosted events"
+                title="Events you control"
+              />
+
               <div className="mt-5 grid gap-3">
                 {organizerEvents.length > 0 ? (
                   organizerEvents.map((event) => {
@@ -267,8 +253,16 @@ export default async function DashboardPage() {
                       revenueUsdc: 0,
                     };
                     const metricCards = [
-                      { label: "passes", value: metrics.passCount, tone: "text-accent" },
-                      { label: "left", value: metrics.capacityRemaining, tone: "text-cyan" },
+                      {
+                        label: "passes",
+                        value: metrics.passCount,
+                        tone: "text-quorum-cyan-soft",
+                      },
+                      {
+                        label: "left",
+                        value: metrics.capacityRemaining,
+                        tone: "text-cyan",
+                      },
                       {
                         label: "checked in",
                         value: metrics.checkedInCount,
@@ -283,14 +277,23 @@ export default async function DashboardPage() {
 
                     return (
                       <article
-                        className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
+                        className="rounded-[12px] border border-white/10 bg-background/38 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
                         key={event.id}
                       >
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                          <div>
-                            <p className="text-lg font-semibold">{event.title}</p>
-                            <p className="mt-1 font-mono text-xs uppercase tracking-normal text-muted">
-                              {event.status} / {event.capacity} capacity
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <StatusPill
+                                tone={event.status === "published" ? "success" : "pending"}
+                              >
+                                {event.status}
+                              </StatusPill>
+                              <span className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 font-mono text-xs text-muted">
+                                {event.capacity} capacity
+                              </span>
+                            </div>
+                            <p className="mt-3 truncate font-product text-xl font-medium">
+                              {event.title}
                             </p>
                           </div>
                           {event.status === "draft" ? (
@@ -298,7 +301,7 @@ export default async function DashboardPage() {
                           ) : (
                             <Link
                               href={`/events/${event.slug}`}
-                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm transition hover:border-accent/45 hover:text-accent"
+                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/12 px-3 text-sm transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
                             >
                               Open <ArrowUpRight size={13} />
                             </Link>
@@ -307,7 +310,7 @@ export default async function DashboardPage() {
                         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {metricCards.map((metric) => (
                             <div
-                              className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3"
+                              className="rounded-[10px] border border-white/10 bg-white/[0.035] p-3"
                               key={metric.label}
                             >
                               <p className={`font-mono text-xl ${metric.tone}`}>
@@ -323,28 +326,30 @@ export default async function DashboardPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
-                    No organizer events for the connected wallet yet.
-                  </div>
+                  <EmptyState
+                    description="Create a draft event to configure checkout, collaborators, and gated resources."
+                    icon={CalendarDays}
+                    title="No organizer events yet"
+                  />
                 )}
               </div>
-            </section>
+            </ProofSurface>
 
-            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <p className="eyebrow">Collaborator payouts</p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                    Balances ready for withdrawal
-                  </h2>
-                </div>
-                <Link
-                  href="/dashboard/ledger"
-                  className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm text-muted transition hover:border-accent/45 hover:text-accent"
-                >
-                  Ledger <ArrowUpRight size={13} />
-                </Link>
-              </div>
+            <ProofSurface elevated>
+              <SectionHeader
+                actions={
+                  <Link
+                    href="/dashboard/ledger"
+                    className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/12 px-3 text-sm text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+                  >
+                    Ledger <ArrowUpRight size={13} />
+                  </Link>
+                }
+                description="See the collaborator roles where this wallet can receive revenue share."
+                eyebrow="Collaborator payouts"
+                title="Balances ready for withdrawal"
+              />
+
               <div className="mt-5 grid gap-3">
                 {collaborations.length > 0 ? (
                   collaborations.map((entry) => {
@@ -356,7 +361,7 @@ export default async function DashboardPage() {
                       {
                         label: "split",
                         value: `${entry.collaborator.splitPercentage}%`,
-                        tone: "text-accent",
+                        tone: "text-quorum-cyan-soft",
                       },
                       {
                         label: "earned",
@@ -377,11 +382,13 @@ export default async function DashboardPage() {
 
                     return (
                       <article
-                        className="grid gap-4 rounded-[8px] border border-foreground/10 bg-background/32 p-4 lg:grid-cols-[1fr_auto]"
+                        className="grid gap-4 rounded-[12px] border border-white/10 bg-background/38 p-4 lg:grid-cols-[1fr_auto]"
                         key={entry.collaborator.id}
                       >
-                        <div>
-                          <p className="text-lg font-semibold">{entry.event.title}</p>
+                        <div className="min-w-0">
+                          <p className="truncate font-product text-xl font-medium">
+                            {entry.event.title}
+                          </p>
                           <p className="mt-1 text-sm text-muted">
                             {entry.collaborator.displayName} /{" "}
                             {entry.collaborator.role}
@@ -389,7 +396,7 @@ export default async function DashboardPage() {
                           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                             {balanceRows.map((row) => (
                               <div
-                                className="rounded-[8px] border border-foreground/10 bg-foreground/[0.035] p-3"
+                                className="rounded-[10px] border border-white/10 bg-white/[0.035] p-3"
                                 key={row.label}
                               >
                                 <p className={`font-mono text-lg ${row.tone}`}>
@@ -412,88 +419,93 @@ export default async function DashboardPage() {
                     );
                   })
                 ) : (
-                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
-                    No collaborator roles for the connected wallet yet.
-                  </div>
+                  <EmptyState
+                    description="Collaborator balances appear here once this wallet is included in a revenue split."
+                    icon={Handshake}
+                    title="No collaborator roles yet"
+                  />
                 )}
               </div>
-            </section>
+            </ProofSurface>
           </div>
 
           <aside className="grid content-start gap-5">
             <WalletReadiness />
             <ContractReadiness />
 
-            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+            <ProofSurface>
               <p className="eyebrow">Attendee passes</p>
               <div className="mt-5 grid gap-3">
                 {attendeePasses.length > 0 ? (
                   attendeePasses.map(({ event, pass }) => (
                     <Link
-                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3 transition hover:border-accent/45"
+                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[10px] border border-white/10 bg-background/38 p-3 transition hover:border-quorum-cyan/45"
                       href={pass.tokenId ? `/passes/${pass.tokenId}` : "/passes"}
                       key={pass.id}
                     >
-                      <BadgeCheck className="text-accent" size={19} />
+                      <BadgeCheck className="text-quorum-cyan-soft" size={19} />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{event.title}</p>
                         <p className="mt-1 truncate font-mono text-xs text-muted">
                           {pass.tokenId}
                         </p>
                       </div>
-                      <span className="font-mono text-xs text-accent">
+                      <span className="font-mono text-xs text-quorum-cyan-soft">
                         {pass.checkedIn ? "checked" : "active"}
                       </span>
                     </Link>
                   ))
                 ) : (
-                  <div className="rounded-[8px] border border-foreground/10 bg-background/32 p-4 text-sm leading-6 text-muted">
-                    No owned passes for the connected wallet yet.
-                  </div>
+                  <EmptyState
+                    description="Owned passes appear here after this wallet claims or purchases access."
+                    icon={TicketCheck}
+                    title="No attendee passes"
+                  />
                 )}
               </div>
-            </section>
+            </ProofSurface>
 
-            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+            <ProofSurface>
               <p className="eyebrow">Launch checklist</p>
-              <div className="mt-5 overflow-hidden rounded-[8px] border border-foreground/10">
-                {proofRows.map((item, index) => (
-                  <div
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-foreground/10 bg-background/32 p-3 last:border-b-0"
-                    key={item.label}
-                  >
-                    <span className="font-mono text-xs text-muted">
-                      0{index + 1}
-                    </span>
-                    <span>{item.label}</span>
-                    <span
-                      className={`font-mono text-xs ${
-                        item.status === "ready"
-                          ? "text-accent"
-                          : item.status === "queued"
-                            ? "text-amber"
-                            : "text-muted"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </section>
+              <div className="mt-5 overflow-hidden rounded-[12px] border border-white/10">
+                {proofRows.map((item, index) => {
+                  const tone =
+                    item.status === "ready"
+                      ? "success"
+                      : item.status === "queued"
+                        ? "warning"
+                        : "muted";
 
-            <section className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+                  return (
+                    <div
+                      className="grid grid-cols-[auto_1fr_auto] items-center gap-3 border-b border-white/10 bg-background/38 p-3 last:border-b-0"
+                      key={item.label}
+                    >
+                      <span className="font-mono text-xs text-muted">
+                        0{index + 1}
+                      </span>
+                      <span>{item.label}</span>
+                      <StatusPill className="min-h-7 px-2.5" tone={tone}>
+                        {item.status}
+                      </StatusPill>
+                    </div>
+                  );
+                })}
+              </div>
+            </ProofSurface>
+
+            <ProofSurface>
               <div className="flex items-start gap-3 text-muted">
-                <CheckCircle2 className="mt-0.5 text-accent" size={18} />
+                <CheckCircle2 className="mt-0.5 text-quorum-cyan-soft" size={18} />
                 <p className="text-sm leading-6">
                   Studio keeps the product flow visible while wallet approval
                   remains explicit on Stellar testnet.
                 </p>
               </div>
-            </section>
+            </ProofSurface>
           </aside>
         </div>
-      </section>
+      </ProductPage>
     </AppShell>
   );
 }
