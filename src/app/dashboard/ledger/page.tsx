@@ -16,11 +16,13 @@ import {
   EmptyState,
   MetricTile,
   ProductPage,
+  SectionHeader,
   WalletGate,
 } from "@/components/ui/product-layout";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
+import type { LedgerEntryRecord } from "@/lib/db/models";
 import {
   listAnchorPayoutOpportunities,
   listAnchorPayoutsWithEventsByWallet,
@@ -42,6 +44,24 @@ function formatDate(value: string) {
     timeStyle: "short",
     timeZone: "UTC",
   }).format(new Date(value));
+}
+
+function ledgerCopy(entry: LedgerEntryRecord) {
+  if (entry.kind === "credit") {
+    return {
+      amount: `+${entry.amountUsdc} ${entry.asset}`,
+      detail: "Ticket checkout revenue allocated to this collaborator wallet.",
+      label: "Credit",
+      tone: "success" as const,
+    };
+  }
+
+  return {
+    amount: `-${entry.amountUsdc} ${entry.asset}`,
+    detail: "Withdrawn or prepared for anchor payout from this wallet balance.",
+    label: "Debit",
+    tone: "danger" as const,
+  };
 }
 
 export default async function CollaboratorLedgerPage() {
@@ -251,62 +271,91 @@ export default async function CollaboratorLedgerPage() {
           </ProofSurface>
         ) : null}
 
+        <div className="mt-5">
+          <SectionHeader
+            description={
+              session
+                ? "Only entries tied to the connected collaborator wallet are shown here. Event-level proof remains available from each row."
+                : "Connect a collaborator wallet to resolve its event relationships and credit/debit history."
+            }
+            eyebrow="Wallet-scoped ledger"
+            title="A collaborator statement, separated from public evidence."
+          />
+        </div>
+
         {session ? (
           entries.length > 0 ? (
-            <div className="mt-5 overflow-hidden rounded-[8px] border border-foreground/10">
-              {entries.map((entry) => (
-                <article
-                  className="grid gap-4 border-b border-foreground/10 bg-foreground/[0.045] p-4 last:border-b-0 lg:grid-cols-[1fr_auto] lg:items-center"
-                  key={entry.id}
-                >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span
-                        className={`rounded-[6px] border border-foreground/10 bg-background/32 px-2.5 py-1 font-mono text-xs uppercase tracking-normal ${
-                          entry.kind === "credit"
-                            ? "text-success"
-                            : "text-coral"
-                        }`}
-                      >
-                        {entry.kind}
-                      </span>
-                      <span className="rounded-[6px] border border-foreground/10 bg-background/32 px-2.5 py-1 font-mono text-xs text-foreground">
-                        {entry.amountUsdc} {entry.asset}
-                      </span>
-                      <span className="rounded-[6px] border border-foreground/10 bg-background/32 px-2.5 py-1 font-mono text-xs text-muted">
-                        balance {entry.balanceAfterUsdc} USDC
-                      </span>
+            <ProofSurface className="mt-5 overflow-hidden" elevated variant="table">
+              {entries.map((entry) => {
+                const copy = ledgerCopy(entry);
+
+                return (
+                  <article
+                    className="grid gap-4 border-b border-white/10 bg-white/[0.026] p-4 transition hover:bg-white/[0.045] last:border-b-0 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:p-5"
+                    key={entry.id}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusPill
+                          icon={
+                            entry.kind === "credit"
+                              ? CircleDollarSign
+                              : BanknoteArrowUp
+                          }
+                          tone={copy.tone}
+                        >
+                          {copy.label}
+                        </StatusPill>
+                        <span className="rounded-full border border-white/10 bg-background/40 px-2.5 py-1 font-mono text-xs text-foreground">
+                          {copy.amount}
+                        </span>
+                        <span className="rounded-full border border-white/10 bg-background/40 px-2.5 py-1 font-mono text-xs text-muted">
+                          balance {entry.balanceAfterUsdc} USDC
+                        </span>
+                      </div>
+                      <h2 className="mt-3 truncate font-product text-xl font-medium">
+                        {entry.eventTitle}
+                      </h2>
+                      <p className="mt-1 text-sm leading-6 text-muted">
+                        {copy.detail}
+                      </p>
+                      <div className="mt-3 grid gap-2 rounded-[10px] border border-white/10 bg-background/34 p-3 text-xs text-muted md:grid-cols-2">
+                        <p className="min-w-0 break-all font-mono">
+                          <span className="text-foreground/70">source:</span>{" "}
+                          {entry.txHash ?? entry.sourceId}
+                        </p>
+                        <p className="min-w-0 break-all font-mono">
+                          <span className="text-foreground/70">type:</span>{" "}
+                          {entry.sourceLabel}
+                        </p>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
+                        <span>{formatDate(entry.occurredAt)} UTC</span>
+                        {entry.tokenId ? <span>token {entry.tokenId}</span> : null}
+                        <span>{shorten(entry.walletAddress)}</span>
+                      </div>
                     </div>
-                    <h2 className="mt-3 truncate text-lg font-semibold">
-                      {entry.eventTitle}
-                    </h2>
-                    <p className="mt-1 text-sm text-muted">
-                      {entry.sourceLabel} / {formatDate(entry.occurredAt)} UTC
-                    </p>
-                    <p className="mt-2 break-all font-mono text-xs leading-5 text-muted">
-                      {entry.txHash ?? entry.sourceId}
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 lg:justify-end">
-                    <Link
-                      className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-foreground/10 px-3 text-sm text-muted transition hover:border-accent/45 hover:text-accent"
-                      href={`/events/${entry.eventSlug}/proof`}
-                    >
-                      Proof <ArrowUpRight size={13} />
-                    </Link>
-                    {entry.explorerUrl ? (
+                    <div className="flex flex-wrap gap-2 lg:justify-end">
                       <Link
-                        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-accent px-3 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-                        href={entry.explorerUrl}
-                        target="_blank"
+                        className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/12 px-3 text-sm text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+                        href={`/events/${entry.eventSlug}/proof`}
                       >
-                        Explorer <ArrowUpRight size={13} />
+                        Event proof <ArrowUpRight size={13} />
                       </Link>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
+                      {entry.explorerUrl ? (
+                        <Link
+                          className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-quorum-cyan px-3 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
+                          href={entry.explorerUrl}
+                          target="_blank"
+                        >
+                          Explorer <ArrowUpRight size={13} />
+                        </Link>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </ProofSurface>
           ) : (
             <EmptyState
               className="mt-5"

@@ -1,8 +1,23 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, RadioTower } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  BadgeCheck,
+  Fingerprint,
+  RadioTower,
+  ShieldCheck,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { EvidenceTimeline } from "@/components/evidence-timeline";
+import {
+  MetricTile,
+  ProductPage,
+  ProductPageHeader,
+} from "@/components/ui/product-layout";
+import { ProofSurface } from "@/components/ui/proof-surface";
+import { QuorumButton } from "@/components/ui/quorum-button";
+import { StatusPill } from "@/components/ui/status-pill";
 import { getEvidenceEvent, listEvidence } from "@/lib/evidence/repository";
 import { eventThemeStyle } from "@/lib/events/theme";
 
@@ -14,6 +29,12 @@ type EventProofPageProps = {
 
 export const dynamic = "force-dynamic";
 
+function shorten(value: string) {
+  if (value.length <= 18) return value;
+
+  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+}
+
 export default async function EventProofPage({ params }: EventProofPageProps) {
   const { slug } = await params;
   const event = await getEvidenceEvent(decodeURIComponent(slug));
@@ -24,14 +45,19 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
 
   const records = await listEvidence({ eventId: event.id, limit: 100 });
   const liveCount = records.filter((record) => record.txHash).length;
+  const indexedCount = records.filter(
+    (record) => record.kind === "indexed_event",
+  ).length;
+  const actorCount = new Set(
+    records
+      .map((record) => record.actorWallet)
+      .filter((wallet): wallet is string => Boolean(wallet)),
+  ).size;
 
   return (
     <AppShell>
-      <section
-        className="border-b border-foreground/8"
-        style={eventThemeStyle(event)}
-      >
-        <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
+      <div style={eventThemeStyle(event)}>
+        <ProductPage className="space-y-5">
           <Link
             href={`/events/${event.slug}`}
             className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-accent"
@@ -39,54 +65,79 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
             <ArrowLeft size={15} /> Back to event
           </Link>
 
-          <div className="mt-6 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
-            <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-              <div>
-                <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
-                  <RadioTower size={14} />
-                  Event proof
-                </div>
-                <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
-                  {event.title}
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                  Settlement proof for this event only: publish, checkout,
-                  check-in, withdrawal, and indexed contract events that map
-                  back to this Quorum event.
-                </p>
+          <ProductPageHeader
+            actions={
+              <QuorumButton href="/evidence" icon={<ArrowUpRight size={16} />}>
+                Global evidence
+              </QuorumButton>
+            }
+            description="This page only includes proof rows connected to this Quorum event. It keeps public global evidence separate from event-level proof so organizers, attendees, and judges can inspect the exact settlement trail."
+            eyebrow="Event proof"
+            icon={ShieldCheck}
+            meta={
+              <div className="flex flex-wrap items-center gap-2">
+                <StatusPill icon={Fingerprint} tone="local">
+                  Event scope
+                </StatusPill>
+                <span className="rounded-full border border-white/10 bg-white/[0.035] px-3 py-1.5 font-mono text-xs text-muted">
+                  {shorten(event.id)}
+                </span>
               </div>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-                href="/evidence"
-              >
-                Global evidence <ExternalLink size={16} />
-              </Link>
+            }
+            title={event.title}
+          >
+            <div className="grid gap-3 md:grid-cols-3">
+              <MetricTile
+                detail="Rows mapped directly to this event."
+                icon={RadioTower}
+                label="proof rows"
+                value={records.length}
+              />
+              <MetricTile
+                detail="Rows with external explorer links."
+                icon={BadgeCheck}
+                label="Stellar tx hashes"
+                tone="success"
+                value={liveCount}
+              />
+              <MetricTile
+                detail={`${indexedCount} indexed event rows included.`}
+                icon={Fingerprint}
+                label="actors"
+                value={actorCount}
+              />
             </div>
+          </ProductPageHeader>
 
-            <div className="mt-6 grid gap-3 md:grid-cols-3">
-              {[
-                { label: "proof rows", value: records.length },
-                { label: "tx hashes", value: liveCount },
-                { label: "event id", value: event.id },
-              ].map((item) => (
-                <div
-                  className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
-                  key={item.label}
-                >
-                  <p className="break-all font-mono text-xl text-accent">
-                    {item.value}
-                  </p>
-                  <p className="mt-2 text-sm text-muted">{item.label}</p>
-                </div>
-              ))}
+          <ProofSurface>
+            <div className="grid gap-4 md:grid-cols-[0.8fr_1.2fr] md:items-center">
+              <div>
+                <StatusPill icon={RadioTower} tone="cyan">
+                  Scoped feed
+                </StatusPill>
+                <h2 className="mt-4 font-product text-2xl font-medium">
+                  Event-level proof, not a global transaction dump.
+                </h2>
+              </div>
+              <p className="text-sm leading-6 text-muted">
+                This protects context: public visitors can inspect the proof for
+                this event without mixing it with unrelated Quorum activity.
+                Wallet-specific credit/debit history still belongs on the
+                collaborator ledger.
+              </p>
             </div>
-          </div>
-        </div>
-      </section>
+          </ProofSurface>
 
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <EvidenceTimeline records={records} />
-      </section>
+          <EvidenceTimeline
+            description="Only proof rows connected to this event are shown here."
+            emptyDescription="Publish, checkout, check-in, withdrawal, anchor payout, or indexed contract rows for this event will appear here after they are persisted."
+            emptyTitle="No proof rows for this event yet"
+            records={records}
+            showEventLink={false}
+            title="Event proof timeline"
+          />
+        </ProductPage>
+      </div>
     </AppShell>
   );
 }
