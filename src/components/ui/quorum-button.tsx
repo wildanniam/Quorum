@@ -3,7 +3,7 @@ import type React from "react";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/ui";
 
-type QuorumButtonVariant = "primary" | "secondary" | "ghost";
+type QuorumButtonVariant = "danger" | "ghost" | "primary" | "secondary" | "subtle";
 
 type BaseProps = {
   children: React.ReactNode;
@@ -23,12 +23,16 @@ type LinkProps = BaseProps & {
 };
 
 const variantClassName: Record<QuorumButtonVariant, string> = {
+  danger:
+    "border-coral/55 bg-coral/12 text-coral shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:border-coral hover:bg-coral/18 hover:text-foreground",
   ghost:
     "border-transparent bg-transparent text-quorum-cyan hover:bg-quorum-cyan/10 hover:text-foreground",
   primary:
     "border-quorum-cyan bg-quorum-cyan/20 text-foreground shadow-[inset_-4px_4px_12px_rgba(38,198,218,0.34),0_0_28px_rgba(38,198,218,0.18)] hover:border-quorum-cyan-soft hover:bg-quorum-cyan/28",
   secondary:
     "border-white/45 bg-quorum-grey-600/40 text-foreground shadow-[0_0_12px_rgba(255,255,255,0.12)] hover:border-white/70 hover:bg-quorum-grey-600/70",
+  subtle:
+    "border-white/10 bg-white/[0.045] text-muted hover:border-quorum-cyan/45 hover:bg-quorum-cyan/10 hover:text-quorum-cyan-soft",
 };
 
 const baseClassName =

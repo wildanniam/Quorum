@@ -67,7 +67,7 @@ export function DesktopNavigation() {
   return (
     <nav
       aria-label="Primary navigation"
-      className="hidden items-center gap-1 rounded-full border border-foreground/10 bg-foreground/[0.045] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl md:flex"
+      className="hidden items-center gap-1 rounded-full border border-white/10 bg-white/[0.045] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] backdrop-blur-xl md:flex"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -80,21 +80,21 @@ export function DesktopNavigation() {
               "relative inline-flex min-h-9 items-center gap-2 overflow-hidden rounded-full px-3.5 text-sm font-medium transition",
               active
                 ? "text-foreground"
-                : "text-muted hover:bg-foreground/8 hover:text-foreground",
+                : "text-muted hover:bg-quorum-cyan/10 hover:text-foreground",
             )}
             href={item.href}
             key={item.href}
           >
             {active ? (
               <motion.span
-                className="absolute inset-0 rounded-full bg-foreground/10"
+                className="absolute inset-0 rounded-full border border-quorum-cyan/30 bg-quorum-cyan/12 shadow-[0_0_24px_rgba(38,198,218,0.12)]"
                 layoutId="desktop-nav-active"
                 transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               />
             ) : null}
             <span className="relative inline-flex items-center gap-2">
               <Icon
-                className={active ? "text-accent" : undefined}
+                className={active ? "text-quorum-cyan-soft" : undefined}
                 size={15}
                 strokeWidth={1.9}
               />
@@ -113,7 +113,7 @@ export function MobileNavigation() {
   return (
     <nav
       aria-label="Mobile navigation"
-      className="sticky top-[4.25rem] z-10 mx-3 mt-3 grid grid-cols-5 gap-1 rounded-full border border-foreground/10 bg-background/88 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:hidden"
+      className="sticky top-[5.75rem] z-10 mx-3 mt-3 grid grid-cols-5 gap-1 rounded-full border border-white/10 bg-[#0c0b0b]/88 p-1.5 shadow-[0_18px_70px_rgba(0,0,0,0.32)] backdrop-blur-2xl md:hidden"
     >
       {navItems.map((item) => {
         const Icon = item.icon;
@@ -126,20 +126,20 @@ export function MobileNavigation() {
               "relative grid min-h-12 place-items-center gap-0.5 overflow-hidden rounded-full px-1 text-[11px] font-semibold transition",
               active
                 ? "text-foreground"
-                : "text-muted hover:bg-foreground/8 hover:text-foreground",
+                : "text-muted hover:bg-quorum-cyan/10 hover:text-foreground",
             )}
             href={item.href}
             key={item.href}
           >
             {active ? (
               <motion.span
-                className="absolute inset-0 rounded-full bg-foreground/10"
+                className="absolute inset-0 rounded-full border border-quorum-cyan/30 bg-quorum-cyan/12"
                 layoutId="mobile-nav-active"
                 transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
               />
             ) : null}
             <Icon
-              className={cn("relative", active && "text-accent")}
+              className={cn("relative", active && "text-quorum-cyan-soft")}
               size={17}
               strokeWidth={1.9}
             />
