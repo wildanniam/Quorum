@@ -12,6 +12,12 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { AnchorPayoutButton } from "@/components/anchor/anchor-payout-button";
 import { AnchorPayoutSyncButton } from "@/components/anchor/anchor-payout-sync-button";
+import {
+  EmptyState,
+  MetricTile,
+  ProductPage,
+  WalletGate,
+} from "@/components/ui/product-layout";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
@@ -62,15 +68,15 @@ export default async function CollaboratorLedgerPage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
+      <ProductPage>
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-accent"
+          className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-quorum-cyan-soft"
         >
           <ArrowLeft size={15} /> Back to Studio
         </Link>
 
-        <ProofSurface className="mt-6 lg:p-6" elevated>
+        <ProofSurface className="mt-6" elevated variant="hero">
           <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
             <div>
               <StatusPill icon={Handshake} tone="cyan">
@@ -114,19 +120,13 @@ export default async function CollaboratorLedgerPage() {
                 value: String(summary.eventCount),
               },
             ].map((item) => {
-              const Icon = item.icon;
-
               return (
-                <div
-                  className="rounded-[12px] border border-white/10 bg-white/[0.035] p-4"
+                <MetricTile
+                  icon={item.icon}
                   key={item.label}
-                >
-                  <Icon className="text-quorum-cyan-soft" size={18} />
-                  <p className="mt-4 break-all font-mono text-xl text-foreground">
-                    {item.value}
-                  </p>
-                  <p className="mt-2 text-sm text-muted">{item.label}</p>
-                </div>
+                  label={item.label}
+                  value={item.value}
+                />
               );
             })}
           </div>
@@ -187,9 +187,10 @@ export default async function CollaboratorLedgerPage() {
                     </article>
                   ))
                 ) : (
-                  <div className="rounded-[12px] border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-muted">
-                    No payout opportunities for this wallet yet.
-                  </div>
+                  <EmptyState
+                    description="No event has withdrawable collaborator balance for this wallet yet."
+                    title="No payout opportunities"
+                  />
                 )}
               </div>
             </div>
@@ -307,30 +308,20 @@ export default async function CollaboratorLedgerPage() {
               ))}
             </div>
           ) : (
-            <div className="mt-5 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-6">
-              <Handshake className="text-accent" size={24} />
-              <h2 className="mt-4 text-2xl font-semibold">
-                No collaborator ledger yet
-              </h2>
-              <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-                Checkout split credits and withdrawal debits will appear here
-                when this wallet is a collaborator on a paid event.
-              </p>
-            </div>
+            <EmptyState
+              className="mt-5"
+              description="Checkout split credits and withdrawal debits will appear here when this wallet is a collaborator on a paid event."
+              icon={Handshake}
+              title="No collaborator ledger yet"
+            />
           )
         ) : (
-          <div className="mt-5 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-6">
-            <WalletCards className="text-accent" size={24} />
-            <h2 className="mt-4 text-2xl font-semibold">
-              Wallet session required
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-              Connect the collaborator wallet to resolve its event relationships
-              and ledger entries.
-            </p>
-          </div>
+          <WalletGate
+            className="mt-5"
+            description="Connect the collaborator wallet to resolve its event relationships and ledger entries."
+          />
         )}
-      </section>
+      </ProductPage>
     </AppShell>
   );
 }

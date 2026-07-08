@@ -9,6 +9,14 @@ import {
   WalletCards,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import {
+  EmptyState,
+  MetricTile,
+  ProductPage,
+  ProductPageHeader,
+  WalletGate,
+} from "@/components/ui/product-layout";
+import { QuorumButton } from "@/components/ui/quorum-button";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import { getEventById, listPassesByOwner } from "@/lib/events/repository";
 import { eventCoverStyle, eventThemeStyle } from "@/lib/events/theme";
@@ -37,29 +45,25 @@ export default async function PassesPage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
-          <div className="grid gap-5 md:grid-cols-[1fr_auto] md:items-end">
-            <div>
-              <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
-                <TicketCheck size={14} />
-                Event passes
-              </div>
-              <h1 className="mt-5 text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
-                Your event passes.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                {session
-                  ? shorten(session.walletAddress)
-                  : "Connect wallet to view the passes owned by this browser session."}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 rounded-full border border-foreground/10 bg-background/32 px-4 py-3 text-sm text-muted">
-              <WalletCards className="text-accent" size={18} />
-              {passEntries.length} passes
-            </div>
-          </div>
-        </div>
+      <ProductPage>
+        <ProductPageHeader
+          actions={<QuorumButton href="/discover">Browse events</QuorumButton>}
+          description={
+            session
+              ? shorten(session.walletAddress)
+              : "Connect wallet to view the passes owned by this browser session."
+          }
+          eyebrow="Event passes"
+          icon={TicketCheck}
+          title="Your event passes."
+        >
+          <MetricTile
+            className="max-w-xs"
+            icon={WalletCards}
+            label="passes"
+            value={passEntries.length}
+          />
+        </ProductPageHeader>
 
         {passEntries.length > 0 ? (
           <div className="mt-5 grid gap-4 lg:grid-cols-2">
@@ -114,25 +118,18 @@ export default async function PassesPage() {
               </Link>
             ))}
           </div>
+        ) : !session ? (
+          <WalletGate className="mt-5" />
         ) : (
-          <div className="mt-5 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-6">
-            <TicketCheck className="text-accent" size={24} />
-            <h2 className="mt-4 text-2xl font-semibold">
-              {session ? "No passes yet" : "Wallet session required"}
-            </h2>
-            <p className="mt-3 max-w-xl text-sm leading-6 text-muted">
-              Published events can issue one unique, non-transferable pass per
-              wallet.
-            </p>
-            <Link
-              href="/discover"
-              className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-            >
-              Browse events <ArrowRight size={16} />
-            </Link>
-          </div>
+          <EmptyState
+            action={<QuorumButton href="/discover">Browse events</QuorumButton>}
+            className="mt-5"
+            description="Published events can issue one unique, non-transferable pass per wallet."
+            icon={TicketCheck}
+            title="No passes yet"
+          />
         )}
-      </section>
+      </ProductPage>
     </AppShell>
   );
 }

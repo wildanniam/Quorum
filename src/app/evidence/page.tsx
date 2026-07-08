@@ -1,7 +1,12 @@
-import Link from "next/link";
-import { ArrowRight, RadioTower } from "lucide-react";
+import { RadioTower } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EvidenceTimeline } from "@/components/evidence-timeline";
+import {
+  MetricTile,
+  ProductPage,
+  ProductPageHeader,
+} from "@/components/ui/product-layout";
+import { QuorumButton } from "@/components/ui/quorum-button";
 import { listEvidence } from "@/lib/evidence/repository";
 
 export const dynamic = "force-dynamic";
@@ -34,45 +39,26 @@ export default async function EvidencePage() {
 
   return (
     <AppShell>
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl lg:p-6">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <div className="inline-flex min-h-8 items-center gap-2 rounded-full border border-accent/45 bg-accent/10 px-3 text-xs font-semibold uppercase tracking-[0.1em] text-accent">
-                <RadioTower size={14} />
-                Live evidence
-              </div>
-              <h1 className="mt-5 max-w-4xl text-5xl font-semibold leading-tight tracking-tight md:text-7xl">
-                Public proof for Quorum settlement.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                A judge-safe timeline of Quorum publish, checkout, check-in,
-                anchor payout, withdrawal, and indexed Stellar contract events
-                with external explorer links when a transaction hash is
-                available.
-              </p>
-            </div>
-            <Link
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
-              href="/discover"
-            >
-              Browse events <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
+      <ProductPage>
+        <ProductPageHeader
+          actions={<QuorumButton href="/discover">Browse events</QuorumButton>}
+          description="A judge-safe timeline of Quorum publish, checkout, check-in, anchor payout, withdrawal, and indexed Stellar contract events with external explorer links when a transaction hash is available."
+          eyebrow="Live evidence"
+          icon={RadioTower}
+          title="Public proof for Quorum settlement."
+        >
+          <div className="grid gap-3 md:grid-cols-3">
             {[
-              { label: "proof rows", value: records.length },
-              { label: "tx hashes", value: liveCount },
-              { label: "events", value: eventCount || indexedCount },
+              { label: "proof rows", value: records.length, icon: RadioTower },
+              { label: "tx hashes", value: liveCount, icon: RadioTower },
+              { label: "events", value: eventCount || indexedCount, icon: RadioTower },
             ].map((item) => (
-              <div
-                className="rounded-[8px] border border-foreground/10 bg-background/32 p-4"
+              <MetricTile
+                icon={item.icon}
+                label={item.label}
                 key={item.label}
-              >
-                <p className="font-mono text-3xl text-accent">{item.value}</p>
-                <p className="mt-2 text-sm text-muted">{item.label}</p>
-              </div>
+                value={item.value}
+              />
             ))}
           </div>
 
@@ -82,12 +68,12 @@ export default async function EvidencePage() {
               but the database connection did not respond in this local session.
             </div>
           ) : null}
-        </div>
+        </ProductPageHeader>
 
         <div className="mt-5">
           <EvidenceTimeline records={records} />
         </div>
-      </section>
+      </ProductPage>
     </AppShell>
   );
 }

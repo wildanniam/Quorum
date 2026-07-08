@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0b0b0c;
-  --foreground: #f4efe7;
-  --panel: #151516;
-  --panel-strong: #1d1d1f;
-  --line: #2b2b2e;
-  --muted: #aaa39a;
-  --accent: #d9a85c;
-  --accent-ink: #111112;
+  --background: #0c0b0b;
+  --foreground: #f5f7f7;
+  --panel: #111314;
+  --panel-strong: #171a1b;
+  --line: rgba(255, 255, 255, 0.13);
+  --muted: #a7acad;
+  --accent: #26c6da;
+  --accent-ink: #061113;
   --amber: #d9a85c;
-  --cyan: #8fb8bd;
+  --cyan: #26c6da;
   --coral: #d98571;
   --success: #95c98a;
   --quorum-blue-300: #6ed9e6;
@@ -33,12 +33,12 @@
   --landing-cyan-deep: #0f343a;
   --landing-cyan-glow: rgba(38, 198, 218, 0.28);
   --landing-white: #f5f7f7;
-  --event-accent: #d9a85c;
-  --event-accent-2: #a993ff;
-  --event-ink: #111112;
-  --event-glow: rgba(217, 168, 92, 0.2);
-  --surface-glass: rgba(21, 21, 22, 0.72);
-  --surface-raised: rgba(29, 29, 31, 0.88);
+  --event-accent: #26c6da;
+  --event-accent-2: #8feaf2;
+  --event-ink: #061113;
+  --event-glow: rgba(38, 198, 218, 0.2);
+  --surface-glass: rgba(17, 19, 20, 0.72);
+  --surface-raised: rgba(23, 26, 27, 0.88);
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 8px;
@@ -78,7 +78,7 @@
   --color-event-accent: var(--event-accent);
   --color-event-accent-2: var(--event-accent-2);
   --color-event-ink: var(--event-ink);
-  --font-sans: "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Outfit", "Outfit Fallback", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Geist Mono", "Geist Mono Fallback", ui-monospace, monospace;
   --font-display: "Playfair Display", Georgia, serif;
   --font-product: "Outfit", "Outfit Fallback", ui-sans-serif, system-ui, sans-serif;
@@ -87,12 +87,12 @@
 body {
   min-width: 320px;
   background:
-    linear-gradient(180deg, rgba(244, 239, 231, 0.045), transparent 32rem),
-    linear-gradient(115deg, rgba(217, 168, 92, 0.09), transparent 34rem),
-    linear-gradient(255deg, rgba(169, 147, 255, 0.07), transparent 38rem),
+    radial-gradient(circle at 6% 13rem, rgba(38, 198, 218, 0.08), transparent 24rem),
+    radial-gradient(circle at 96% 28rem, rgba(38, 198, 218, 0.07), transparent 26rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.018), transparent 32rem),
     var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "Geist", "Geist Fallback", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-outfit), "Outfit", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -141,21 +141,61 @@ select {
 }
 
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--event-accent) 76%, var(--foreground));
+  outline: 2px solid color-mix(in srgb, var(--accent) 76%, var(--foreground));
   outline-offset: 4px;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--event-accent) 34%, transparent);
+  background: color-mix(in srgb, var(--accent) 34%, transparent);
   color: var(--foreground);
+}
+
+.quorum-product-shell {
+  --event-accent: var(--accent);
+  --event-accent-2: var(--landing-cyan-soft);
+  --event-glow: rgba(38, 198, 218, 0.2);
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit), "Outfit", var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.quorum-product-shell::before,
+.quorum-product-shell::after {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  content: "";
+}
+
+.quorum-product-shell::before {
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.026) 1px, transparent 1px);
+  background-position: top center;
+  background-size: 144px 144px;
+  mask-image: linear-gradient(180deg, black 0%, black 74%, transparent 100%);
+}
+
+.quorum-product-shell::after {
+  z-index: -1;
+  background:
+    radial-gradient(circle at -2rem 12rem, rgba(38, 198, 218, 0.13), transparent 20rem),
+    radial-gradient(circle at calc(100% + 2rem) 22rem, rgba(38, 198, 218, 0.1), transparent 24rem),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 34rem),
+    linear-gradient(180deg, transparent 0%, rgba(12, 11, 11, 0.72) 70%, var(--background) 100%);
 }
 
 .quorum-grid {
   position: relative;
   isolation: isolate;
   background-image:
-    linear-gradient(180deg, rgba(244, 239, 231, 0.018), transparent 42rem),
-    linear-gradient(120deg, rgba(217, 168, 92, 0.06), transparent 32rem);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.014), transparent 42rem),
+    linear-gradient(120deg, rgba(38, 198, 218, 0.05), transparent 32rem);
 }
 
 .quorum-grid::before {
@@ -166,7 +206,7 @@ select {
   content: "";
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.026), transparent 20rem),
-    linear-gradient(90deg, rgba(217, 168, 92, 0.06), transparent 48%),
+    linear-gradient(90deg, rgba(38, 198, 218, 0.06), transparent 48%),
     linear-gradient(180deg, transparent, rgba(11, 11, 12, 0.88));
   opacity: 0.78;
 }
