@@ -10,7 +10,7 @@ import {
   TicketCheck,
   type LucideIcon,
 } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, useReducedMotion } from "motion/react";
 
 type NavItem = {
   href: string;
@@ -63,6 +63,7 @@ function cn(...classNames: Array<string | false | null | undefined>) {
 
 export function DesktopNavigation() {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
 
   return (
     <nav
@@ -89,7 +90,11 @@ export function DesktopNavigation() {
               <motion.span
                 className="absolute inset-0 rounded-full border border-quorum-cyan/30 bg-quorum-cyan/12 shadow-[0_0_24px_rgba(38,198,218,0.12)]"
                 layoutId="desktop-nav-active"
-                transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.28, ease: [0.16, 1, 0.3, 1] }
+                }
               />
             ) : null}
             <span className="relative inline-flex items-center gap-2">
@@ -109,6 +114,7 @@ export function DesktopNavigation() {
 
 export function MobileNavigation() {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
 
   return (
     <nav
@@ -135,7 +141,11 @@ export function MobileNavigation() {
               <motion.span
                 className="absolute inset-0 rounded-full border border-quorum-cyan/30 bg-quorum-cyan/12"
                 layoutId="mobile-nav-active"
-                transition={{ duration: 0.24, ease: [0.16, 1, 0.3, 1] }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { duration: 0.24, ease: [0.16, 1, 0.3, 1] }
+                }
               />
             ) : null}
             <Icon

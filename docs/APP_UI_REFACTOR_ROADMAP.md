@@ -1,6 +1,6 @@
 # Quorum App UI Refactor Roadmap
 
-Last updated: 2026-07-07.
+Last updated: 2026-07-08.
 
 This document supersedes the older FE v2 notes for the next product UI pass.
 The landing page has now become the strongest source of truth: it follows the
@@ -29,6 +29,29 @@ The current state is:
 
 The refactor should happen through small PRs. Do not mix shell, discover,
 checkout, ledger, pass, dashboard, and form behavior in one large change.
+
+## Execution Status
+
+The non-high-risk UI refactor has been executed as small, phase-scoped PRs.
+Each landed phase kept wallet, Stellar, payout, database, and signing behavior
+out of scope unless it was already covered by existing smoke scripts.
+
+- Phase 0: roadmap and audit landed through issue `#9`.
+- Phase 1: product shell, shared surfaces, and landing-aligned primitives landed
+  in PR `#12`.
+- Phase 2: discover and event cards landed in PR `#14`.
+- Phase 3: event detail and gated resources landed in PR `#16`.
+- Phase 4: checkout UI polish landed in PR `#18`.
+- Phase 5: evidence, event proof, and collaborator ledger landed in PR `#20`.
+- Phase 6: Studio dashboard and create event flow landed in PR `#22`.
+- Phase 7: pass library, pass receipt, and check-in surfaces landed in PR `#24`.
+- Phase 8: final motion/responsive polish and expanded browser QA are tracked in
+  issue `#25`.
+
+Phase 8 expands `npm run browser:qa` from 5 to 13 product routes across desktop
+and mobile viewports, covering landing, discover, event detail, checkout,
+resources, pass library, pass receipt, organizer check-in, event proof,
+dashboard, create event, collaborator ledger, and global evidence.
 
 ## Inputs Audited
 
