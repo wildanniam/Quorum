@@ -36,7 +36,7 @@ const variantClassName: Record<QuorumButtonVariant, string> = {
 };
 
 const baseClassName =
-  "inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border px-6 text-sm font-medium leading-[1.4] transition disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border px-6 text-sm font-medium leading-[1.4] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-quorum-cyan active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100";
 
 export function QuorumButton(props: ButtonProps | LinkProps) {
   if (typeof props.href === "string") {

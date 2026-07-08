@@ -1,8 +1,9 @@
 import { spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { Keypair } from "@stellar/stellar-sdk";
 import { chromium } from "playwright";
 import { withClient } from "./postgres-utils.mjs";
 
@@ -14,64 +15,171 @@ const databaseSchema =
   process.env.BROWSER_QA_DB_SCHEMA ??
   `quorum_browser_qa_${randomUUID().replaceAll("-", "_")}`;
 process.env.QUORUM_DB_SCHEMA = databaseSchema;
+const browserSessionSecret = "quorum-local-dev-session-secret";
+const eventId = "evt_apac_stellar_builder_meetup";
+const eventSlug = "apac-stellar-builder-meetup";
+const organizerWallet =
+  "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
+const collaboratorWallet =
+  "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 
 const viewports = [
   { label: "Desktop", width: 1280, height: 720 },
   { label: "Mobile", width: 390, height: 844 },
 ];
 
-const pages = [
-  {
-    label: "Landing",
-    path: "/",
-    requiredText: [
-      "Where Web3 Events",
-      "Pay Every",
-      "Built for collaborative payments",
-      "Got questions?",
-      "Start Splitting",
-    ],
-  },
-  {
-    label: "Discover",
-    path: "/discover",
-    requiredText: [
-      "APAC Stellar Builder Meetup",
-      "Stellar Open Office Hours",
-      "5 USDC",
-      "Free",
-    ],
-  },
-  {
-    label: "Paid event detail",
-    path: "/events/apac-stellar-builder-meetup",
-    requiredText: [
-      "APAC Stellar Builder Meetup",
-      "Get pass",
-      "70%",
-      "20%",
-      "10%",
-    ],
-  },
-  {
-    label: "Locked resources",
-    path: "/events/apac-stellar-builder-meetup/resources",
-    requiredText: ["LOCKED", "Connect the wallet", "Get pass"],
-  },
-  {
-    label: "Dashboard readiness",
-    path: "/dashboard",
-    requiredText: [
-      "Run your events from one calm workspace.",
-      "Setup pending",
-      "Local proof mode",
-      "USDC asset",
-      "Missing",
-      "Wallet actions",
-      "local proof",
-    ],
-  },
-];
+function encodeBase64Url(value) {
+  return Buffer.from(value)
+    .toString("base64")
+    .replaceAll("+", "-")
+    .replaceAll("/", "_")
+    .replaceAll("=", "");
+}
+
+function createSession(walletAddress) {
+  const payload = encodeBase64Url(
+    JSON.stringify({ walletAddress, issuedAt: Date.now() }),
+  );
+  const signature = encodeBase64Url(
+    createHmac("sha256", browserSessionSecret).update(payload).digest(),
+  );
+
+  return `${payload}.${signature}`;
+}
+
+async function readJson(response) {
+  const text = await response.text();
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
+
+function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, tokenId }) {
+  return [
+    {
+      label: "Landing",
+      path: "/",
+      requiredText: [
+        "Where Web3 Events",
+        "Pay Every",
+        "Built for collaborative payments",
+        "Got questions?",
+        "Start Splitting",
+      ],
+    },
+    {
+      label: "Discover",
+      path: "/discover",
+      requiredText: [
+        "APAC Stellar Builder Meetup",
+        "Stellar Open Office Hours",
+        "5 USDC",
+        "Free",
+      ],
+    },
+    {
+      label: "Paid event detail",
+      path: `/events/${eventSlug}`,
+      requiredText: [
+        "APAC Stellar Builder Meetup",
+        "Get pass",
+        "70%",
+        "20%",
+        "10%",
+      ],
+    },
+    {
+      label: "Checkout",
+      path: `/events/${eventSlug}/checkout`,
+      requiredText: [
+        "Review pass",
+        "Freighter approval",
+        "The pass becomes the access key.",
+      ],
+    },
+    {
+      label: "Locked resources",
+      path: `/events/${eventSlug}/resources`,
+      requiredText: ["LOCKED", "Connect the wallet", "Get pass"],
+    },
+    {
+      cookieValue: attendeeCookie,
+      label: "Pass library",
+      path: "/passes",
+      requiredText: [
+        "Wallet-bound passes and receipts.",
+        "Open receipt",
+        "checked in",
+      ],
+    },
+    {
+      cookieValue: attendeeCookie,
+      label: "Pass receipt",
+      path: `/passes/${encodeURIComponent(tokenId)}`,
+      requiredText: [
+        "Wallet-bound pass",
+        "Receipt proof path",
+        "Check-in proof",
+        "Access unlocked",
+      ],
+    },
+    {
+      cookieValue: organizerCookie,
+      label: "Organizer check-in",
+      path: `/check-in/${eventId}?token=${encodeURIComponent(tokenId)}`,
+      requiredText: ["Organizer check-in", "Check in pass", "Recent check-ins"],
+    },
+    {
+      label: "Event proof",
+      path: `/events/${eventSlug}/proof`,
+      requiredText: ["Event proof", "Event proof timeline", "Event-level proof"],
+    },
+    {
+      label: "Dashboard readiness",
+      path: "/dashboard",
+      requiredText: [
+        "Run your events from one calm workspace.",
+        "Setup pending",
+        "Local proof mode",
+        "USDC asset",
+        "Missing",
+        "Wallet actions",
+        "local proof",
+      ],
+    },
+    {
+      label: "Create event",
+      path: "/dashboard/events/new",
+      requiredText: [
+        "Create event",
+        "Build the page, split, and access in one draft.",
+        "Collaborators",
+      ],
+    },
+    {
+      cookieValue: collaboratorCookie,
+      label: "Collaborator ledger",
+      path: "/dashboard/ledger",
+      requiredText: [
+        "Collaborator ledger",
+        "Credits and withdrawals",
+        "collaborator statement",
+      ],
+    },
+    {
+      label: "Evidence hub",
+      path: "/evidence",
+      requiredText: [
+        "Trace Quorum settlement from checkout to payout.",
+        "Proof timeline",
+        "App proof",
+      ],
+    },
+  ];
+}
 
 function runCommand(command, args, env = {}) {
   return new Promise((resolve, reject) => {
@@ -161,6 +269,20 @@ async function inspectPage(browser, viewport, pageSpec) {
       height: viewport.height,
     },
   });
+
+  if (pageSpec.cookieValue) {
+    await context.addCookies([
+      {
+        domain: "127.0.0.1",
+        httpOnly: true,
+        name: "quorum_session",
+        path: "/",
+        sameSite: "Lax",
+        value: pageSpec.cookieValue,
+      },
+    ]);
+  }
+
   const page = await context.newPage();
   const consoleErrors = [];
   const pageErrors = [];
@@ -227,7 +349,7 @@ function renderPageRows(results, viewportLabel) {
     .join("\n");
 }
 
-function renderMarkdown({ generatedAt, results }) {
+function renderMarkdown({ generatedAt, pages, results }) {
   const totalErrors = results.reduce(
     (count, result) => count + result.consoleErrors.length + result.pageErrors.length,
     0,
@@ -284,9 +406,16 @@ ${renderPageRows(results, "Mobile")}
   FAQ, and primary start CTA.
 - Discover renders paid and free seeded events.
 - Event detail shows checkout, capacity, and collaborator split information.
+- Checkout renders review, Freighter approval, split, and post-confirmation
+  access context.
 - Resource page renders a locked state without a pass session.
+- Pass library and pass receipt render from a temporary pass-owner session.
+- Organizer check-in renders from a temporary organizer session with a checked-in
+  local-proof pass.
 - Dashboard renders wallet readiness, contract readiness, \`Local proof mode\`,
   \`USDC asset\` readiness, and action execution policy.
+- Create event, collaborator ledger, event proof, and global evidence routes are
+  included in the desktop/mobile matrix.
 
 ## Remaining Boundary
 
@@ -303,6 +432,7 @@ async function main() {
     NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID: "",
     NEXT_TELEMETRY_DISABLED: "1",
     QUORUM_DB_SCHEMA: databaseSchema,
+    QUORUM_SESSION_SECRET: browserSessionSecret,
   };
 
   await runCommand("node", ["scripts/db-migrate.mjs"], env);
@@ -330,6 +460,43 @@ async function main() {
   try {
     await waitForServer(server);
 
+    const attendeeCookie = createSession(Keypair.random().publicKey());
+    const organizerCookie = createSession(organizerWallet);
+    const collaboratorCookie = createSession(collaboratorWallet);
+    const passResponse = await fetch(`${baseUrl}/api/events/${eventId}/passes`, {
+      method: "POST",
+      headers: { cookie: `quorum_session=${attendeeCookie}` },
+    });
+    const passBody = await readJson(passResponse);
+    const tokenId = passBody?.pass?.tokenId;
+
+    assert(passResponse.status === 201, "browser QA pass setup should succeed");
+    assert(typeof tokenId === "string", "browser QA setup should return token ID");
+
+    const checkInResponse = await fetch(
+      `${baseUrl}/api/events/${eventId}/check-ins`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          cookie: `quorum_session=${organizerCookie}`,
+        },
+        body: JSON.stringify({ tokenId }),
+      },
+    );
+
+    assert(
+      checkInResponse.status === 201,
+      "browser QA check-in setup should succeed",
+    );
+
+    const pages = buildPages({
+      attendeeCookie,
+      collaboratorCookie,
+      organizerCookie,
+      tokenId,
+    });
+
     const browser = await chromium.launch({ headless: true });
 
     try {
@@ -355,7 +522,10 @@ async function main() {
 
       const generatedAt = new Date().toISOString();
       fs.mkdirSync(path.dirname(browserQaPath), { recursive: true });
-      fs.writeFileSync(browserQaPath, renderMarkdown({ generatedAt, results }));
+      fs.writeFileSync(
+        browserQaPath,
+        renderMarkdown({ generatedAt, pages, results }),
+      );
 
       console.log(
         JSON.stringify(
