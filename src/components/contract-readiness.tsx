@@ -12,6 +12,8 @@ import {
   getContractActionPolicy,
 } from "@/lib/stellar/action-policy";
 import { getContractReadiness } from "@/lib/stellar/contracts";
+import { ProofSurface } from "@/components/ui/proof-surface";
+import { StatusPill } from "@/components/ui/status-pill";
 
 export function ContractReadiness() {
   const readiness = getContractReadiness();
@@ -69,9 +71,11 @@ export function ContractReadiness() {
   ];
 
   return (
-    <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
-      <p className="eyebrow">Live setup</p>
-      <p className="mt-2 text-xl font-semibold">
+    <ProofSurface>
+      <StatusPill icon={RadioTower} tone={readiness.configured ? "live" : "local"}>
+        Live setup
+      </StatusPill>
+      <p className="mt-4 font-product text-xl font-medium">
         {readiness.configured ? "Testnet configured" : "Setup pending"}
       </p>
       <p className="mt-3 text-sm leading-6 text-muted">
@@ -86,10 +90,13 @@ export function ContractReadiness() {
 
           return (
             <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[10px] border border-white/10 bg-background/36 p-3"
               key={row.label}
             >
-              <Icon className={row.active ? "text-accent" : "text-muted"} size={17} />
+              <Icon
+                className={row.active ? "text-quorum-cyan-soft" : "text-muted"}
+                size={17}
+              />
               <span className="text-sm text-muted">{row.label}</span>
               <span className="max-w-40 truncate text-right font-mono text-xs">
                 {row.value}
@@ -99,9 +106,9 @@ export function ContractReadiness() {
         })}
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-[8px] border border-foreground/10 bg-background/25">
-        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-foreground/10 p-3">
-          <ListChecks className="text-accent" size={17} />
+      <div className="mt-5 overflow-hidden rounded-[12px] border border-white/10 bg-background/30">
+        <div className="grid grid-cols-[auto_1fr] items-center gap-3 border-b border-white/10 p-3">
+          <ListChecks className="text-quorum-cyan-soft" size={17} />
           <div>
             <p className="text-sm font-medium">Wallet actions</p>
             <p className="mt-1 text-xs leading-5 text-muted">
@@ -113,7 +120,7 @@ export function ContractReadiness() {
         </div>
         {actions.map((action) => (
           <div
-            className="grid grid-cols-[1fr_auto] gap-3 border-b border-foreground/10 p-3 last:border-b-0"
+            className="grid grid-cols-[1fr_auto] gap-3 border-b border-white/10 p-3 last:border-b-0"
             key={action.action}
           >
             <span className="text-sm text-muted">
@@ -133,6 +140,6 @@ export function ContractReadiness() {
           </div>
         ))}
       </div>
-    </div>
+    </ProofSurface>
   );
 }

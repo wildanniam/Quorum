@@ -2,6 +2,8 @@
 
 import { AlertTriangle, BadgeCheck, RadioTower, ShieldCheck } from "lucide-react";
 import { useWallet } from "@/components/wallet-provider";
+import { ProofSurface } from "@/components/ui/proof-surface";
+import { StatusPill } from "@/components/ui/status-pill";
 
 export function WalletReadiness() {
   const { error, network, networkPassphrase, sessionWalletAddress, status } =
@@ -32,11 +34,13 @@ export function WalletReadiness() {
   ];
 
   return (
-    <div className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+    <ProofSurface>
       <div className="flex items-center justify-between gap-4">
         <div>
-          <p className="eyebrow">Wallet</p>
-          <p className="mt-2 text-xl font-semibold">
+          <StatusPill icon={ShieldCheck} tone={sessionWalletAddress ? "ready" : "pending"}>
+            Wallet
+          </StatusPill>
+          <p className="mt-4 font-product text-xl font-medium">
             {status === "checking" ? "Checking wallet" : "Freighter status"}
           </p>
         </div>
@@ -52,10 +56,13 @@ export function WalletReadiness() {
           const Icon = row.icon;
           return (
             <div
-              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[8px] border border-foreground/10 bg-background/32 p-3"
+              className="grid grid-cols-[auto_1fr_auto] items-center gap-3 rounded-[10px] border border-white/10 bg-background/36 p-3"
               key={row.label}
             >
-              <Icon className={row.active ? "text-accent" : "text-muted"} size={17} />
+              <Icon
+                className={row.active ? "text-quorum-cyan-soft" : "text-muted"}
+                size={17}
+              />
               <span className="text-sm text-muted">{row.label}</span>
               <span className="font-mono text-xs">{row.value}</span>
             </div>
@@ -64,6 +71,6 @@ export function WalletReadiness() {
       </div>
 
       {error ? <p className="mt-4 text-sm leading-6 text-coral">{error}</p> : null}
-    </div>
+    </ProofSurface>
   );
 }
