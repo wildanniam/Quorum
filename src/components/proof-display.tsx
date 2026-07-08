@@ -38,24 +38,24 @@ const PROOF_DESCRIPTORS: Record<ProofKind, ProofDescriptor> = {
   },
   pending: {
     Icon: Clock3,
-    badgeClassName: "border-line bg-panel text-muted",
+    badgeClassName: "border-white/10 bg-white/[0.045] text-muted",
     label: "Pending",
-    shellClassName: "border-line",
+    shellClassName: "border-white/10",
     valueClassName: "text-muted",
   },
   proof: {
     Icon: BadgeCheck,
-    badgeClassName: "border-accent/45 bg-accent/10 text-accent",
+    badgeClassName: "border-quorum-cyan/45 bg-quorum-cyan/10 text-quorum-cyan-soft",
     label: "Proof",
-    shellClassName: "border-accent/35",
+    shellClassName: "border-quorum-cyan/35",
     valueClassName: "text-foreground",
   },
   stellar: {
     Icon: BadgeCheck,
-    badgeClassName: "border-accent/45 bg-accent/10 text-accent",
+    badgeClassName: "border-quorum-cyan/45 bg-quorum-cyan/10 text-quorum-cyan-soft",
     label: "Stellar tx",
-    shellClassName: "border-accent/35",
-    valueClassName: "text-accent",
+    shellClassName: "border-quorum-cyan/35",
+    valueClassName: "text-quorum-cyan-soft",
   },
 };
 
@@ -90,7 +90,7 @@ export function ProofDisplay({
   return (
     <div
       className={cn(
-        "border bg-background/35",
+        "rounded-[12px] border bg-background/35",
         descriptor.shellClassName,
         compact ? "p-3" : "p-4",
         className,
@@ -108,6 +108,7 @@ export function ProofDisplay({
         <span
           className={cn(
             "inline-flex min-h-7 items-center gap-1.5 border px-2.5 font-mono text-xs font-semibold uppercase tracking-normal",
+            "rounded-full",
             descriptor.badgeClassName,
           )}
         >

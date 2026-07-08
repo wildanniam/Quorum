@@ -11,6 +11,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { ProofDisplay } from "@/components/proof-display";
+import { ProofSurface } from "@/components/ui/proof-surface";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
@@ -134,10 +135,8 @@ export function CheckInPanel({
   }
 
   return (
-    <form
-      className="rounded-[16px] border border-quorum-cyan/24 bg-quorum-grey-700/76 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.24)] backdrop-blur-xl"
-      onSubmit={handleSubmit}
-    >
+    <ProofSurface elevated>
+      <form onSubmit={handleSubmit}>
       <div className="flex items-start justify-between gap-4">
         <div>
           <StatusPill icon={ScanLine} tone="cyan">
@@ -239,6 +238,7 @@ export function CheckInPanel({
             ? "Checked in"
             : "Mark checked in"}
       </QuorumButton>
-    </form>
+      </form>
+    </ProofSurface>
   );
 }

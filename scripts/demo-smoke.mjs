@@ -428,7 +428,7 @@ async function main() {
     );
     const unlockedHtml = await unlockedResources.text();
     assert(
-      unlockedHtml.includes("Unlocked"),
+      unlockedHtml.toLowerCase().includes("unlocked"),
       "resources should unlock for pass owner",
     );
 

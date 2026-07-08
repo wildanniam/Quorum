@@ -14,7 +14,7 @@ export async function QrCodeCard({ className, label, value }: QrCodeCardProps) {
   return (
     <div
       className={cn(
-        "rounded-[16px] border border-quorum-cyan/30 bg-quorum-grey-800 p-4",
+        "rounded-[16px] border border-quorum-cyan/30 bg-quorum-grey-800/92 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
         className,
       )}
     >
@@ -23,7 +23,7 @@ export async function QrCodeCard({ className, label, value }: QrCodeCardProps) {
         {label}
       </div>
       <div
-        className="mt-4 grid aspect-square max-w-[220px] place-items-center rounded-[14px] border border-white/10 bg-[#f4efe7] p-4"
+        className="mt-4 grid aspect-square max-w-[220px] place-items-center rounded-[14px] border border-white/10 bg-[#f4efe7] p-4 shadow-[0_18px_50px_rgba(38,198,218,0.12)]"
         dangerouslySetInnerHTML={{ __html: svg }}
       />
       <p className="mt-3 break-all font-mono text-[11px] leading-5 text-muted">
