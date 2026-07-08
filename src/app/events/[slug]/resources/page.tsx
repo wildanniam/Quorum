@@ -6,10 +6,20 @@ import {
   FileKey2,
   LockKeyhole,
   ShieldCheck,
+  TicketCheck,
   UnlockKeyhole,
+  WalletCards,
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import {
+  EmptyState,
+  ProductPage,
+  ProductPageHeader,
+  SectionHeader,
+} from "@/components/ui/product-layout";
+import { QuorumButton } from "@/components/ui/quorum-button";
+import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
   getEventBySlug,
@@ -41,122 +51,184 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
     : null;
   const hasAccess = Boolean(pass);
   const resources = await listResources(event.id);
+  const accessTitle = hasAccess
+    ? "Resources unlocked"
+    : session
+      ? "This wallet does not own the pass"
+      : "Connect the pass wallet";
+  const accessDescription = hasAccess
+    ? "The connected wallet owns a Quorum pass for this event. Private links and files can be opened below."
+    : session
+      ? "You are connected, but this wallet does not hold the non-transferable pass for this event. Switch to the wallet that bought or claimed the pass."
+      : "Connect the wallet that owns this event pass to reveal gated resources.";
 
   return (
     <AppShell>
-      <section
-        className="border-b border-foreground/8"
-        style={eventThemeStyle(event)}
-      >
-        <div className="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-12">
-          <Link
-            href={`/events/${event.slug}`}
-            className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-accent"
-          >
-            <ArrowLeft size={15} /> Back to event
-          </Link>
+      <ProductPage spacing="loose">
+        <Link
+          className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-quorum-cyan-soft"
+          href={`/events/${event.slug}`}
+        >
+          <ArrowLeft size={15} /> Back to event
+        </Link>
 
-          <div className="mt-6 overflow-hidden rounded-[8px] border border-foreground/10 bg-foreground/[0.045] shadow-[0_24px_90px_rgba(0,0,0,0.24)]">
-            <div className="grid lg:grid-cols-[0.82fr_1.18fr]">
-              <div
-                className="event-cover min-h-64 lg:min-h-[420px]"
-                style={eventCoverStyle(event)}
-              />
-              <div className="flex flex-col justify-between p-5 lg:p-7">
-                <div
-                  className={`inline-flex min-h-8 w-fit items-center gap-2 rounded-full border px-3 text-xs font-semibold uppercase tracking-[0.1em] ${
-                    hasAccess
-                      ? "border-accent/45 bg-accent/10 text-accent"
-                      : "border-coral/45 bg-coral/10 text-coral"
-                  }`}
-                >
-                  {hasAccess ? (
-                    <UnlockKeyhole size={14} />
-                  ) : (
-                    <LockKeyhole size={14} />
-                  )}
-                  {hasAccess ? "Unlocked" : "Locked"}
-                </div>
-                <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-tight tracking-tight md:text-6xl">
-                  {event.title}
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                  {hasAccess
-                    ? "Connected wallet owns a Quorum pass for this event."
-                    : "Connect the wallet that owns the event pass to unlock resources."}
-                </p>
-                <div className="mt-8 flex w-fit items-center gap-3 rounded-full border border-foreground/10 bg-background/32 px-4 py-3 text-sm text-muted">
-                  {hasAccess ? (
-                    <ShieldCheck className="text-accent" size={18} />
-                  ) : (
-                    <LockKeyhole className="text-coral" size={18} />
-                  )}
-                  {resources.length} resources
-                </div>
-              </div>
+        <ProductPageHeader
+          actions={
+            hasAccess ? (
+              <StatusPill icon={UnlockKeyhole} tone="success">
+                UNLOCKED
+              </StatusPill>
+            ) : (
+              <>
+                <StatusPill icon={LockKeyhole} tone="blocked">
+                  LOCKED
+                </StatusPill>
+                <QuorumButton href={`/events/${event.slug}/checkout`}>
+                  Get pass
+                </QuorumButton>
+              </>
+            )
+          }
+          description={accessDescription}
+          eyebrow="Resources"
+          icon={hasAccess ? UnlockKeyhole : LockKeyhole}
+          title={accessTitle}
+        >
+          <div className="grid gap-4 lg:grid-cols-[0.82fr_1.18fr]">
+            <div
+              className="event-cover min-h-64 rounded-[14px] bg-cover bg-center lg:min-h-[380px]"
+              style={eventCoverStyle(event)}
+            />
+            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+              {[
+                {
+                  icon: FileKey2,
+                  label: "resources",
+                  value: resources.length,
+                },
+                {
+                  icon: WalletCards,
+                  label: "wallet",
+                  value: session ? "Connected" : "Connect",
+                },
+                {
+                  icon: TicketCheck,
+                  label: "pass",
+                  value: hasAccess ? "Verified" : "Locked",
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    className="rounded-[12px] border border-white/10 bg-quorum-grey-900/42 p-4"
+                    key={item.label}
+                  >
+                    <Icon className="text-quorum-cyan-soft" size={18} />
+                    <p className="mt-4 font-product text-2xl font-medium tracking-normal text-foreground">
+                      {item.value}
+                    </p>
+                    <p className="mt-2 text-sm text-muted">{item.label}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
-        </div>
-      </section>
+        </ProductPageHeader>
+      </ProductPage>
 
-      <section className="mx-auto max-w-7xl px-5 py-10 lg:px-8 lg:py-14">
-        <div className="grid gap-4 md:grid-cols-3">
-          {resources.map((resource) => (
-            <div
-              className="rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5"
-              key={resource.id}
-            >
-              <FileKey2 className="text-accent" size={20} />
-              <p className="mt-4 text-xs font-semibold uppercase tracking-[0.1em] text-muted">
-                {resource.type}
-              </p>
-              <p className="mt-2 text-lg font-semibold tracking-tight">
-                {resource.title}
-              </p>
-              {hasAccess ? (
-                <>
-                  {resource.description ? (
-                    <p className="mt-3 text-sm leading-6 text-muted">
-                      {resource.description}
-                    </p>
-                  ) : null}
-                  {resource.url ? (
+      <ProductPage spacing="compact">
+        <SectionHeader
+          description="Resources stay listed so attendees know what the pass unlocks. Private URLs only appear for the wallet that owns the pass."
+          eyebrow="Access library"
+          title={event.title}
+        />
+
+        {resources.length > 0 ? (
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            {resources.map((resource) => (
+              <article
+                className="rounded-[14px] border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                key={resource.id}
+                style={eventThemeStyle(event)}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <FileKey2 className="text-quorum-cyan-soft" size={20} />
+                  <StatusPill tone={hasAccess ? "success" : "muted"}>
+                    {resource.type}
+                  </StatusPill>
+                </div>
+                <h2 className="mt-5 font-product text-xl font-medium tracking-normal">
+                  {resource.title}
+                </h2>
+                {resource.description ? (
+                  <p className="mt-3 text-sm leading-6 text-muted">
+                    {resource.description}
+                  </p>
+                ) : null}
+
+                {hasAccess ? (
+                  resource.url ? (
                     <Link
+                      className="mt-5 inline-flex min-h-10 items-center gap-2 rounded-full border border-quorum-cyan/45 bg-quorum-cyan/10 px-4 font-product text-sm font-medium text-quorum-cyan-soft transition hover:border-quorum-cyan-soft hover:bg-quorum-cyan/16"
                       href={resource.url}
-                      className="mt-4 inline-flex min-h-10 items-center gap-2 rounded-full border border-foreground/10 px-4 text-sm transition hover:border-accent/45 hover:text-accent"
                     >
-                      Open <ArrowRight size={14} />
+                      Open resource <ArrowRight size={14} />
                     </Link>
-                  ) : null}
-                </>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  Requires this event pass.
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
+                  ) : (
+                    <p className="mt-5 rounded-[10px] border border-white/10 bg-quorum-grey-900/42 p-3 text-sm text-muted">
+                      This resource is text-only and will be shown by the
+                      organizer.
+                    </p>
+                  )
+                ) : (
+                  <p className="mt-5 rounded-[10px] border border-white/10 bg-quorum-grey-900/42 p-3 text-sm text-muted">
+                    {session
+                      ? "Switch to the pass owner wallet to open this resource."
+                      : "Connect the pass owner wallet to open this resource."}
+                  </p>
+                )}
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            action={
+              <QuorumButton href={`/events/${event.slug}`} variant="secondary">
+                Back to event
+              </QuorumButton>
+            }
+            description="This event does not have gated links, files, or text resources yet. A pass can still be used for check-in."
+            icon={FileKey2}
+            title="No resources attached"
+          />
+        )}
 
-        {!hasAccess ? (
-          <div className="mt-5 rounded-[8px] border border-foreground/10 bg-foreground/[0.045] p-5">
+        {!hasAccess && resources.length > 0 ? (
+          <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.04] p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-3 text-muted">
-                <LockKeyhole size={18} />
-                <p className="text-sm">
-                  One wallet can hold one non-transferable pass for this event.
+              <div className="flex items-start gap-3 text-muted">
+                {session ? (
+                  <ShieldCheck className="mt-0.5 text-amber" size={18} />
+                ) : (
+                  <LockKeyhole className="mt-0.5 text-coral" size={18} />
+                )}
+                <p className="text-sm leading-6">
+                  {session
+                    ? "A pass is non-transferable. Use the wallet that bought or claimed it."
+                    : "A wallet session is required before Quorum can check pass ownership."}
                 </p>
               </div>
-              <Link
+              <QuorumButton
                 href={`/events/${event.slug}/checkout`}
-                className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground"
+                variant={session ? "secondary" : "primary"}
               >
-                Get pass <ArrowRight size={14} />
-              </Link>
+                {session ? "Get another pass" : "Get pass"}
+              </QuorumButton>
             </div>
           </div>
         ) : null}
-      </section>
+      </ProductPage>
     </AppShell>
   );
 }
