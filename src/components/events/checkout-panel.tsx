@@ -6,13 +6,17 @@ import {
   AlertTriangle,
   ArrowRight,
   CheckCircle2,
+  CircleDollarSign,
   Loader2,
   ShieldCheck,
   TicketCheck,
   WalletCards,
 } from "lucide-react";
+import { QuorumButton } from "@/components/ui/quorum-button";
+import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
+import { cn } from "@/lib/ui";
 
 type CheckoutPanelProps = {
   capacity: number;
@@ -40,10 +44,6 @@ function shorten(address: string) {
   return `${address.slice(0, 6)}...${address.slice(-5)}`;
 }
 
-function cn(...classNames: Array<string | false | null | undefined>) {
-  return classNames.filter(Boolean).join(" ");
-}
-
 export function CheckoutPanel({
   capacity,
   eventId,
@@ -68,6 +68,13 @@ export function CheckoutPanel({
   const isSoldOut = remainingCapacity <= 0;
   const priceLabel = isFree ? "Free claim" : `${priceUsdc} USDC`;
   const activeError = checkoutError ?? walletError;
+  const checkoutState = isSoldOut
+    ? "Sold out"
+    : isSubmitting
+      ? "Submitting"
+      : isConnected
+        ? "Ready"
+        : "Wallet required";
 
   const buttonLabel = isSoldOut
     ? "Sold out"
@@ -91,16 +98,24 @@ export function CheckoutPanel({
       state: sessionWalletAddress ? "done" : isCheckingWallet ? "active" : "pending",
     },
     {
+      icon: CircleDollarSign,
+      label: "Review amount",
+      value: isFree
+        ? "No USDC payment is required for this claim."
+        : `${priceUsdc} USDC will be prepared for this checkout.`,
+      state: "done",
+    },
+    {
       icon: ShieldCheck,
       label: "Approve in Freighter",
       value: "You stay in control before anything is submitted.",
-      state: isConnected ? "active" : "pending",
+      state: isConnected && !isSubmitting ? "active" : "pending",
     },
     {
       icon: TicketCheck,
       label: "Receive pass",
       value: "Your pass opens resources and check-in.",
-      state: "pending",
+      state: isSubmitting ? "active" : "pending",
     },
   ];
 
@@ -163,20 +178,41 @@ export function CheckoutPanel({
   }
 
   return (
-    <div className="rounded-[8px] border border-foreground/10 bg-background/84 p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+    <div className="rounded-[16px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">Your pass</p>
-          <p className="mt-3 text-4xl font-semibold tracking-tight">
+          <StatusPill
+            icon={isSoldOut ? AlertTriangle : TicketCheck}
+            tone={isSoldOut ? "blocked" : isConnected ? "ready" : "muted"}
+          >
+            {checkoutState}
+          </StatusPill>
+          <p className="mt-5 font-mono text-4xl leading-none text-quorum-cyan-soft">
             {priceLabel}
           </p>
           <p className="mt-2 text-sm text-muted">
             {remainingCapacity} of {capacity} seats left
           </p>
         </div>
-        <div className="grid h-12 w-12 place-items-center rounded-full border border-accent/45 bg-accent/10 text-accent">
+        <div className="grid h-12 w-12 place-items-center rounded-full border border-quorum-cyan/45 bg-quorum-cyan/10 text-quorum-cyan-soft">
           <TicketCheck size={23} />
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-2 rounded-[12px] border border-white/10 bg-quorum-grey-900/42 p-4 text-sm">
+        {[
+          { label: "Amount", value: priceLabel },
+          { label: "Network", value: network ?? "Stellar testnet" },
+          {
+            label: "Result",
+            value: "Wallet-bound event pass",
+          },
+        ].map((item) => (
+          <div className="grid grid-cols-[auto_1fr] gap-4" key={item.label}>
+            <p className="text-muted">{item.label}</p>
+            <p className="text-right font-medium text-foreground">{item.value}</p>
+          </div>
+        ))}
       </div>
 
       <div className="mt-6 grid gap-3">
@@ -188,10 +224,10 @@ export function CheckoutPanel({
           return (
             <div
               className={cn(
-                "grid grid-cols-[auto_1fr] gap-3 rounded-[8px] border p-4",
+                "grid grid-cols-[auto_1fr] gap-3 rounded-[12px] border p-4",
                 isDone || isActive
-                  ? "border-accent/45 bg-accent/10"
-                  : "border-foreground/10 bg-foreground/[0.035]",
+                  ? "border-quorum-cyan/45 bg-quorum-cyan/10"
+                  : "border-white/10 bg-white/[0.035]",
               )}
               key={step.label}
             >
@@ -199,8 +235,8 @@ export function CheckoutPanel({
                 className={cn(
                   "mt-0.5 grid h-7 w-7 place-items-center rounded-full border",
                   isDone || isActive
-                    ? "border-accent/45 text-accent"
-                    : "border-foreground/10 text-muted",
+                    ? "border-quorum-cyan/45 text-quorum-cyan-soft"
+                    : "border-white/10 text-muted",
                 )}
               >
                 {isDone ? <CheckCircle2 size={15} /> : <Icon size={15} />}
@@ -238,17 +274,22 @@ export function CheckoutPanel({
         </div>
       ) : null}
 
-      <button
+      <QuorumButton
         aria-busy={isBusy}
-        className="mt-5 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-accent-ink transition hover:bg-foreground disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-5 w-full"
         disabled={isBusy || isSoldOut}
+        icon={
+          isBusy ? (
+            <Loader2 className="animate-spin" size={16} />
+          ) : !isSoldOut ? (
+            <ArrowRight size={16} />
+          ) : null
+        }
         onClick={handleCheckout}
         type="button"
       >
-        {isBusy ? <Loader2 className="animate-spin" size={16} /> : null}
         {buttonLabel}
-        {!isBusy && !isSoldOut ? <ArrowRight size={16} /> : null}
-      </button>
+      </QuorumButton>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
         Live testnet actions still ask for explicit Freighter approval.
