@@ -444,6 +444,18 @@ export default async function CollaboratorLedgerPage() {
                           >
                             Event proof <ArrowUpRight size={13} />
                           </Link>
+                          {(payout.status === "failed" ||
+                            payout.status === "cancelled") &&
+                          payout.withdrawalId ? (
+                            <div className="w-full sm:w-auto sm:min-w-44">
+                              <AnchorPayoutButton
+                                actionLabel="Retry cash-out"
+                                amountUsdc={payout.amountUsdc}
+                                eventId={payout.eventId}
+                                withdrawalId={payout.withdrawalId}
+                              />
+                            </div>
+                          ) : null}
                         </div>
 
                         {payout.provider === "moneygram" &&

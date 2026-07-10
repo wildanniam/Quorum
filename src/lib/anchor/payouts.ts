@@ -285,19 +285,23 @@ export async function createAnchorPayout({
       throw new Error("Only published events can be paid out.");
     }
 
-    const existingPayout = await queryOne<{ id: string }>(
-      "SELECT id FROM anchor_payouts WHERE withdrawal_id = $1 LIMIT 1",
+    const existingPayout = await queryOne<AnchorPayoutRow>(
+      "SELECT * FROM anchor_payouts WHERE withdrawal_id = $1 LIMIT 1",
       [settlement.id],
       db,
     );
 
-    if (existingPayout) {
+    if (
+      existingPayout &&
+      existingPayout.status !== "failed" &&
+      existingPayout.status !== "cancelled"
+    ) {
       throw new Error("This contract settlement already has a cash-out request.");
     }
 
     const requestedAmount = settlement.amount_usdc;
     assertUsdcAmount(requestedAmount);
-    const payoutId = createId("apo");
+    const payoutId = existingPayout?.id ?? createId("apo");
     const provider = getAnchorPayoutProvider();
     const providerResult = await provider.createPayout({
       amountUsdc: requestedAmount,
@@ -306,34 +310,64 @@ export async function createAnchorPayout({
       moneyGramAuthToken,
       payoutId,
     });
-    const payoutRow = await queryOne<AnchorPayoutRow>(
-      `
-      INSERT INTO anchor_payouts (
-        id, event_id, collaborator_wallet, amount_usdc, provider, status,
-        anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
-        metadata_json
-      )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      RETURNING *
-      `,
-      [
-        payoutId,
-        eventId,
-        collaboratorWallet,
-        requestedAmount,
-        providerResult.provider,
-        providerResult.status,
-        providerResult.anchorTransactionId,
-        providerResult.referenceNumber,
-        providerResult.pickupUrl,
-        settlement.id,
-        providerResult.metadataJson,
-      ],
-      db,
-    );
+    const payoutRow = existingPayout
+      ? await queryOne<AnchorPayoutRow>(
+          `
+          UPDATE anchor_payouts
+          SET
+            amount_usdc = $2,
+            provider = $3,
+            status = $4,
+            anchor_transaction_id = $5,
+            stellar_transaction_id = NULL,
+            reference_number = $6,
+            pickup_url = $7,
+            failure_reason = NULL,
+            metadata_json = $8
+          WHERE id = $1
+          RETURNING *
+          `,
+          [
+            payoutId,
+            requestedAmount,
+            providerResult.provider,
+            providerResult.status,
+            providerResult.anchorTransactionId,
+            providerResult.referenceNumber,
+            providerResult.pickupUrl,
+            providerResult.metadataJson,
+          ],
+          db,
+        )
+      : await queryOne<AnchorPayoutRow>(
+          `
+          INSERT INTO anchor_payouts (
+            id, event_id, collaborator_wallet, amount_usdc, provider, status,
+            anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
+            metadata_json
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *
+          `,
+          [
+            payoutId,
+            eventId,
+            collaboratorWallet,
+            requestedAmount,
+            providerResult.provider,
+            providerResult.status,
+            providerResult.anchorTransactionId,
+            providerResult.referenceNumber,
+            providerResult.pickupUrl,
+            settlement.id,
+            providerResult.metadataJson,
+          ],
+          db,
+        );
 
     return {
       payout: toAnchorPayoutRecord(payoutRow as AnchorPayoutRow),
+      retried: Boolean(existingPayout),
     };
   });
 }

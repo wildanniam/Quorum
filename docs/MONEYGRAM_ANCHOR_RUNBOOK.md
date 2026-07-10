@@ -139,6 +139,10 @@ For a collaborator payout:
     `anchor_payouts.stellar_transaction_id`. It never creates another event
     withdrawal.
 
+Failed or cancelled attempts can be retried. Quorum resets and reuses the same
+`anchor_payouts` row linked to the settlement, so retrying cannot create a
+second event debit or allocate the settlement twice.
+
 ## Evidence Surfaces
 
 - `/dashboard/ledger` shows confirmed settlement opportunities, the three-step

@@ -208,23 +208,53 @@ async function main() {
     withdrawalResult.withdrawal.id,
   );
   assert.equal(opportunitiesBeforeCashOut[0]?.settlementTxHash, withdrawalTx);
+  process.env.ANCHOR_PROVIDER = "mock";
+  const createdCashOut = await anchor.createAnchorPayout({
+    collaboratorWallet,
+    eventId: event.id,
+    withdrawalId: withdrawalResult.withdrawal.id,
+  });
+  assert.equal(createdCashOut.retried, false);
+  assert.equal(createdCashOut.payout.withdrawalId, withdrawalResult.withdrawal.id);
+  await assert.rejects(
+    () =>
+      anchor.createAnchorPayout({
+        collaboratorWallet,
+        eventId: event.id,
+        withdrawalId: withdrawalResult.withdrawal.id,
+      }),
+    /already has a cash-out request/,
+  );
   await execute(
     `
-    INSERT INTO anchor_payouts (
-      id, event_id, collaborator_wallet, amount_usdc, provider, status,
-      anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
-      stellar_transaction_id, metadata_json
-    )
-    VALUES ($1, $2, $3, $4, 'moneygram', 'ready_for_pickup', $5, $5, $6, $7, $8, $9::jsonb)
+    UPDATE anchor_payouts
+    SET status = 'failed', failure_reason = 'retry smoke'
+    WHERE id = $1
+    `,
+    [createdCashOut.payout.id],
+  );
+  const retriedCashOut = await anchor.createAnchorPayout({
+    collaboratorWallet,
+    eventId: event.id,
+    withdrawalId: withdrawalResult.withdrawal.id,
+  });
+  assert.equal(retriedCashOut.retried, true);
+  assert.equal(retriedCashOut.payout.id, createdCashOut.payout.id);
+  await execute(
+    `
+    UPDATE anchor_payouts
+    SET
+      provider = 'moneygram',
+      status = 'ready_for_pickup',
+      anchor_transaction_id = 'mg-settlement-smoke',
+      reference_number = 'mg-settlement-smoke',
+      pickup_url = 'https://extstellar.moneygram.com/mock-interactive',
+      stellar_transaction_id = $2,
+      metadata_json = $3::jsonb
+    WHERE id = $1
     `,
     [
-      `apo_${randomUUID().replaceAll("-", "").slice(0, 16)}`,
-      event.id,
-      collaboratorWallet,
-      "3",
-      "mg-settlement-smoke",
-      "https://extstellar.moneygram.com/mock-interactive",
-      withdrawalResult.withdrawal.id,
+      retriedCashOut.payout.id,
       anchorTransferTx,
       JSON.stringify({ mode: "moneygram", smoke: true }),
     ],
@@ -380,6 +410,8 @@ async function main() {
           "collaborator-debit-ledger",
           "collaborator-withdrawable-balance",
           "settlement-backed-anchor-opportunity",
+          "duplicate-active-cashout-rejected",
+          "failed-cashout-retry-reuses-record",
           "separate-anchor-transfer-proof",
           "single-contract-withdrawal",
         ],

@@ -7,6 +7,7 @@ import { QuorumButton } from "@/components/ui/quorum-button";
 import { requestMoneyGramAuthToken as requestMoneyGramBrowserAuthToken } from "@/lib/anchor/moneygram/browser-auth";
 
 type AnchorPayoutButtonProps = {
+  actionLabel?: string;
   amountUsdc: string;
   eventId: string;
   withdrawalId: string;
@@ -23,6 +24,7 @@ type AnchorPayoutResponse = {
 };
 
 export function AnchorPayoutButton({
+  actionLabel = "Start cash-out",
   amountUsdc,
   eventId,
   withdrawalId,
@@ -108,7 +110,7 @@ export function AnchorPayoutButton({
           ? "Cash-out started"
           : isAuthorizing
             ? "Authorize wallet"
-            : "Start cash-out"}
+            : actionLabel}
       </QuorumButton>
       {referenceNumber ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
