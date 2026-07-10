@@ -85,6 +85,64 @@ export type SyncMoneyGramAnchorPayoutResult = {
   transferInstructions: MoneyGramWithdrawalTransferInstructions | null;
 };
 
+export type AnchorPayoutMoneyGramState = {
+  moneyGramStatus: string | null;
+  transferInstructions: MoneyGramWithdrawalTransferInstructions | null;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : null;
+}
+
+export function getAnchorPayoutMoneyGramState(
+  payout: Pick<AnchorPayoutRecord, "metadataJson">,
+): AnchorPayoutMoneyGramState {
+  const metadata = asRecord(payout.metadataJson);
+  const moneyGramTransaction = asRecord(metadata.moneygramTransaction);
+  const rawInstructions = asRecord(metadata.transferInstructions);
+  const amountUsdc = asString(rawInstructions.amountUsdc);
+  const assetCode = asString(rawInstructions.assetCode);
+  const assetIssuer = asString(rawInstructions.assetIssuer);
+  const destination = asString(rawInstructions.destination);
+  const memo = asString(rawInstructions.memo);
+  const memoType = asString(rawInstructions.memoType);
+  const network = asString(rawInstructions.network);
+  const transferInstructions: MoneyGramWithdrawalTransferInstructions | null =
+    amountUsdc &&
+    assetCode === "USDC" &&
+    assetIssuer &&
+    StrKey.isValidEd25519PublicKey(assetIssuer) &&
+    destination &&
+    StrKey.isValidEd25519PublicKey(destination) &&
+    memo &&
+    memoType === "id" &&
+    network === "TESTNET"
+      ? {
+          amountUsdc,
+          assetCode: "USDC",
+          assetIssuer,
+          destination,
+          memo,
+          memoType: "id",
+          network: "TESTNET",
+        }
+      : null;
+
+  return {
+    moneyGramStatus:
+      asString(metadata.moneygramStatus) ?? asString(moneyGramTransaction.status),
+    transferInstructions,
+  };
+}
+
 function assertWalletAddress(walletAddress: string) {
   if (!StrKey.isValidEd25519PublicKey(walletAddress)) {
     throw new Error(`Invalid Stellar wallet address: ${walletAddress}`);

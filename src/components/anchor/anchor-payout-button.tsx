@@ -105,10 +105,10 @@ export function AnchorPayoutButton({
         type="button"
       >
         {referenceNumber
-          ? "Payout requested"
+          ? "Cash-out started"
           : isAuthorizing
             ? "Authorize wallet"
-            : "Request payout"}
+            : "Start cash-out"}
       </QuorumButton>
       {referenceNumber ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
@@ -122,7 +122,7 @@ export function AnchorPayoutButton({
           rel="noreferrer"
           target="_blank"
         >
-          Continue at MoneyGram <ArrowUpRight size={12} />
+          Continue MoneyGram details <ArrowUpRight size={12} />
         </a>
       ) : null}
       {error ? (
