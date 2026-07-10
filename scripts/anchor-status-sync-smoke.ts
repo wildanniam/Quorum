@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { resolveMoneyGramAnchorConfig } from "../src/lib/anchor/config";
 import { fetchMoneyGramSep1Info } from "../src/lib/anchor/moneygram/sep1";
-import { fetchMoneyGramSep24Transaction } from "../src/lib/anchor/moneygram/sep24";
+import {
+  fetchMoneyGramSep24Transaction,
+  getMoneyGramWithdrawalTransferInstructions,
+} from "../src/lib/anchor/moneygram/sep24";
 import { mapMoneyGramSep24Status } from "../src/lib/anchor/payouts";
 
 async function main() {
@@ -61,6 +64,56 @@ async function main() {
   assert.equal(mapMoneyGramSep24Status("expired"), "failed");
   assert.equal(mapMoneyGramSep24Status("pending_user_transfer_start"), "pending_anchor");
 
+  const transferInstructions = getMoneyGramWithdrawalTransferInstructions({
+    config,
+    expectedAmountUsdc: "1",
+    transaction: {
+      ...transaction,
+      amountIn: "1.0000000",
+      externalTransactionId: null,
+      moreInfoUrl: null,
+      status: "pending_user_transfer_start",
+      stellarTransactionId: null,
+      withdrawMemo: "123456789",
+      withdrawMemoType: "id",
+    },
+  });
+
+  assert.deepEqual(transferInstructions, {
+    amountUsdc: "1.0000000",
+    assetCode: "USDC",
+    assetIssuer: config.usdcIssuer,
+    destination: transaction.withdrawAnchorAccount,
+    memo: "123456789",
+    memoType: "id",
+    network: "TESTNET",
+  });
+  assert.equal(
+    getMoneyGramWithdrawalTransferInstructions({
+      config,
+      expectedAmountUsdc: "1",
+      transaction,
+    }),
+    null,
+  );
+  assert.throws(
+    () =>
+      getMoneyGramWithdrawalTransferInstructions({
+        config,
+        expectedAmountUsdc: "2",
+        transaction: {
+          ...transaction,
+          externalTransactionId: null,
+          moreInfoUrl: null,
+          status: "pending_user_transfer_start",
+          stellarTransactionId: null,
+          withdrawMemo: "123456789",
+          withdrawMemoType: "id",
+        },
+      }),
+    /does not match/,
+  );
+
   console.log(
     JSON.stringify(
       {
@@ -69,6 +122,8 @@ async function main() {
           "sep24-transaction-response-parse",
           "moneygram-status-map-ready-for-pickup",
           "moneygram-status-map-terminal-states",
+          "moneygram-transfer-instructions",
+          "moneygram-transfer-amount-guard",
         ],
         ok: true,
       },

@@ -47,7 +47,14 @@ export async function POST(
       payoutId,
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      payout: result.payout,
+      transaction: {
+        moreInfoUrl: result.transaction.moreInfoUrl,
+        status: result.transaction.status,
+      },
+      transferInstructions: result.transferInstructions,
+    });
   } catch (error) {
     const message =
       error instanceof Error

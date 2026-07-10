@@ -9,8 +9,11 @@ import { query, queryOne, withTransaction, type DatabaseClient } from "@/lib/db/
 import { getAnchorPayoutProvider } from "@/lib/anchor/provider";
 import {
   fetchMoneyGramSep24Transaction,
+  getMoneyGramWithdrawalTransferInstructions,
   type MoneyGramSep24Transaction,
+  type MoneyGramWithdrawalTransferInstructions,
 } from "@/lib/anchor/moneygram/sep24";
+import { usdcToAtomicUnits } from "@/lib/stellar/live-encoding";
 
 type AnchorPayoutRow = {
   id: string;
@@ -79,6 +82,7 @@ export type SyncMoneyGramAnchorPayoutInput = {
 export type SyncMoneyGramAnchorPayoutResult = {
   payout: AnchorPayoutRecord;
   transaction: MoneyGramSep24Transaction;
+  transferInstructions: MoneyGramWithdrawalTransferInstructions | null;
 };
 
 function assertWalletAddress(walletAddress: string) {
@@ -317,8 +321,29 @@ export async function syncMoneyGramAnchorPayout({
       authToken: moneyGramAuthToken,
       id: payout.anchor_transaction_id,
     });
+
+    if (transaction.id !== payout.anchor_transaction_id) {
+      throw new Error("MoneyGram returned a different anchor transaction id.");
+    }
+
+    if (transaction.kind && transaction.kind.toLowerCase() !== "withdrawal") {
+      throw new Error("MoneyGram returned a non-withdrawal transaction.");
+    }
+
+    if (
+      transaction.amountIn &&
+      usdcToAtomicUnits(transaction.amountIn) !==
+        usdcToAtomicUnits(payout.amount_usdc)
+    ) {
+      throw new Error("MoneyGram transfer amount does not match the settled USDC amount.");
+    }
+
     const status = mapMoneyGramSep24Status(transaction.status);
     const txHash = normalizeLiveTransactionHash(transaction.stellarTransactionId);
+    const transferInstructions = getMoneyGramWithdrawalTransferInstructions({
+      expectedAmountUsdc: payout.amount_usdc,
+      transaction,
+    });
 
     const metadataPatch = {
       moneygramStatus: transaction.status,
@@ -335,6 +360,7 @@ export async function syncMoneyGramAnchorPayout({
         withdrawMemoType: transaction.withdrawMemoType,
       },
       syncedAt: new Date().toISOString(),
+      transferInstructions,
     };
     const updated = await queryOne<AnchorPayoutRow>(
       `
@@ -364,6 +390,7 @@ export async function syncMoneyGramAnchorPayout({
     return {
       payout: toAnchorPayoutRecord(updated as AnchorPayoutRow),
       transaction,
+      transferInstructions,
     };
   });
 }
