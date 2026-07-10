@@ -66,7 +66,7 @@ export function getAnchorPayoutProvider(): AnchorPayoutProviderAdapter {
           },
           pickupUrl: withdrawal.url,
           provider: "moneygram",
-          referenceNumber: withdrawal.id,
+          referenceNumber: null,
           status: "requested",
         };
       },

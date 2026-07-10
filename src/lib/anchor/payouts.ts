@@ -432,6 +432,11 @@ export async function syncMoneyGramAnchorPayout({
 
     const status = mapMoneyGramSep24Status(transaction.status);
     const txHash = normalizeLiveTransactionHash(transaction.stellarTransactionId);
+
+    if (transaction.stellarTransactionId && !txHash) {
+      throw new Error("MoneyGram returned an invalid Stellar transaction hash.");
+    }
+
     const transferInstructions = getMoneyGramWithdrawalTransferInstructions({
       expectedAmountUsdc: payout.amount_usdc,
       transaction,

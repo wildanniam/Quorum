@@ -35,11 +35,12 @@ export function AnchorPayoutButton({
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [pickupUrl, setPickupUrl] = useState<string | null>(null);
   const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
+  const [payoutStarted, setPayoutStarted] = useState(false);
   const disabled =
     isSubmitting ||
     isAuthorizing ||
     Number(amountUsdc) <= 0 ||
-    Boolean(referenceNumber);
+    payoutStarted;
 
   async function postPayout(moneyGramAuthToken?: string) {
     const response = await fetch(`/api/events/${eventId}/anchor-payouts`, {
@@ -81,6 +82,7 @@ export function AnchorPayoutButton({
 
       setReferenceNumber(payload.payout.referenceNumber);
       setPickupUrl(payload.payout.pickupUrl);
+      setPayoutStarted(true);
       router.refresh();
     } catch (error) {
       setError(
@@ -106,7 +108,7 @@ export function AnchorPayoutButton({
         onClick={handleRequestPayout}
         type="button"
       >
-        {referenceNumber
+        {payoutStarted
           ? "Cash-out started"
           : isAuthorizing
             ? "Authorize wallet"
@@ -114,7 +116,7 @@ export function AnchorPayoutButton({
       </QuorumButton>
       {referenceNumber ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
-          Reference {referenceNumber}
+          Pickup reference {referenceNumber}
         </p>
       ) : null}
       {pickupUrl ? (
