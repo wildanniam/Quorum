@@ -9,6 +9,7 @@ import { requestMoneyGramAuthToken as requestMoneyGramBrowserAuthToken } from "@
 type AnchorPayoutButtonProps = {
   amountUsdc: string;
   eventId: string;
+  withdrawalId: string;
 };
 
 type AnchorPayoutResponse = {
@@ -24,6 +25,7 @@ type AnchorPayoutResponse = {
 export function AnchorPayoutButton({
   amountUsdc,
   eventId,
+  withdrawalId,
 }: AnchorPayoutButtonProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,7 @@ export function AnchorPayoutButton({
 
   async function postPayout(moneyGramAuthToken?: string) {
     const response = await fetch(`/api/events/${eventId}/anchor-payouts`, {
-      body: JSON.stringify({ amountUsdc, moneyGramAuthToken }),
+      body: JSON.stringify({ moneyGramAuthToken, withdrawalId }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });

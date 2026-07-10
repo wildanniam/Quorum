@@ -174,18 +174,15 @@ export default async function CollaboratorLedgerPage() {
                   anchorOpportunities.map((item) => (
                     <article
                       className="grid gap-4 rounded-[12px] border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_auto] md:items-center"
-                      key={item.eventId}
+                      key={item.withdrawalId}
                     >
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 px-2.5 py-1 font-mono text-xs text-quorum-cyan-soft">
-                            {item.availableUsdc} USDC available
+                            {item.settlementAmountUsdc} USDC settled
                           </span>
                           <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
-                            earned {item.earnedUsdc}
-                          </span>
-                          <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
-                            withdrawn {item.withdrawnUsdc}
+                            contract proof {shorten(item.settlementTxHash)}
                           </span>
                         </div>
                         <h3 className="mt-3 truncate font-product text-lg font-medium">
@@ -200,16 +197,17 @@ export default async function CollaboratorLedgerPage() {
                       </div>
                       <div className="md:min-w-48">
                         <AnchorPayoutButton
-                          amountUsdc={item.availableUsdc}
+                          amountUsdc={item.settlementAmountUsdc}
                           eventId={item.eventId}
+                          withdrawalId={item.withdrawalId}
                         />
                       </div>
                     </article>
                   ))
                 ) : (
                   <EmptyState
-                    description="No event has withdrawable collaborator balance for this wallet yet."
-                    title="No payout opportunities"
+                    description="Withdraw a collaborator balance from an event first. Settled wallet funds will then appear here for MoneyGram cash-out."
+                    title="No settled funds ready"
                   />
                 )}
               </div>

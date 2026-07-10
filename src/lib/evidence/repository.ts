@@ -219,11 +219,10 @@ export async function listEvidence({
         END::text AS source_label,
         a.status::text AS status,
         NULL::text AS token_id,
-        w.tx_hash AS tx_hash,
+        a.stellar_transaction_id AS tx_hash,
         a.updated_at AS occurred_at
       FROM anchor_payouts a
       JOIN events e ON e.id = a.event_id
-      LEFT JOIN withdrawals w ON w.id = a.withdrawal_id
 
       UNION ALL
 

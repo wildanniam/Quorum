@@ -16,8 +16,7 @@ function getSession(request: NextRequest) {
 function statusForMessage(message: string) {
   if (message.includes("not found")) return 404;
   if (message.includes("not a collaborator")) return 403;
-  if (message.includes("exceeds withdrawable")) return 409;
-  if (message.includes("No withdrawable")) return 409;
+  if (message.includes("already has a cash-out")) return 409;
   if (message.includes("MoneyGram wallet authorization")) return 428;
   return 400;
 }
@@ -38,16 +37,23 @@ export async function POST(
 
   const { eventId } = await context.params;
   const body = (await request.json().catch(() => ({}))) as {
-    amountUsdc?: string | null;
     moneyGramAuthToken?: string | null;
+    withdrawalId?: string | null;
   };
 
   try {
+    if (!body.withdrawalId?.trim()) {
+      return NextResponse.json(
+        { error: "Completed contract settlement is required." },
+        { status: 400 },
+      );
+    }
+
     const result = await createAnchorPayout({
-      amountUsdc: body.amountUsdc,
       collaboratorWallet: session.walletAddress,
       eventId,
       moneyGramAuthToken: body.moneyGramAuthToken,
+      withdrawalId: body.withdrawalId,
     });
 
     return NextResponse.json(
