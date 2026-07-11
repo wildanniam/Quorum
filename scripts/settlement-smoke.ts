@@ -113,6 +113,7 @@ async function main() {
   run("node", ["scripts/db-migrate.mjs"]);
 
   const repository = await import("../src/lib/events/repository");
+  const anchor = await import("../src/lib/anchor/payouts");
   const evidence = await import("../src/lib/evidence/repository");
   const ledger = await import("../src/lib/ledger/repository");
   const indexer = await import("../src/lib/stellar/indexer");
@@ -167,6 +168,7 @@ async function main() {
   const checkInTx = txHash(3);
   const withdrawalTx = txHash(4);
   const indexedOnlyTx = txHash(5);
+  const anchorTransferTx = txHash(7);
   const tokenId = "9001";
 
   await repository.recordLivePublishedEvent({
@@ -196,25 +198,74 @@ async function main() {
     eventId: event.id,
     txHash: withdrawalTx,
   });
+  const opportunitiesBeforeCashOut = await anchor.listAnchorPayoutOpportunities(
+    collaboratorWallet,
+  );
+
+  assert.equal(opportunitiesBeforeCashOut.length, 1);
+  assert.equal(
+    opportunitiesBeforeCashOut[0]?.withdrawalId,
+    withdrawalResult.withdrawal.id,
+  );
+  assert.equal(opportunitiesBeforeCashOut[0]?.settlementTxHash, withdrawalTx);
+  process.env.ANCHOR_PROVIDER = "mock";
+  const createdCashOut = await anchor.createAnchorPayout({
+    collaboratorWallet,
+    eventId: event.id,
+    withdrawalId: withdrawalResult.withdrawal.id,
+  });
+  assert.equal(createdCashOut.retried, false);
+  assert.equal(createdCashOut.payout.withdrawalId, withdrawalResult.withdrawal.id);
+  await assert.rejects(
+    () =>
+      anchor.createAnchorPayout({
+        collaboratorWallet,
+        eventId: event.id,
+        withdrawalId: withdrawalResult.withdrawal.id,
+      }),
+    /already has a cash-out request/,
+  );
   await execute(
     `
-    INSERT INTO anchor_payouts (
-      id, event_id, collaborator_wallet, amount_usdc, provider, status,
-      anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
-      metadata_json
-    )
-    VALUES ($1, $2, $3, $4, 'moneygram', 'ready_for_pickup', $5, $5, $6, $7, $8::jsonb)
+    UPDATE anchor_payouts
+    SET status = 'failed', failure_reason = 'retry smoke'
+    WHERE id = $1
+    `,
+    [createdCashOut.payout.id],
+  );
+  const retriedCashOut = await anchor.createAnchorPayout({
+    collaboratorWallet,
+    eventId: event.id,
+    withdrawalId: withdrawalResult.withdrawal.id,
+  });
+  assert.equal(retriedCashOut.retried, true);
+  assert.equal(retriedCashOut.payout.id, createdCashOut.payout.id);
+  await execute(
+    `
+    UPDATE anchor_payouts
+    SET
+      provider = 'moneygram',
+      status = 'ready_for_pickup',
+      anchor_transaction_id = 'mg-settlement-smoke',
+      reference_number = 'mg-settlement-smoke',
+      pickup_url = 'https://extstellar.moneygram.com/mock-interactive',
+      stellar_transaction_id = $2,
+      metadata_json = $3::jsonb
+    WHERE id = $1
     `,
     [
-      `apo_${randomUUID().replaceAll("-", "").slice(0, 16)}`,
-      event.id,
-      collaboratorWallet,
-      "3",
-      "mg-settlement-smoke",
-      "https://extstellar.moneygram.com/mock-interactive",
-      withdrawalResult.withdrawal.id,
+      retriedCashOut.payout.id,
+      anchorTransferTx,
       JSON.stringify({ mode: "moneygram", smoke: true }),
     ],
+  );
+  const opportunitiesAfterCashOut = await anchor.listAnchorPayoutOpportunities(
+    collaboratorWallet,
+  );
+  assert.equal(
+    opportunitiesAfterCashOut.length,
+    0,
+    "a settled withdrawal can only back one anchor cash-out",
   );
 
   const rawEvents = [
@@ -319,6 +370,31 @@ async function main() {
     ),
     "ledger should include withdrawal debit",
   );
+  const withdrawalEvidence = eventEvidence.find(
+    (record) => record.kind === "withdrawal",
+  );
+  const anchorEvidence = eventEvidence.find(
+    (record) => record.kind === "anchor_payout",
+  );
+  assert.equal(
+    withdrawalEvidence?.txHash,
+    withdrawalTx,
+    "contract settlement should retain its own proof hash",
+  );
+  assert.equal(
+    anchorEvidence?.txHash,
+    anchorTransferTx,
+    "anchor cash-out should expose its separate Stellar transfer hash",
+  );
+  const withdrawalRows = await execute(
+    "SELECT id FROM withdrawals WHERE event_id = $1 AND collaborator_wallet = $2",
+    [event.id, collaboratorWallet],
+  );
+  assert.equal(
+    withdrawalRows.rowCount,
+    1,
+    "anchor cash-out must not create a second contract withdrawal",
+  );
 
   console.log(
     JSON.stringify(
@@ -333,6 +409,11 @@ async function main() {
           "collaborator-credit-ledger",
           "collaborator-debit-ledger",
           "collaborator-withdrawable-balance",
+          "settlement-backed-anchor-opportunity",
+          "duplicate-active-cashout-rejected",
+          "failed-cashout-retry-reuses-record",
+          "separate-anchor-transfer-proof",
+          "single-contract-withdrawal",
         ],
         evidenceKinds: [...evidenceKinds].sort(),
         indexedEvents: firstIngest.records.length + runResult.insertedCount,

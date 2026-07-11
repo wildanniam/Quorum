@@ -4,9 +4,14 @@ import {
   ArrowLeft,
   ArrowUpRight,
   BanknoteArrowUp,
+  CircleAlert,
+  CircleCheck,
   CircleDollarSign,
+  Clock3,
   Handshake,
+  Landmark,
   RadioTower,
+  Send,
   WalletCards,
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
@@ -24,13 +29,16 @@ import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import type { LedgerEntryRecord } from "@/lib/db/models";
 import {
+  getAnchorPayoutMoneyGramState,
   listAnchorPayoutOpportunities,
   listAnchorPayoutsWithEventsByWallet,
+  type AnchorPayoutWithEvent,
 } from "@/lib/anchor/payouts";
 import {
   getCollaboratorLedgerSummary,
   listCollaboratorLedger,
 } from "@/lib/ledger/repository";
+import { stellarExpertTransactionUrl } from "@/lib/stellar/explorer";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +66,103 @@ function ledgerCopy(entry: LedgerEntryRecord) {
 
   return {
     amount: `-${entry.amountUsdc} ${entry.asset}`,
-    detail: "Withdrawn or prepared for anchor payout from this wallet balance.",
-    label: "Debit",
-    tone: "danger" as const,
+    detail: "Settled from the event contract into this collaborator wallet.",
+    label: "Wallet settlement",
+    tone: "cyan" as const,
   };
+}
+
+function cashOutStatus(
+  payout: AnchorPayoutWithEvent,
+  moneyGramStatus: string | null,
+) {
+  if (payout.status === "completed") {
+    return {
+      description: "MoneyGram marked this cash-out complete.",
+      icon: CircleCheck,
+      label: "Cash-out complete",
+      tone: "success" as const,
+    };
+  }
+
+  if (payout.status === "ready_for_pickup") {
+    return {
+      description: "The pickup reference is ready in MoneyGram.",
+      icon: Landmark,
+      label: "Ready for pickup",
+      tone: "ready" as const,
+    };
+  }
+
+  if (payout.status === "failed" || payout.status === "cancelled") {
+    return {
+      description:
+        payout.failureReason ??
+        "MoneyGram could not continue this cash-out. Review the details before retrying.",
+      icon: CircleAlert,
+      label: payout.status === "failed" ? "Cash-out failed" : "Cash-out cancelled",
+      tone: "danger" as const,
+    };
+  }
+
+  if (moneyGramStatus === "pending_user_transfer_start") {
+    return {
+      description: "MoneyGram is ready for the exact wallet transfer shown below.",
+      icon: Send,
+      label: "Wallet transfer required",
+      tone: "cyan" as const,
+    };
+  }
+
+  if (payout.status === "requested") {
+    return {
+      description: "Complete the MoneyGram identity and pickup details to continue.",
+      icon: Clock3,
+      label: "Details required",
+      tone: "pending" as const,
+    };
+  }
+
+  return {
+    description: "MoneyGram is processing the latest cash-out state.",
+    icon: Clock3,
+    label: "Processing",
+    tone: "pending" as const,
+  };
+}
+
+function TransactionProofRow({
+  emptyLabel,
+  hash,
+  label,
+}: {
+  emptyLabel: string;
+  hash: string | null;
+  label: string;
+}) {
+  const explorerUrl = stellarExpertTransactionUrl(hash);
+
+  return (
+    <div className="grid min-w-0 gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+      <p className="text-xs text-muted">{label}</p>
+      {hash ? (
+        explorerUrl ? (
+          <Link
+            className="inline-flex min-w-0 items-center gap-1 break-all font-mono text-xs text-quorum-cyan-soft transition hover:text-foreground"
+            href={explorerUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {shorten(hash)} <ArrowUpRight className="shrink-0" size={12} />
+          </Link>
+        ) : (
+          <span className="break-all font-mono text-xs text-muted">{hash}</span>
+        )
+      ) : (
+        <span className="text-xs text-muted">{emptyLabel}</span>
+      )}
+    </div>
+  );
 }
 
 export default async function CollaboratorLedgerPage() {
@@ -103,7 +204,7 @@ export default async function CollaboratorLedgerPage() {
                 Collaborator ledger
               </StatusPill>
               <h1 className="mt-5 max-w-4xl font-product text-5xl font-medium leading-[1.05] tracking-normal md:text-7xl">
-                Credits and withdrawals, tied to proof.
+                Revenue, wallet settlement, and cash-out proof.
               </h1>
               <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
                 {session
@@ -126,12 +227,12 @@ export default async function CollaboratorLedgerPage() {
               },
               {
                 icon: BanknoteArrowUp,
-                label: "withdrawn",
+                label: "settled to wallet",
                 value: `${summary.totalWithdrawnUsdc} USDC`,
               },
               {
                 icon: Handshake,
-                label: "withdrawable",
+                label: "remaining in contract",
                 value: `${summary.withdrawableUsdc} USDC`,
               },
               {
@@ -153,125 +254,233 @@ export default async function CollaboratorLedgerPage() {
         </ProofSurface>
 
         {session ? (
-          <ProofSurface className="mt-5">
-            <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-              <div>
-                <StatusPill icon={RadioTower} tone="cyan">
-                  Anchor payout rail
-                </StatusPill>
-                <h2 className="mt-4 font-product text-2xl font-medium">
-                  Request anchor payouts from withdrawable USDC.
-                </h2>
-                <p className="mt-3 text-sm leading-6 text-muted">
-                  MoneyGram payouts start with wallet authorization, then open
-                  the anchor-hosted flow for pickup details. Local mock payouts
-                  stay available for development and still produce ledger proof.
-                </p>
-              </div>
+          <section className="mt-12" aria-label="MoneyGram cash-out">
+            <SectionHeader
+              description="Quorum only starts MoneyGram after USDC has left the event contract and reached this wallet. Each confirmed settlement can back one cash-out."
+              eyebrow={
+                <span className="inline-flex items-center gap-2">
+                  <RadioTower size={14} /> MoneyGram cash-out
+                </span>
+              }
+              title="Move settled wallet funds toward cash pickup."
+            />
 
-              <div className="grid gap-3">
-                {anchorOpportunities.length > 0 ? (
-                  anchorOpportunities.map((item) => (
-                    <article
-                      className="grid gap-4 rounded-[12px] border border-white/10 bg-white/[0.035] p-4 md:grid-cols-[1fr_auto] md:items-center"
-                      key={item.eventId}
-                    >
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 px-2.5 py-1 font-mono text-xs text-quorum-cyan-soft">
-                            {item.availableUsdc} USDC available
-                          </span>
-                          <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
-                            earned {item.earnedUsdc}
-                          </span>
-                          <span className="rounded-full border border-white/10 bg-quorum-grey-800 px-2.5 py-1 font-mono text-xs text-muted">
-                            withdrawn {item.withdrawnUsdc}
-                          </span>
-                        </div>
-                        <h3 className="mt-3 truncate font-product text-lg font-medium">
-                          {item.eventTitle}
-                        </h3>
-                        <Link
-                          className="mt-2 inline-flex text-sm text-muted transition hover:text-quorum-cyan-soft"
-                          href={`/events/${item.eventSlug}/proof`}
-                        >
-                          Event proof <ArrowUpRight size={13} />
-                        </Link>
-                      </div>
-                      <div className="md:min-w-48">
-                        <AnchorPayoutButton
-                          amountUsdc={item.availableUsdc}
-                          eventId={item.eventId}
+            <ol
+              aria-label="Cash-out path"
+              className="mt-6 grid border-y border-white/10 md:grid-cols-3"
+            >
+              {[
+                {
+                  detail: "Event contract confirms the collaborator withdrawal.",
+                  icon: WalletCards,
+                  label: "Settle to wallet",
+                },
+                {
+                  detail: "The same wallet sends exact testnet USDC with memo.",
+                  icon: Send,
+                  label: "Transfer to MoneyGram",
+                },
+                {
+                  detail: "MoneyGram returns the reference for cash pickup.",
+                  icon: Landmark,
+                  label: "Collect with reference",
+                },
+              ].map((step, index) => {
+                const Icon = step.icon;
+
+                return (
+                  <li
+                    className="grid grid-cols-[auto_1fr] gap-3 border-b border-white/10 py-4 last:border-b-0 md:border-b-0 md:border-r md:px-5 md:first:pl-0 md:last:border-r-0"
+                    key={step.label}
+                  >
+                    <span className="inline-flex size-9 items-center justify-center rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 text-quorum-cyan-soft">
+                      <Icon size={15} />
+                    </span>
+                    <div>
+                      <p className="font-product text-sm font-medium">
+                        {index + 1}. {step.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        {step.detail}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+
+            <div className="mt-7 grid gap-3">
+              {anchorOpportunities.length > 0 ? (
+                anchorOpportunities.map((item) => (
+                  <article
+                    className="grid gap-5 rounded-[8px] border border-white/10 bg-quorum-grey-700/72 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                    key={item.withdrawalId}
+                  >
+                    <div className="min-w-0">
+                      <StatusPill icon={CircleCheck} tone="success">
+                        Wallet settlement confirmed
+                      </StatusPill>
+                      <h3 className="mt-4 font-product text-xl font-medium">
+                        {item.eventTitle}
+                      </h3>
+                      <p className="mt-2 font-mono text-2xl text-quorum-cyan-soft">
+                        {item.settlementAmountUsdc} USDC
+                      </p>
+                      <div className="mt-4 divide-y divide-white/10 border-y border-white/10">
+                        <TransactionProofRow
+                          emptyLabel="Settlement proof pending"
+                          hash={item.settlementTxHash}
+                          label="Contract to wallet"
                         />
+                        <div className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+                          <p className="text-xs text-muted">Settled</p>
+                          <p className="text-xs text-foreground">
+                            {formatDate(item.settledAt)} UTC
+                          </p>
+                        </div>
                       </div>
-                    </article>
-                  ))
-                ) : (
-                  <EmptyState
-                    description="No event has withdrawable collaborator balance for this wallet yet."
-                    title="No payout opportunities"
-                  />
-                )}
-              </div>
+                      <Link
+                        className="mt-4 inline-flex items-center gap-1 text-sm text-muted transition hover:text-quorum-cyan-soft"
+                        href={`/events/${item.eventSlug}/proof`}
+                      >
+                        Event proof <ArrowUpRight size={13} />
+                      </Link>
+                    </div>
+                    <div className="md:w-52">
+                      <AnchorPayoutButton
+                        amountUsdc={item.settlementAmountUsdc}
+                        eventId={item.eventId}
+                        withdrawalId={item.withdrawalId}
+                      />
+                    </div>
+                  </article>
+                ))
+              ) : (
+                <EmptyState
+                  description="Withdraw a collaborator balance from an event first. The confirmed wallet settlement will appear here automatically."
+                  icon={WalletCards}
+                  title="No settled funds ready"
+                />
+              )}
             </div>
 
             {anchorPayouts.length > 0 ? (
-              <div className="mt-5 border-t border-white/10 pt-5">
-                <h3 className="font-product text-lg font-medium">
-                  Anchor payout history
-                </h3>
-                <div className="mt-3 grid gap-3 md:grid-cols-2">
-                  {anchorPayouts.map((payout) => (
-                    <article
-                      className="rounded-[12px] border border-white/10 bg-quorum-grey-800 p-4"
-                      key={payout.id}
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="rounded-full border border-quorum-cyan/35 bg-quorum-cyan/10 px-2.5 py-1 font-mono text-xs text-quorum-cyan-soft">
-                          {payout.status.replaceAll("_", " ")}
-                        </span>
-                        <span className="font-mono text-xs text-muted">
-                          {payout.provider}
-                        </span>
-                      </div>
-                      <p className="mt-3 font-product font-medium">
-                        {payout.eventTitle}
-                      </p>
-                      <p className="mt-2 font-mono text-sm text-foreground">
-                        {payout.amountUsdc} {payout.asset}
-                      </p>
-                      <p className="mt-2 break-all font-mono text-xs leading-5 text-muted">
-                        {payout.referenceNumber ?? payout.anchorTransactionId}
-                      </p>
-                      <div className="mt-3 flex flex-wrap items-center gap-2">
-                        {payout.pickupUrl ? (
-                          <Link
-                            className="inline-flex min-h-8 items-center justify-center gap-2 rounded-full bg-quorum-cyan px-3 text-xs font-semibold text-background transition hover:bg-foreground"
-                            href={payout.pickupUrl}
-                            target="_blank"
-                          >
-                            MoneyGram <ArrowUpRight size={13} />
-                          </Link>
-                        ) : null}
-                        {payout.provider === "moneygram" ? (
-                          <AnchorPayoutSyncButton payoutId={payout.id} />
-                        ) : null}
-                      </div>
-                      <Link
-                        className="mt-3 inline-flex text-sm text-quorum-cyan-soft transition hover:text-foreground"
-                        href={`/events/${payout.eventSlug}/proof`}
+              <div className="mt-12">
+                <SectionHeader
+                  description="Contract settlement proof and MoneyGram transfer proof stay separate, so every step can be checked independently."
+                  eyebrow="Cash-out history"
+                  title="Follow each request from wallet to pickup."
+                />
+                <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
+                  {anchorPayouts.map((payout) => {
+                    const moneyGram = getAnchorPayoutMoneyGramState(payout);
+                    const status = cashOutStatus(
+                      payout,
+                      moneyGram.moneyGramStatus,
+                    );
+
+                    return (
+                      <article
+                        className="rounded-[8px] border border-white/10 bg-quorum-grey-700/72 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                        key={payout.id}
                       >
-                        Proof timeline <ArrowUpRight size={13} />
-                      </Link>
-                    </article>
-                  ))}
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <StatusPill icon={status.icon} tone={status.tone}>
+                            {status.label}
+                          </StatusPill>
+                          <span className="font-mono text-xs uppercase text-muted">
+                            {payout.provider}
+                          </span>
+                        </div>
+                        <h3 className="mt-4 font-product text-xl font-medium">
+                          {payout.eventTitle}
+                        </h3>
+                        <p className="mt-2 font-mono text-2xl text-foreground">
+                          {payout.amountUsdc} {payout.asset}
+                        </p>
+                        <p className="mt-3 text-sm leading-6 text-muted">
+                          {status.description}
+                        </p>
+
+                        <div className="mt-4 divide-y divide-white/10 border-y border-white/10">
+                          <TransactionProofRow
+                            emptyLabel="Settlement proof unavailable"
+                            hash={payout.settlementTxHash}
+                            label="Contract to wallet"
+                          />
+                          <TransactionProofRow
+                            emptyLabel="Waiting for wallet transfer"
+                            hash={payout.stellarTransactionId}
+                            label="Wallet to MoneyGram"
+                          />
+                          <div className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+                            <p className="text-xs text-muted">Pickup reference</p>
+                            <p className="break-all font-mono text-xs text-foreground">
+                              {payout.status === "ready_for_pickup" ||
+                              payout.status === "completed"
+                                ? payout.referenceNumber ?? "Waiting for MoneyGram"
+                                : "Not issued yet"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap items-center gap-2">
+                          {payout.pickupUrl ? (
+                            <Link
+                              className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full bg-quorum-cyan px-3 text-xs font-semibold text-accent-ink transition hover:bg-foreground"
+                              href={payout.pickupUrl}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              {payout.status === "requested"
+                                ? "Continue MoneyGram"
+                                : "View MoneyGram details"}{" "}
+                              <ArrowUpRight size={13} />
+                            </Link>
+                          ) : null}
+                          <Link
+                            className="inline-flex min-h-9 items-center justify-center gap-2 rounded-full border border-white/12 px-3 text-xs text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+                            href={`/events/${payout.eventSlug}/proof`}
+                          >
+                            Event proof <ArrowUpRight size={13} />
+                          </Link>
+                          {(payout.status === "failed" ||
+                            payout.status === "cancelled") &&
+                          payout.withdrawalId ? (
+                            <div className="w-full sm:w-auto sm:min-w-44">
+                              <AnchorPayoutButton
+                                actionLabel="Retry cash-out"
+                                amountUsdc={payout.amountUsdc}
+                                eventId={payout.eventId}
+                                withdrawalId={payout.withdrawalId}
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+
+                        {payout.provider === "moneygram" &&
+                        payout.status !== "completed" &&
+                        payout.status !== "cancelled" ? (
+                          <div className="mt-4 border-t border-white/10 pt-4">
+                            <AnchorPayoutSyncButton
+                              initialMoneyGramStatus={moneyGram.moneyGramStatus}
+                              initialTransferInstructions={
+                                moneyGram.transferInstructions
+                              }
+                              payoutId={payout.id}
+                            />
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
                 </div>
               </div>
             ) : null}
-          </ProofSurface>
+          </section>
         ) : null}
 
-        <div className="mt-5">
+        <div className="mt-14">
           <SectionHeader
             description={
               session
@@ -279,7 +488,7 @@ export default async function CollaboratorLedgerPage() {
                 : "Connect a collaborator wallet to resolve its event relationships and credit/debit history."
             }
             eyebrow="Wallet-scoped ledger"
-            title="A collaborator statement, separated from public evidence."
+            title="Event revenue and contract settlements for this wallet."
           />
         </div>
 

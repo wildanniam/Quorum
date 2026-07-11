@@ -7,8 +7,10 @@ import { QuorumButton } from "@/components/ui/quorum-button";
 import { requestMoneyGramAuthToken as requestMoneyGramBrowserAuthToken } from "@/lib/anchor/moneygram/browser-auth";
 
 type AnchorPayoutButtonProps = {
+  actionLabel?: string;
   amountUsdc: string;
   eventId: string;
+  withdrawalId: string;
 };
 
 type AnchorPayoutResponse = {
@@ -22,8 +24,10 @@ type AnchorPayoutResponse = {
 };
 
 export function AnchorPayoutButton({
+  actionLabel = "Start cash-out",
   amountUsdc,
   eventId,
+  withdrawalId,
 }: AnchorPayoutButtonProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -31,15 +35,16 @@ export function AnchorPayoutButton({
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [pickupUrl, setPickupUrl] = useState<string | null>(null);
   const [referenceNumber, setReferenceNumber] = useState<string | null>(null);
+  const [payoutStarted, setPayoutStarted] = useState(false);
   const disabled =
     isSubmitting ||
     isAuthorizing ||
     Number(amountUsdc) <= 0 ||
-    Boolean(referenceNumber);
+    payoutStarted;
 
   async function postPayout(moneyGramAuthToken?: string) {
     const response = await fetch(`/api/events/${eventId}/anchor-payouts`, {
-      body: JSON.stringify({ amountUsdc, moneyGramAuthToken }),
+      body: JSON.stringify({ moneyGramAuthToken, withdrawalId }),
       headers: { "Content-Type": "application/json" },
       method: "POST",
     });
@@ -77,6 +82,7 @@ export function AnchorPayoutButton({
 
       setReferenceNumber(payload.payout.referenceNumber);
       setPickupUrl(payload.payout.pickupUrl);
+      setPayoutStarted(true);
       router.refresh();
     } catch (error) {
       setError(
@@ -102,15 +108,15 @@ export function AnchorPayoutButton({
         onClick={handleRequestPayout}
         type="button"
       >
-        {referenceNumber
-          ? "Payout requested"
+        {payoutStarted
+          ? "Cash-out started"
           : isAuthorizing
             ? "Authorize wallet"
-            : "Request payout"}
+            : actionLabel}
       </QuorumButton>
       {referenceNumber ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
-          Reference {referenceNumber}
+          Pickup reference {referenceNumber}
         </p>
       ) : null}
       {pickupUrl ? (
@@ -120,7 +126,7 @@ export function AnchorPayoutButton({
           rel="noreferrer"
           target="_blank"
         >
-          Continue at MoneyGram <ArrowUpRight size={12} />
+          Continue MoneyGram details <ArrowUpRight size={12} />
         </a>
       ) : null}
       {error ? (

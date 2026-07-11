@@ -9,6 +9,7 @@ import { withClient } from "./postgres-utils.mjs";
 
 const projectRoot = process.cwd();
 const browserQaPath = path.join(projectRoot, "docs", "BROWSER_QA.md");
+const screenshotDir = process.env.BROWSER_QA_SCREENSHOT_DIR?.trim() || null;
 const port = Number(process.env.BROWSER_QA_PORT ?? 3040);
 const baseUrl = `http://127.0.0.1:${port}`;
 const databaseSchema =
@@ -22,6 +23,8 @@ const organizerWallet =
   "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const collaboratorWallet =
   "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
+const moneyGramDestination =
+  "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW";
 
 const viewports = [
   { label: "Desktop", width: 1280, height: 720 },
@@ -165,8 +168,11 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       path: "/dashboard/ledger",
       requiredText: [
         "Collaborator ledger",
-        "Credits and withdrawals",
-        "collaborator statement",
+        "Revenue, wallet settlement",
+        "Move settled wallet funds",
+        "Wallet transfer required",
+        "0.4 USDC",
+        "Event revenue and contract settlements",
       ],
     },
     {
@@ -179,6 +185,76 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       ],
     },
   ];
+}
+
+async function seedCashOutFixture() {
+  await withClient(async (client) => {
+    const settledForCashOutId = "wdr_browser_moneygram_history";
+    const readyForCashOutId = "wdr_browser_moneygram_ready";
+    const settlementTxHash = "a".repeat(64);
+    const purchaseTime = await client.query(
+      "SELECT COALESCE(MAX(created_at), now()) AS created_at FROM purchases WHERE event_id = $1",
+      [eventId],
+    );
+    const baseTime = new Date(purchaseTime.rows[0].created_at).getTime();
+
+    await client.query(
+      `
+      INSERT INTO withdrawals (
+        id, event_id, collaborator_wallet, amount_usdc, tx_hash, created_at
+      )
+      VALUES
+        ($1, $2, $3, '0.6', $4, $7),
+        ($5, $2, $3, '0.4', $6, $8)
+      `,
+      [
+        settledForCashOutId,
+        eventId,
+        collaboratorWallet,
+        settlementTxHash,
+        readyForCashOutId,
+        "b".repeat(64),
+        new Date(baseTime + 1_000).toISOString(),
+        new Date(baseTime + 2_000).toISOString(),
+      ],
+    );
+
+    await client.query(
+      `
+      INSERT INTO anchor_payouts (
+        id, event_id, collaborator_wallet, amount_usdc, provider, status,
+        anchor_transaction_id, reference_number, pickup_url, withdrawal_id,
+        metadata_json
+      )
+      VALUES (
+        'apo_browser_moneygram_pending', $1, $2, '0.6', 'moneygram',
+        'pending_anchor', 'mg-browser-qa', 'mg-browser-qa',
+        'https://extstellar.moneygram.com/mock-interactive', $3, $4::jsonb
+      )
+      `,
+      [
+        eventId,
+        collaboratorWallet,
+        settledForCashOutId,
+        JSON.stringify({
+          moneygramStatus: "pending_user_transfer_start",
+          moneygramTransaction: {
+            status: "pending_user_transfer_start",
+          },
+          transferInstructions: {
+            amountUsdc: "0.6",
+            assetCode: "USDC",
+            assetIssuer:
+              "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+            destination: moneyGramDestination,
+            memo: "24681012",
+            memoType: "id",
+            network: "TESTNET",
+          },
+        }),
+      ],
+    );
+  });
 }
 
 function runCommand(command, args, env = {}) {
@@ -323,6 +399,16 @@ async function inspectPage(browser, viewport, pageSpec) {
           documentWidth > viewportWidth + 1 || bodyWidth > viewportWidth + 1,
       };
     });
+    let screenshotPath = null;
+
+    if (screenshotDir && pageSpec.label === "Collaborator ledger") {
+      fs.mkdirSync(screenshotDir, { recursive: true });
+      screenshotPath = path.join(
+        screenshotDir,
+        `collaborator-ledger-${viewport.label.toLowerCase()}.png`,
+      );
+      await page.screenshot({ fullPage: true, path: screenshotPath });
+    }
 
     return {
       consoleErrors,
@@ -331,6 +417,7 @@ async function inspectPage(browser, viewport, pageSpec) {
       page: pageSpec.label,
       path: pageSpec.path,
       status: response.status(),
+      screenshotPath,
       overflow,
       viewport,
     };
@@ -472,6 +559,7 @@ async function main() {
 
     assert(passResponse.status === 201, "browser QA pass setup should succeed");
     assert(typeof tokenId === "string", "browser QA setup should return token ID");
+    await seedCashOutFixture();
 
     const checkInResponse = await fetch(
       `${baseUrl}/api/events/${eventId}/check-ins`,
@@ -536,6 +624,9 @@ async function main() {
             baseUrl,
             checkedPages: results.length,
             failures,
+            screenshots: results
+              .map((result) => result.screenshotPath)
+              .filter(Boolean),
           },
           null,
           2,

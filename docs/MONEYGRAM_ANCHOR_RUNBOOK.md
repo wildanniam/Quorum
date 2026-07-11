@@ -13,16 +13,26 @@ Implemented:
   validation, and MoneyGram token exchange.
 - SEP-24 MoneyGram USDC withdrawal initiation.
 - MoneyGram payout status sync through SEP-24 `/transaction`.
+- Transfer-instruction validation for destination, amount, memo ID, asset, and
+  Stellar Testnet before the wallet transfer begins.
 - Anchor payout evidence rows in `/evidence`.
-- Collaborator ledger labels for MoneyGram payout debits.
+- Separate proof for the event-contract settlement and the later
+  wallet-to-MoneyGram transfer.
 - Hosted preflight checks for Vercel env, hosted TOML, MoneyGram SEP-1, and
   MoneyGram SEP-24 USDC withdrawal readiness.
+
+Quorum's hosted client domain is technically active with MoneyGram testnet.
+Live SEP-10 token exchange and sandbox SEP-24 withdrawal initiation succeeded
+on July 10, 2026 even though no separate approval email had arrived.
 
 Not completed in this autonomous phase:
 
 - Full manual E2E where a real user signs in Freighter, opens the MoneyGram
   interactive flow, completes pickup/KYC details, sends the required Stellar
   payment, and captures final transaction evidence.
+- In-app construction, Freighter signing, and submission of the final classic
+  Stellar USDC payment. Quorum currently validates and displays the exact
+  transfer instructions; the user still sends that payment manually.
 
 ## Required Env
 
@@ -106,28 +116,44 @@ The response must be `200`, text TOML, and include the Quorum signing key.
 For a collaborator payout:
 
 1. User connects wallet to Quorum.
-2. User opens `/dashboard/ledger`.
-3. User clicks `Request payout`.
-4. If `ANCHOR_PROVIDER=moneygram`, Quorum asks Freighter to sign the SEP-10
+2. User withdraws the earned event balance from the Quorum contract. This
+   confirmed contract transaction creates the one `withdrawals` row and moves
+   USDC to the collaborator wallet.
+3. User opens `/dashboard/ledger`. Only confirmed settlements that have not
+   already been allocated to a cash-out are offered.
+4. User clicks `Start cash-out` for one settlement.
+5. If `ANCHOR_PROVIDER=moneygram`, Quorum asks Freighter to sign the SEP-10
    MoneyGram challenge.
-5. Quorum exchanges the signed challenge for a MoneyGram token.
-6. Quorum calls MoneyGram SEP-24 withdraw interactive.
-7. Quorum stores the anchor payout with `provider=moneygram`,
-   `status=requested`, `anchor_transaction_id`, and `pickup_url`.
-8. User opens the MoneyGram URL and completes the anchor-hosted flow.
-9. User can click `Sync status` in payout history. Quorum fetches MoneyGram
-   `/transaction` and updates `anchor_payouts`.
-10. When MoneyGram reports a final Stellar transaction hash, Quorum creates a
-    `withdrawals` row and the debit appears in collaborator ledger/evidence.
+6. Quorum exchanges the signed challenge for a MoneyGram token.
+7. Quorum calls MoneyGram SEP-24 withdraw interactive and links the new
+   `anchor_payouts` row to the source `withdrawal_id`.
+8. User opens the MoneyGram URL and completes the hosted identity and pickup
+   details.
+9. User clicks `Refresh MoneyGram`. When the status is
+   `pending_user_transfer_start`, Quorum validates and displays the exact
+   destination, amount, asset, and memo ID.
+10. User sends that exact testnet USDC payment from the same wallet.
+11. User refreshes again. `pending_user_transfer_complete` means the pickup
+    reference is available; `completed` means MoneyGram completed the cash-out.
+12. MoneyGram's Stellar payment hash is stored as
+    `anchor_payouts.stellar_transaction_id`. It never creates another event
+    withdrawal.
+
+Failed or cancelled attempts can be retried. Quorum resets and reuses the same
+`anchor_payouts` row linked to the settlement, so retrying cannot create a
+second event debit or allocate the settlement twice.
 
 ## Evidence Surfaces
 
-- `/dashboard/ledger` shows payout opportunities, payout history, MoneyGram
-  link, and sync action.
-- `/evidence` now includes `anchor_payout` rows, even before final withdrawal
-  hash exists.
-- `withdrawal` rows still represent the final ledger debit once a valid Stellar
-  transaction hash exists.
+- `/dashboard/ledger` shows confirmed settlement opportunities, the three-step
+  cash-out path, MoneyGram status, transfer instructions, and sync action.
+- `/evidence` includes `anchor_payout` rows even before the final MoneyGram
+  transfer hash exists.
+- `withdrawal` evidence always uses the contract-to-wallet transaction hash.
+- `anchor_payout` evidence uses the separate wallet-to-MoneyGram Stellar hash
+  once MoneyGram reports it.
+- The collaborator revenue ledger contains one debit for the contract
+  settlement. Cash-out does not debit the event balance a second time.
 
 ## Troubleshooting
 
@@ -154,11 +180,23 @@ If status sync fails:
   bearer tokens.
 - Confirm `anchor_transaction_id` exists on the payout row.
 - Confirm the payout provider is `moneygram`.
+- If MoneyGram says `pending_user_transfer_start`, confirm the response includes
+  a valid Stellar account, a numeric memo ID, and an amount equal to the linked
+  contract settlement.
+
+Official flow references:
+
+- [Poll transaction status](https://developer.moneygram.com/moneygram-developer/docs/poll-transaction-status)
+- [Send or receive funds](https://developer.moneygram.com/moneygram-developer/docs/send-or-receive-funds)
+- [Fetch reference number](https://developer.moneygram.com/moneygram-developer/docs/fetch-reference-number)
 
 ## Security Notes
 
 - Quorum does not send `ANCHOR_CLIENT_SIGNING_SECRET` to the browser.
 - Quorum does not persist MoneyGram SEP-10 bearer tokens.
 - User wallet signature is still required for MoneyGram auth.
+- A settled withdrawal can be linked to only one anchor cash-out.
+- MoneyGram destination, amount, memo type, and asset are validated before being
+  shown as transfer-ready.
 - Hosted preflight rejects operator-only signing env in hosted runtime.
 - Supabase service-role keys must not be present in browser env.

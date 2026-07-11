@@ -126,6 +126,7 @@ export type AnchorPayoutRecord = {
   provider: AnchorPayoutProvider;
   status: AnchorPayoutStatus;
   anchorTransactionId: string | null;
+  stellarTransactionId: string | null;
   referenceNumber: string | null;
   pickupUrl: string | null;
   withdrawalId: string | null;

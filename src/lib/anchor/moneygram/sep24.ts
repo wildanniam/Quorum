@@ -3,6 +3,7 @@ import {
   resolveMoneyGramAnchorConfig,
   type MoneyGramAnchorConfig,
 } from "@/lib/anchor/config";
+import { usdcToAtomicUnits } from "@/lib/stellar/live-encoding";
 import {
   fetchMoneyGramSep1Info,
   type MoneyGramSep1Info,
@@ -38,6 +39,16 @@ export type MoneyGramSep24Transaction = {
   withdrawAnchorAccount: string | null;
   withdrawMemo: string | null;
   withdrawMemoType: string | null;
+};
+
+export type MoneyGramWithdrawalTransferInstructions = {
+  amountUsdc: string;
+  assetCode: "USDC";
+  assetIssuer: string;
+  destination: string;
+  memo: string;
+  memoType: "id";
+  network: "TESTNET";
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -86,6 +97,92 @@ function bearerToken(value: string) {
 
 function responseError(payload: Record<string, unknown>, fallback: string) {
   return asString(payload.error) ?? asString(payload.message) ?? fallback;
+}
+
+function normalizeMoneyGramUrl(value: string | null, label: string) {
+  if (!value) return null;
+
+  let url: URL;
+
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error(`${label} returned an invalid URL.`);
+  }
+
+  const hostname = url.hostname.toLowerCase();
+
+  if (
+    url.protocol !== "https:" ||
+    (hostname !== "moneygram.com" && !hostname.endsWith(".moneygram.com"))
+  ) {
+    throw new Error(`${label} must use an HTTPS MoneyGram domain.`);
+  }
+
+  return url.toString();
+}
+
+function assertMemoId(value: string) {
+  if (!/^\d+$/.test(value)) {
+    throw new Error("MoneyGram withdrawal memo must be a numeric Stellar memo id.");
+  }
+
+  const memo = BigInt(value);
+
+  if (memo > BigInt("18446744073709551615")) {
+    throw new Error("MoneyGram withdrawal memo exceeds the Stellar memo id limit.");
+  }
+}
+
+export function getMoneyGramWithdrawalTransferInstructions({
+  config = resolveMoneyGramAnchorConfig(),
+  expectedAmountUsdc,
+  transaction,
+}: {
+  config?: MoneyGramAnchorConfig;
+  expectedAmountUsdc: string;
+  transaction: MoneyGramSep24Transaction;
+}): MoneyGramWithdrawalTransferInstructions | null {
+  if (transaction.status.trim().toLowerCase() !== "pending_user_transfer_start") {
+    return null;
+  }
+
+  if (transaction.kind && transaction.kind.toLowerCase() !== "withdrawal") {
+    throw new Error("MoneyGram returned a non-withdrawal transaction.");
+  }
+
+  const amountUsdc = transaction.amountIn;
+  const destination = transaction.withdrawAnchorAccount;
+  const memo = transaction.withdrawMemo;
+  const memoType = transaction.withdrawMemoType?.toLowerCase();
+
+  if (!amountUsdc || !destination || !memo || !memoType) {
+    throw new Error("MoneyGram transfer instructions are incomplete.");
+  }
+
+  if (!StrKey.isValidEd25519PublicKey(destination)) {
+    throw new Error("MoneyGram returned an invalid Stellar destination account.");
+  }
+
+  if (memoType !== "id") {
+    throw new Error(`Unsupported MoneyGram withdrawal memo type: ${memoType}.`);
+  }
+
+  assertMemoId(memo);
+
+  if (usdcToAtomicUnits(amountUsdc) !== usdcToAtomicUnits(expectedAmountUsdc)) {
+    throw new Error("MoneyGram transfer amount does not match the settled USDC amount.");
+  }
+
+  return {
+    amountUsdc,
+    assetCode: config.usdcAssetCode,
+    assetIssuer: config.usdcIssuer,
+    destination,
+    memo,
+    memoType,
+    network: "TESTNET",
+  };
 }
 
 async function discoveryOrFetch({
@@ -186,7 +283,10 @@ export async function initiateMoneyGramSep24Withdrawal({
 
   const type = asString(payload.type) ?? "unknown";
   const id = asString(payload.id);
-  const url = asString(payload.url);
+  const url = normalizeMoneyGramUrl(
+    asString(payload.url),
+    "MoneyGram SEP-24 withdrawal",
+  );
 
   if (type === "interactive_customer_info_needed" && (!id || !url)) {
     throw new Error("MoneyGram SEP-24 withdrawal response is incomplete.");
@@ -255,7 +355,10 @@ export async function fetchMoneyGramSep24Transaction({
     id: transactionId,
     kind: asString(transaction.kind),
     message: asString(transaction.message),
-    moreInfoUrl: asString(transaction.more_info_url),
+    moreInfoUrl: normalizeMoneyGramUrl(
+      asString(transaction.more_info_url),
+      "MoneyGram SEP-24 transaction",
+    ),
     raw: transaction,
     status,
     stellarTransactionId: asString(transaction.stellar_transaction_id),
