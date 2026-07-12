@@ -113,9 +113,9 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       label: "Pass library",
       path: "/passes",
       requiredText: [
-        "Wallet-bound passes and receipts.",
+        "Your event passes.",
         "Open receipt",
-        "checked in",
+        "Checked in",
       ],
     },
     {
@@ -124,8 +124,7 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       path: `/passes/${encodeURIComponent(tokenId)}`,
       requiredText: [
         "Wallet-bound pass",
-        "Receipt proof path",
-        "Check-in proof",
+        "Door QR",
         "Access unlocked",
       ],
     },

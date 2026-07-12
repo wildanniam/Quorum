@@ -284,7 +284,11 @@ export default async function PassPage({ params }: PassPageProps) {
                 </div>
               </ProofSurface>
 
-              <ProofSurface>
+              <details className="rounded-[8px] border border-white/10 bg-white/[0.025] p-4">
+                <summary className="cursor-pointer list-none text-sm font-medium text-muted">
+                  View receipt evidence and transaction details
+                </summary>
+                <div className="mt-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                   <div>
                     <StatusPill icon={FileKey2} tone="cyan">
@@ -314,7 +318,8 @@ export default async function PassPage({ params }: PassPageProps) {
                     <ProofRow key={row.kind} row={row} />
                   ))}
                 </div>
-              </ProofSurface>
+                </div>
+              </details>
             </div>
           </div>
         </div>
