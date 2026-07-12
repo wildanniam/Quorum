@@ -5,18 +5,14 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
-  CheckCircle2,
-  CircleDollarSign,
   Loader2,
-  ShieldCheck,
   TicketCheck,
-  WalletCards,
 } from "lucide-react";
 import { QuorumButton } from "@/components/ui/quorum-button";
+import { StickyActionBar, TaskPanel } from "@/components/ui/product-primitives";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
-import { cn } from "@/lib/ui";
 
 type CheckoutPanelProps = {
   capacity: number;
@@ -39,10 +35,6 @@ type CheckoutResponse = {
   };
   tokenId?: string;
 };
-
-function shorten(address: string) {
-  return `${address.slice(0, 6)}...${address.slice(-5)}`;
-}
 
 export function CheckoutPanel({
   capacity,
@@ -87,37 +79,13 @@ export function CheckoutPanel({
         : isFree
           ? "Claim pass"
           : "Confirm checkout";
-
-  const steps = [
-    {
-      icon: WalletCards,
-      label: "Connect wallet",
-      value: sessionWalletAddress
-        ? `${shorten(sessionWalletAddress)}${network ? ` on ${network}` : ""}`
-        : "Connect Freighter to start.",
-      state: sessionWalletAddress ? "done" : isCheckingWallet ? "active" : "pending",
-    },
-    {
-      icon: CircleDollarSign,
-      label: "Review amount",
-      value: isFree
-        ? "No USDC payment is required for this claim."
-        : `${priceUsdc} USDC will be prepared for this checkout.`,
-      state: "done",
-    },
-    {
-      icon: ShieldCheck,
-      label: "Approve in Freighter",
-      value: "You stay in control before anything is submitted.",
-      state: isConnected && !isSubmitting ? "active" : "pending",
-    },
-    {
-      icon: TicketCheck,
-      label: "Receive pass",
-      value: "Your pass opens resources and check-in.",
-      state: isSubmitting ? "active" : "pending",
-    },
-  ];
+  const nextStep = isSoldOut
+    ? "This event has reached capacity."
+    : isSubmitting
+      ? "Freighter approval and pass creation are in progress."
+      : isConnected
+        ? "Confirm the final approval in Freighter to receive the pass."
+        : "Connect the wallet that should own this pass.";
 
   async function handleCheckout() {
     setCheckoutError(null);
@@ -178,7 +146,7 @@ export function CheckoutPanel({
   }
 
   return (
-    <div className="rounded-[16px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.28),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl">
+    <TaskPanel className="p-5" tone={isSoldOut ? "muted" : isConnected ? "ready" : "default"}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <StatusPill
@@ -199,7 +167,7 @@ export function CheckoutPanel({
         </div>
       </div>
 
-      <div className="mt-6 grid gap-2 rounded-[12px] border border-white/10 bg-quorum-grey-900/42 p-4 text-sm">
+      <div className="mt-6 text-sm">
         {[
           { label: "Amount", value: priceLabel },
           { label: "Network", value: network ?? "Stellar testnet" },
@@ -208,51 +176,16 @@ export function CheckoutPanel({
             value: "Wallet-bound event pass",
           },
         ].map((item) => (
-          <div className="grid grid-cols-[auto_1fr] gap-4" key={item.label}>
+          <div className="grid grid-cols-[auto_1fr] gap-4 border-b border-white/10 py-3 last:border-b-0" key={item.label}>
             <p className="text-muted">{item.label}</p>
             <p className="text-right font-medium text-foreground">{item.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="mt-6 grid gap-3">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isDone = step.state === "done";
-          const isActive = step.state === "active";
-
-          return (
-            <div
-              className={cn(
-                "grid grid-cols-[auto_1fr] gap-3 rounded-[12px] border p-4",
-                isDone || isActive
-                  ? "border-quorum-cyan/45 bg-quorum-cyan/10"
-                  : "border-white/10 bg-white/[0.035]",
-              )}
-              key={step.label}
-            >
-              <div
-                className={cn(
-                  "mt-0.5 grid h-7 w-7 place-items-center rounded-full border",
-                  isDone || isActive
-                    ? "border-quorum-cyan/45 text-quorum-cyan-soft"
-                    : "border-white/10 text-muted",
-                )}
-              >
-                {isDone ? <CheckCircle2 size={15} /> : <Icon size={15} />}
-              </div>
-              <div>
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold">{step.label}</p>
-                  <span className="font-mono text-xs text-muted">
-                    0{index + 1}
-                  </span>
-                </div>
-                <p className="mt-1 text-xs leading-5 text-muted">{step.value}</p>
-              </div>
-            </div>
-          );
-        })}
+      <div className="mt-5 border-t border-white/10 pt-5">
+        <p className="text-sm font-medium text-foreground">What happens next</p>
+        <p className="mt-2 text-sm leading-6 text-muted">{nextStep}</p>
       </div>
 
       {activeError ? (
@@ -274,26 +207,28 @@ export function CheckoutPanel({
         </div>
       ) : null}
 
-      <QuorumButton
-        aria-busy={isBusy}
-        className="mt-5 w-full"
-        disabled={isBusy || isSoldOut}
-        icon={
-          isBusy ? (
-            <Loader2 className="animate-spin" size={16} />
-          ) : !isSoldOut ? (
-            <ArrowRight size={16} />
-          ) : null
-        }
-        onClick={handleCheckout}
-        type="button"
-      >
-        {buttonLabel}
-      </QuorumButton>
+      <StickyActionBar className="mt-5">
+        <QuorumButton
+          aria-busy={isBusy}
+          className="w-full"
+          disabled={isBusy || isSoldOut}
+          icon={
+            isBusy ? (
+              <Loader2 className="animate-spin" size={16} />
+            ) : !isSoldOut ? (
+              <ArrowRight size={16} />
+            ) : null
+          }
+          onClick={handleCheckout}
+          type="button"
+        >
+          {buttonLabel}
+        </QuorumButton>
+      </StickyActionBar>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
         Live testnet actions still ask for explicit Freighter approval.
       </p>
-    </div>
+    </TaskPanel>
   );
 }
