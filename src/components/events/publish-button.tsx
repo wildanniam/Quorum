@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Rocket } from "lucide-react";
+import { Rocket } from "lucide-react";
 import { ProofDisplay } from "@/components/proof-display";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type PublishButtonProps = {
@@ -86,16 +87,16 @@ export function PublishButton({ eventId }: PublishButtonProps) {
         type="button"
       >
         {isSubmitting ? (
-          <Loader2 className="animate-spin" size={14} />
+          <Spinner label="Publishing event" size={14} />
         ) : (
           <Rocket size={14} />
         )}
-        Publish
+        {isSubmitting ? "Publishing" : "Publish"}
       </button>
       {error ? (
-        <p className="text-right text-xs leading-5 text-coral" role="alert">
+        <Alert className="text-left text-xs" title="Publish needs attention" tone="danger">
           {error}
-        </p>
+        </Alert>
       ) : null}
       {txHash ? (
         <ProofDisplay align="right" compact label="Publish proof" value={txHash} />
