@@ -141,16 +141,15 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       requiredText: ["Event proof", "Event proof timeline", "Event-level proof"],
     },
     {
-      label: "Dashboard readiness",
+      label: "Studio wallet gate",
       path: "/dashboard",
       requiredText: [
-        "Run your events from one calm workspace.",
-        "Setup pending",
-        "Local proof mode",
-        "USDC asset",
-        "Missing",
-        "Wallet actions",
-        "local proof",
+        "Your event workspace starts with your wallet.",
+        "Connect to continue",
+        "Work, not system status",
+        "Hosting",
+        "Collaborating",
+        "Attending",
       ],
     },
     {

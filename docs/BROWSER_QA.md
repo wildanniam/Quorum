@@ -36,7 +36,7 @@ verification for the hackathon demo surface and complements
 | Pass receipt | `/passes/qpass-apac-stellar-builder-meetup-0001-255627` | 200 | yes | no | 0 |
 | Organizer check-in | `/check-in/evt_apac_stellar_builder_meetup?token=qpass-apac-stellar-builder-meetup-0001-255627` | 200 | yes | no | 0 |
 | Event proof | `/events/apac-stellar-builder-meetup/proof` | 200 | yes | no | 0 |
-| Dashboard readiness | `/dashboard` | 200 | yes | no | 0 |
+| Studio wallet gate | `/dashboard` | 200 | yes | no | 0 |
 | Create event | `/dashboard/events/new` | 200 | yes | no | 0 |
 | Collaborator ledger | `/dashboard/ledger` | 200 | yes | no | 0 |
 | Evidence hub | `/evidence` | 200 | yes | no | 0 |
@@ -56,7 +56,7 @@ verification for the hackathon demo surface and complements
 | Pass receipt | `/passes/qpass-apac-stellar-builder-meetup-0001-255627` | 200 | yes | no | 0 |
 | Organizer check-in | `/check-in/evt_apac_stellar_builder_meetup?token=qpass-apac-stellar-builder-meetup-0001-255627` | 200 | yes | no | 0 |
 | Event proof | `/events/apac-stellar-builder-meetup/proof` | 200 | yes | no | 0 |
-| Dashboard readiness | `/dashboard` | 200 | yes | no | 0 |
+| Studio wallet gate | `/dashboard` | 200 | yes | no | 0 |
 | Create event | `/dashboard/events/new` | 200 | yes | no | 0 |
 | Collaborator ledger | `/dashboard/ledger` | 200 | yes | no | 0 |
 | Evidence hub | `/evidence` | 200 | yes | no | 0 |
