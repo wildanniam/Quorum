@@ -4,13 +4,14 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
-  Loader2,
   Search,
   ShieldCheck,
   ScanLine,
   WalletCards,
 } from "lucide-react";
 import { ProofDisplay } from "@/components/proof-display";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
+import { Input, InputGroup, InputGroupAddon } from "@/components/ui/form-primitives";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -62,6 +63,15 @@ export function CheckInPanel({
   const isConnected = Boolean(sessionWalletAddress);
   const isBusy = isSubmitting || walletStatus === "checking";
   const hasCompletedCheckIn = Boolean(txHash);
+  const actionLabel = !isConnected
+    ? isBusy
+      ? "Connecting organizer wallet"
+      : "Connect organizer wallet"
+    : hasCompletedCheckIn
+      ? "Checked in"
+      : isSubmitting
+        ? "Recording check-in"
+        : "Mark checked in";
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -159,40 +169,44 @@ export function CheckInPanel({
         <ShieldCheck className="text-accent" size={24} />
       </div>
 
-      <label
-        className="mt-4 flex items-center gap-3 rounded-[14px] border border-white/10 bg-quorum-grey-800 p-3 focus-within:border-quorum-cyan/55 focus-within:shadow-[0_0_0_1px_rgba(38,198,218,0.24)] sm:mt-5 sm:p-4"
-        htmlFor="check-in-token"
-      >
-        <Search className="text-quorum-cyan-soft" size={18} />
-        <input
-          className="min-w-0 flex-1 bg-transparent font-mono text-sm outline-none placeholder:text-muted"
+      <label className="sr-only" htmlFor="check-in-token">
+        Pass token ID
+      </label>
+      <InputGroup className="mt-4 sm:mt-5">
+        <Input
+          className="min-h-12 rounded-[8px] border-white/10 bg-quorum-grey-800 px-11 font-mono text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
           id="check-in-token"
           onChange={(event) => setTokenId(event.target.value)}
           placeholder="qpass-event-0001-abcdef"
           value={tokenId}
         />
-      </label>
+        <InputGroupAddon className="text-quorum-cyan-soft">
+          <Search size={18} />
+        </InputGroupAddon>
+      </InputGroup>
 
       {initialTokenId ? (
-        <p className="mt-3 rounded-[12px] border border-quorum-cyan/35 bg-quorum-cyan/10 p-3 text-sm leading-6 text-quorum-cyan-soft">
-          Token loaded from QR. Review it before recording the door check-in.
-        </p>
+        <Alert className="mt-3" title="Token loaded from QR" tone="info">
+          Review it before recording the door check-in.
+        </Alert>
       ) : null}
 
       {checkInError ?? walletError ? (
-        <div
-          className="mt-4 rounded-[12px] border border-coral/55 bg-coral/10 p-3 text-sm text-coral"
-          role="alert"
+        <Alert
+          className="mt-4"
+          icon={AlertTriangle}
+          title="Check-in needs attention"
+          tone="danger"
         >
-          <div className="flex gap-2">
-            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-            <p>{checkInError ?? walletError}</p>
-          </div>
-        </div>
+          {checkInError ?? walletError}
+        </Alert>
       ) : null}
 
       {txHash ? (
         <div className="mt-4 grid gap-3">
+          <Alert title="Pass checked in" tone="success">
+            A door proof was recorded for this pass.
+          </Alert>
           <ProofDisplay compact label="Check-in proof" value={txHash} />
           <div className="grid gap-2 sm:grid-cols-2">
             <QuorumButton
@@ -212,31 +226,28 @@ export function CheckInPanel({
               </QuorumButton>
             ) : null}
           </div>
-          <button
-            className="inline-flex min-h-10 w-full items-center justify-center rounded-full border border-white/10 px-4 text-sm font-semibold transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+          <QuorumButton
+            className="w-full"
             onClick={() => {
               setCheckInError(null);
               setCheckedInTokenId(null);
               setTxHash(null);
             }}
             type="button"
+            variant="subtle"
           >
             Check another pass
-          </button>
+          </QuorumButton>
         </div>
       ) : null}
 
       <QuorumButton
         className="mt-3 w-full disabled:cursor-wait"
         disabled={isBusy || hasCompletedCheckIn}
-        icon={isBusy ? <Loader2 className="animate-spin" size={16} /> : <ScanLine size={16} />}
+        icon={isBusy ? <Spinner label={actionLabel} size={16} /> : <ScanLine size={16} />}
         type="submit"
       >
-        {!isConnected
-          ? "Connect organizer wallet"
-          : hasCompletedCheckIn
-            ? "Checked in"
-            : "Mark checked in"}
+        {actionLabel}
       </QuorumButton>
       </form>
     </ProofSurface>
