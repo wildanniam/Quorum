@@ -2,7 +2,49 @@
 
 Last audited: 2026-07-12.
 
-Status: **locked for implementation after review**.
+Status: **implemented and audited for the current UI scope**.
+
+## Execution Status
+
+Updated: 2026-07-12.
+
+The component-adoption work is complete for the current product surface. The
+landing page was intentionally left unchanged.
+
+Completed work:
+
+- Phase 0: adoption contract and internal `/ui-kit` verification route (PR #48).
+- Phase 1: shared button loading, spinner, skeleton, alert, and empty states
+  (PR #52).
+- Phase 2: shared input, textarea, select, and input-group primitives (PR #54).
+- Phase 3: Quorum-owned dialog, drawer, tooltip, and toast foundation (PR #56).
+- Phase 4 and Phase 9 read-only adoption: Discover search, resource access,
+  evidence fallback, pass/evidence/ledger audit, and responsive state review
+  (PRs #58 and #60).
+- Phase 5: checkout wallet-action feedback (PR #62).
+- Phase 6: publish and withdrawal feedback (PR #64).
+- Phase 7: MoneyGram payout and sync presentation, including explicit
+  provider-access feedback (PR #66).
+- Phase 8: Create Event form primitive migration (PR #68).
+- Phase 10: check-in field, state, and proof feedback migration (PR #70).
+
+Deliberately deferred:
+
+- A real MoneyGram sandbox cash-out cannot be verified until MoneyGram
+  allowlists the Quorum wallet domain and provides the signing-secret access
+  required for SEP-10. Quorum now presents this condition honestly and keeps
+  settled funds and payout evidence intact; it does not claim that cash-out is
+  live.
+- Live testnet signing remains outside autonomous QA. It still requires an
+  explicit wallet approval at the time of a real transaction.
+
+Final audit outcome:
+
+- Product routes were reviewed through the existing browser fixture suite at
+  desktop, tablet, and mobile sizes.
+- No landing-page code or visual system was changed by this adoption plan.
+- No API, database, contract, transaction-construction, signing, settlement,
+  check-in, or MoneyGram SEP behavior was changed as part of the UI work.
 
 This document is the implementation source of truth for selectively adopting
 mature product UI patterns from `faiz-ui-app` into Quorum. It complements the
