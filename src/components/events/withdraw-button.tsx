@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { BanknoteArrowUp, Loader2 } from "lucide-react";
+import { BanknoteArrowUp } from "lucide-react";
 import { ProofDisplay } from "@/components/proof-display";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
 
 type WithdrawButtonProps = {
@@ -89,16 +90,16 @@ export function WithdrawButton({ amountUsdc, eventId }: WithdrawButtonProps) {
         type="button"
       >
         {isSubmitting ? (
-          <Loader2 className="animate-spin" size={15} />
+          <Spinner label="Withdrawing balance" size={15} />
         ) : (
           <BanknoteArrowUp size={15} />
         )}
-        {hasCompletedWithdrawal ? "Withdrawn" : "Withdraw"}
+        {hasCompletedWithdrawal ? "Withdrawn" : isSubmitting ? "Withdrawing" : "Withdraw"}
       </button>
       {error ? (
-        <p className="text-right text-xs leading-5 text-coral" role="alert">
+        <Alert className="text-left text-xs" title="Withdrawal needs attention" tone="danger">
           {error}
-        </p>
+        </Alert>
       ) : null}
       {txHash ? (
         <ProofDisplay align="right" compact label="Withdraw proof" value={txHash} />
