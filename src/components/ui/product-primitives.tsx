@@ -1,6 +1,7 @@
 import { cloneElement, isValidElement, type HTMLAttributes, type ReactElement } from "react";
 import type React from "react";
 import type { LucideIcon } from "lucide-react";
+export { productInputClassName } from "@/components/ui/form-primitives";
 import { cn } from "@/lib/ui";
 
 type CompactPageHeaderProps = {
@@ -158,9 +159,6 @@ export function DataRow({
     </div>
   );
 }
-
-export const productInputClassName =
-  "min-h-11 w-full rounded-[6px] border border-white/12 bg-background/70 px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-quorum-cyan focus:bg-background disabled:cursor-not-allowed disabled:opacity-60";
 
 type FormFieldProps = {
   children: React.ReactNode;
