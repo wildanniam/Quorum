@@ -1,24 +1,9 @@
 import Link from "next/link";
-import {
-  CalendarDays,
-  CircleDollarSign,
-  Filter,
-  Search,
-  ShieldCheck,
-  Sparkles,
-  TicketCheck,
-  X,
-} from "lucide-react";
+import { Search, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EventCard, type EventCardData } from "@/components/discover/event-card";
-import { FeaturedEventsCarousel } from "@/components/discover/featured-events-carousel";
-import {
-  EmptyState,
-  MetricTile,
-  ProductPage,
-  ProductPageHeader,
-  SectionHeader,
-} from "@/components/ui/product-layout";
+import { EmptyState, ProductPage } from "@/components/ui/product-layout";
+import { CompactPageHeader, ProductSection } from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import {
   countPassesForEvent,
@@ -146,17 +131,10 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
   const cardEvents = filteredEvents.map((event) =>
     cardDataForEvent(event, eventStats.get(event.id) ?? { collaborators: [], minted: 0 }),
   );
-  const featuredEvents = cardEvents.slice(0, 3);
-  const totalSeatsLeft = publishedEvents.reduce((total, event) => {
-    const minted = eventStats.get(event.id)?.minted ?? 0;
-
-    return total + seatsLeft(event, minted);
-  }, 0);
-
   return (
     <AppShell>
-      <ProductPage spacing="loose">
-        <ProductPageHeader
+      <ProductPage className="space-y-8" spacing="default">
+        <CompactPageHeader
           actions={
             <QuorumButton href="/dashboard" variant="secondary">
               Open Studio
@@ -165,13 +143,15 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
           description="Browse community events with the important parts up front: date, place, price, available seats, and the proof trail behind each pass."
           eyebrow="Discover"
           icon={Search}
-          title="Find events worth showing up for."
-        >
-          <form action="/discover" className="grid gap-3 lg:grid-cols-[1fr_auto]">
+          title="Find an event, then decide with confidence."
+        />
+
+        <section aria-label="Search and filter events" className="grid gap-4">
+          <form action="/discover" className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
             <label className="sr-only" htmlFor="discover-search">
               Search events
             </label>
-            <div className="flex min-h-12 min-w-0 items-center gap-3 rounded-full border border-white/10 bg-quorum-grey-900/52 px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+            <div className="flex min-h-12 min-w-0 items-center gap-3 rounded-[7px] border border-white/10 bg-white/[0.035] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
               <Search className="shrink-0 text-quorum-cyan-soft" size={18} />
               <input
                 className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
@@ -190,14 +170,15 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 </Link>
               ) : null}
             </div>
-            <QuorumButton className="w-full lg:w-auto" type="submit">
+            <QuorumButton className="w-full sm:w-auto" type="submit">
               Search
             </QuorumButton>
           </form>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
-              className="inline-flex min-h-9 items-center rounded-full border border-quorum-cyan/45 bg-quorum-cyan/12 px-3 text-xs font-medium text-quorum-cyan-soft transition hover:border-quorum-cyan-soft hover:bg-quorum-cyan/18"
+              aria-current={!query ? "page" : undefined}
+              className="inline-flex min-h-9 items-center rounded-[6px] border border-quorum-cyan/45 bg-quorum-cyan/12 px-3 text-xs font-medium text-quorum-cyan-soft transition hover:border-quorum-cyan-soft hover:bg-quorum-cyan/18"
               href="/discover"
             >
               All events
@@ -209,8 +190,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                 <Link
                   className={
                     isActive
-                      ? "inline-flex min-h-9 items-center rounded-full border border-quorum-cyan/45 bg-quorum-cyan/12 px-3 text-xs font-medium text-quorum-cyan-soft"
-                      : "inline-flex min-h-9 items-center rounded-full border border-white/10 bg-white/[0.035] px-3 text-xs font-medium text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
+                      ? "inline-flex min-h-9 items-center rounded-[6px] border border-quorum-cyan/45 bg-quorum-cyan/12 px-3 text-xs font-medium text-quorum-cyan-soft"
+                      : "inline-flex min-h-9 items-center rounded-[6px] border border-white/10 bg-white/[0.035] px-3 text-xs font-medium text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft"
                   }
                   href={`/discover?q=${encodeURIComponent(type)}`}
                   key={type}
@@ -220,43 +201,9 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
               );
             })}
           </div>
+        </section>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <MetricTile
-              detail="Published and ready to browse."
-              icon={CalendarDays}
-              label="events"
-              value={publishedEvents.length}
-            />
-            <MetricTile
-              detail="Across all published events."
-              icon={TicketCheck}
-              label="seats left"
-              value={totalSeatsLeft}
-            />
-            <MetricTile
-              detail="Filter by the event format."
-              icon={Filter}
-              label="categories"
-              value={eventTypes.length}
-            />
-          </div>
-        </ProductPageHeader>
-      </ProductPage>
-
-      <ProductPage spacing="compact">
-        {featuredEvents.length > 0 ? (
-          <>
-            <SectionHeader
-              description="Larger cards are reserved for events where visuals help someone decide quickly. The proof layer stays visible, but it does not fight the event story."
-              eyebrow="Featured"
-              title="Happening soon"
-            />
-            <div className="mt-6">
-              <FeaturedEventsCarousel events={featuredEvents} />
-            </div>
-          </>
-        ) : (
+        {cardEvents.length === 0 ? (
           <EmptyState
             action={
               query ? (
@@ -277,65 +224,24 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
             icon={Search}
             title={query ? `No events matched "${query}".` : "No published events yet."}
           />
-        )}
-      </ProductPage>
-
-      {cardEvents.length > 0 ? (
-        <ProductPage spacing="compact">
-          <SectionHeader
+        ) : (
+          <ProductSection
             actions={
               <QuorumButton href="/dashboard" variant="subtle">
                 Open Studio
               </QuorumButton>
             }
-            description="Compare the essentials quickly, then open the event for the complete split, resource, and checkout context."
-            eyebrow="All events"
-            title={query ? `Results for "${query}"` : "Upcoming events"}
-          />
-
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {cardEvents.map((event) => (
-              <EventCard event={event} key={event.slug} />
-            ))}
-          </div>
-        </ProductPage>
-      ) : null}
-
-      <ProductPage spacing="compact">
-        <div className="grid gap-3 lg:grid-cols-3">
-          {[
-            {
-              body: "The event stays first. Proof details appear where they help someone trust the checkout.",
-              icon: Sparkles,
-              label: "Event-first browsing",
-            },
-            {
-              body: "Prices, capacity, and collaborator splits are visible before anyone signs a wallet action.",
-              icon: CircleDollarSign,
-              label: "Readable money flow",
-            },
-            {
-              body: "Each purchase leads to a wallet pass that can unlock resources and check-in evidence.",
-              icon: ShieldCheck,
-              label: "Access after purchase",
-            },
-          ].map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <article
-                className="rounded-[14px] border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                key={item.label}
-              >
-                <Icon className="text-quorum-cyan-soft" size={20} />
-                <h3 className="mt-5 font-product text-xl font-medium tracking-normal">
-                  {item.label}
-                </h3>
-                <p className="mt-3 text-sm leading-6 text-muted">{item.body}</p>
-              </article>
-            );
-          })}
-        </div>
+            description="Compare the essentials first. The complete payout, pass, and resource context is one tap away."
+            eyebrow={query ? `${cardEvents.length} results` : `${cardEvents.length} upcoming events`}
+            title={query ? `Results for "${query}"` : "Choose an event"}
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {cardEvents.map((event) => (
+                <EventCard event={event} key={event.slug} />
+              ))}
+            </div>
+          </ProductSection>
+        )}
       </ProductPage>
     </AppShell>
   );
