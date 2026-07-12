@@ -19,12 +19,12 @@ import { AnchorPayoutButton } from "@/components/anchor/anchor-payout-button";
 import { AnchorPayoutSyncButton } from "@/components/anchor/anchor-payout-sync-button";
 import {
   EmptyState,
-  MetricTile,
   ProductPage,
   SectionHeader,
   WalletGate,
 } from "@/components/ui/product-layout";
 import { ProofSurface } from "@/components/ui/proof-surface";
+import { CompactPageHeader, DataRow, TaskPanel } from "@/components/ui/product-primitives";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import type { LedgerEntryRecord } from "@/lib/db/models";
@@ -189,7 +189,7 @@ export default async function CollaboratorLedgerPage() {
 
   return (
     <AppShell>
-      <ProductPage>
+      <ProductPage className="space-y-8" spacing="default">
         <Link
           href="/dashboard"
           className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-quorum-cyan-soft"
@@ -197,61 +197,27 @@ export default async function CollaboratorLedgerPage() {
           <ArrowLeft size={15} /> Back to Studio
         </Link>
 
-        <ProofSurface className="mt-6" elevated variant="hero">
-          <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-end">
-            <div>
-              <StatusPill icon={Handshake} tone="cyan">
-                Collaborator ledger
-              </StatusPill>
-              <h1 className="mt-5 max-w-4xl font-product text-5xl font-medium leading-[1.05] tracking-normal md:text-7xl">
-                Revenue, wallet settlement, and cash-out proof.
-              </h1>
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-muted">
-                {session
-                  ? shorten(session.walletAddress)
-                  : "Connect the collaborator wallet to see only its related event ledger."}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.045] px-4 py-3 text-sm text-muted">
-              <WalletCards className="text-quorum-cyan-soft" size={18} />
-              {summary.entryCount} ledger rows
-            </div>
-          </div>
+        <CompactPageHeader
+          description={
+            session
+              ? `Showing settlement and cash-out activity for ${shorten(session.walletAddress)}.`
+              : "Connect the collaborator wallet to see only its related settlement activity."
+          }
+          eyebrow="Collaborator ledger"
+          icon={Handshake}
+          title="Earnings, settlement, and cash-out."
+        />
 
-          <div className="mt-6 grid gap-3 md:grid-cols-4">
-            {[
-              {
-                icon: CircleDollarSign,
-                label: "earned",
-                value: `${summary.totalEarnedUsdc} USDC`,
-              },
-              {
-                icon: BanknoteArrowUp,
-                label: "settled to wallet",
-                value: `${summary.totalWithdrawnUsdc} USDC`,
-              },
-              {
-                icon: Handshake,
-                label: "remaining in contract",
-                value: `${summary.withdrawableUsdc} USDC`,
-              },
-              {
-                icon: WalletCards,
-                label: "events",
-                value: String(summary.eventCount),
-              },
-            ].map((item) => {
-              return (
-                <MetricTile
-                  icon={item.icon}
-                  key={item.label}
-                  label={item.label}
-                  value={item.value}
-                />
-              );
-            })}
-          </div>
-        </ProofSurface>
+        {session ? (
+          <TaskPanel tone={Number(summary.withdrawableUsdc) > 0 ? "ready" : "default"}>
+            <div className="grid gap-1 sm:grid-cols-2">
+              <DataRow icon={CircleDollarSign} label="Earned from ticket splits" value={`${summary.totalEarnedUsdc} USDC`} />
+              <DataRow icon={BanknoteArrowUp} label="Settled to your wallet" value={`${summary.totalWithdrawnUsdc} USDC`} />
+              <DataRow icon={Handshake} label="Available for the next action" value={`${summary.withdrawableUsdc} USDC`} />
+              <DataRow icon={WalletCards} label="Events involved" value={summary.eventCount} />
+            </div>
+          </TaskPanel>
+        ) : null}
 
         {session ? (
           <section className="mt-12" aria-label="MoneyGram cash-out">
@@ -528,21 +494,18 @@ export default async function CollaboratorLedgerPage() {
                       <p className="mt-1 text-sm leading-6 text-muted">
                         {copy.detail}
                       </p>
-                      <div className="mt-3 grid gap-2 rounded-[10px] border border-white/10 bg-background/34 p-3 text-xs text-muted md:grid-cols-2">
-                        <p className="min-w-0 break-all font-mono">
-                          <span className="text-foreground/70">source:</span>{" "}
-                          {entry.txHash ?? entry.sourceId}
-                        </p>
-                        <p className="min-w-0 break-all font-mono">
-                          <span className="text-foreground/70">type:</span>{" "}
-                          {entry.sourceLabel}
-                        </p>
-                      </div>
                       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
                         <span>{formatDate(entry.occurredAt)} UTC</span>
-                        {entry.tokenId ? <span>token {entry.tokenId}</span> : null}
                         <span>{shorten(entry.walletAddress)}</span>
                       </div>
+                      <details className="mt-3 rounded-[6px] border border-white/10 bg-background/34 p-3">
+                        <summary className="cursor-pointer text-xs font-medium text-muted">Technical details</summary>
+                        <div className="mt-3 grid gap-2 text-xs text-muted md:grid-cols-2">
+                          <p className="min-w-0 break-all font-mono">source: {entry.txHash ?? entry.sourceId}</p>
+                          <p className="min-w-0 break-all font-mono">type: {entry.sourceLabel}</p>
+                          {entry.tokenId ? <p className="break-all font-mono">token: {entry.tokenId}</p> : null}
+                        </div>
+                      </details>
                     </div>
                     <div className="flex flex-wrap gap-2 lg:justify-end">
                       <Link

@@ -165,8 +165,7 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       label: "Collaborator ledger",
       path: "/dashboard/ledger",
       requiredText: [
-        "Collaborator ledger",
-        "Revenue, wallet settlement",
+        "Earnings, settlement, and cash-out",
         "Move settled wallet funds",
         "Wallet transfer required",
         "0.4 USDC",
