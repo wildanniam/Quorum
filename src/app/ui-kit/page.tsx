@@ -26,6 +26,7 @@ import {
   Select,
   Textarea,
 } from "@/components/ui/form-primitives";
+import { OverlayFixtures } from "@/components/ui/overlay-fixtures";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 
@@ -212,6 +213,13 @@ export default function UiKitPage() {
               </div>
             ))}
           </div>
+        </ProductSection>
+
+        <ProductSection
+          description="These interaction fixtures verify focus handling and transient feedback before overlays are adopted in product routes."
+          title="Overlays and notifications"
+        >
+          <OverlayFixtures />
         </ProductSection>
 
         <p className="flex items-center gap-2 border-t border-white/10 pt-6 text-sm leading-6 text-muted">
