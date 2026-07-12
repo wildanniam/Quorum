@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Search, X } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EventCard, type EventCardData } from "@/components/discover/event-card";
+import { Input, InputGroup, InputGroupAddon } from "@/components/ui/form-primitives";
 import { EmptyState, ProductPage } from "@/components/ui/product-layout";
 import { CompactPageHeader, ProductSection } from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
@@ -151,25 +152,27 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
             <label className="sr-only" htmlFor="discover-search">
               Search events
             </label>
-            <div className="flex min-h-12 min-w-0 items-center gap-3 rounded-[7px] border border-white/10 bg-white/[0.035] px-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-              <Search className="shrink-0 text-quorum-cyan-soft" size={18} />
-              <input
-                className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
+            <InputGroup className="min-w-0">
+              <Input
+                className="min-h-12 border-white/10 bg-white/[0.035] px-10 pr-10 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] focus:bg-white/[0.055]"
                 defaultValue={query}
                 id="discover-search"
                 name="q"
                 placeholder="Search by event, city, format, or category"
               />
+              <InputGroupAddon className="text-quorum-cyan-soft">
+                <Search size={18} />
+              </InputGroupAddon>
               {query ? (
                 <Link
                   aria-label="Clear search"
-                  className="shrink-0 text-muted transition hover:text-foreground"
+                  className="absolute inset-y-0 right-3 inline-flex items-center text-muted transition hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-quorum-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                   href="/discover"
                 >
                   <X size={16} />
                 </Link>
               ) : null}
-            </div>
+            </InputGroup>
             <QuorumButton className="w-full sm:w-auto" type="submit">
               Search
             </QuorumButton>
