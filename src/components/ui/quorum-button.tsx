@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type React from "react";
 import { ArrowRight } from "lucide-react";
+import { Spinner } from "@/components/ui/feedback-primitives";
 import { cn } from "@/lib/ui";
 
 type QuorumButtonVariant = "danger" | "ghost" | "primary" | "secondary" | "subtle";
@@ -15,6 +16,7 @@ type BaseProps = {
 type ButtonProps = BaseProps &
   React.ButtonHTMLAttributes<HTMLButtonElement> & {
     href?: undefined;
+    loading?: boolean;
   };
 
 type LinkProps = BaseProps & {
@@ -36,7 +38,7 @@ const variantClassName: Record<QuorumButtonVariant, string> = {
 };
 
 const baseClassName =
-  "inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border px-6 text-sm font-medium leading-[1.4] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-quorum-cyan active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100";
+  "relative inline-flex min-h-[46px] items-center justify-center gap-2 rounded-full border px-6 text-sm font-medium leading-[1.4] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-quorum-cyan active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60 motion-reduce:transition-none motion-reduce:active:scale-100";
 
 export function QuorumButton(props: ButtonProps | LinkProps) {
   if (typeof props.href === "string") {
@@ -65,7 +67,9 @@ export function QuorumButton(props: ButtonProps | LinkProps) {
   const {
     children,
     className,
+    disabled,
     icon = <ArrowRight size={17} />,
+    loading = false,
     type = "button",
     variant = "primary",
     ...buttonProps
@@ -73,9 +77,30 @@ export function QuorumButton(props: ButtonProps | LinkProps) {
   const composedClassName = cn(baseClassName, variantClassName[variant], className);
 
   return (
-    <button {...buttonProps} className={composedClassName} type={type}>
-      {children}
-      {icon}
+    <button
+      {...buttonProps}
+      aria-busy={loading || undefined}
+      className={composedClassName}
+      disabled={disabled || loading}
+      type={type}
+    >
+      {loading ? (
+        <>
+          <span aria-hidden="true" className="inline-flex items-center gap-2 opacity-0">
+            {children}
+            {icon}
+          </span>
+          <span className="sr-only">{children}</span>
+          <span aria-hidden="true" className="absolute inset-0 grid place-items-center">
+            <Spinner size={17} />
+          </span>
+        </>
+      ) : (
+        <>
+          {children}
+          {icon}
+        </>
+      )}
     </button>
   );
 }

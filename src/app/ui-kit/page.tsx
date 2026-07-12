@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import {
   AlertCircle,
   CheckCircle2,
-  CircleAlert,
   CircleDollarSign,
   ClipboardCheck,
   FileKey2,
-  LoaderCircle,
   Sparkles,
   WalletCards,
 } from "lucide-react";
@@ -21,6 +19,7 @@ import {
   productInputClassName,
 } from "@/components/ui/product-primitives";
 import { EmptyState, ProductPage } from "@/components/ui/product-layout";
+import { Alert, Skeleton } from "@/components/ui/feedback-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 
@@ -62,9 +61,7 @@ export default function UiKitPage() {
             <QuorumButton variant="subtle">Subtle action</QuorumButton>
             <QuorumButton variant="ghost">Text action</QuorumButton>
             <QuorumButton variant="danger">Destructive action</QuorumButton>
-            <QuorumButton disabled icon={<LoaderCircle className="animate-spin" size={16} />}>
-              Processing
-            </QuorumButton>
+            <QuorumButton loading>Processing</QuorumButton>
           </div>
         </ProductSection>
 
@@ -180,39 +177,21 @@ export default function UiKitPage() {
           description="The examples below make state review deterministic without calling a wallet, API, or mutation."
           title="Feedback placement"
         >
-          <div className="grid gap-4 md:grid-cols-2">
-            <TaskPanel tone="ready">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 shrink-0 text-success" size={19} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Pass issued</p>
-                  <p className="mt-1 text-sm leading-6 text-muted">
-                    The attendee can now open their receipt and access protected resources.
-                  </p>
-                </div>
-              </div>
-            </TaskPanel>
-
-            <TaskPanel tone="muted">
-              <div className="flex items-start gap-3">
-                <CircleAlert className="mt-0.5 shrink-0 text-coral" size={19} />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Action needs attention</p>
-                  <p className="mt-1 text-sm leading-6 text-muted">
-                    Critical errors stay near the action that caused them; a temporary notice is never the only explanation.
-                  </p>
-                </div>
-              </div>
-            </TaskPanel>
+          <div className="grid gap-3 md:grid-cols-2">
+            <Alert title="Pass issued" tone="success">
+              The attendee can now open their receipt and access protected resources.
+            </Alert>
+            <Alert title="Action needs attention" tone="danger">
+              Critical errors stay near the action that caused them; a temporary notice is never the only explanation.
+            </Alert>
           </div>
 
           <div className="mt-5 grid gap-4 sm:grid-cols-3" aria-label="Loading skeleton fixtures">
             {["Event title", "Pass card", "Ledger row"].map((label) => (
               <div className="rounded-[8px] border border-white/10 bg-white/[0.03] p-4" key={label}>
-                <span className="sr-only">Loading {label}</span>
-                <div className="h-3 w-24 animate-pulse rounded-full bg-white/10 motion-reduce:animate-none" />
-                <div className="mt-4 h-6 w-4/5 animate-pulse rounded-full bg-white/10 motion-reduce:animate-none" />
-                <div className="mt-3 h-3 w-full animate-pulse rounded-full bg-white/10 motion-reduce:animate-none" />
+                <Skeleton className="h-3 w-24" label={`Loading ${label}`} />
+                <Skeleton className="mt-4 h-6 w-4/5" label={`Loading ${label}`} />
+                <Skeleton className="mt-3 h-3 w-full" label={`Loading ${label}`} />
               </div>
             ))}
           </div>
