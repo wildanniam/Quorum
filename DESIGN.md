@@ -130,3 +130,61 @@ Required states for landing controls:
 - No fake data that looks like placeholder filler.
 - No landing content dependent on live event DB rows.
 - No absolute Figma translation that breaks responsive layout.
+
+## Product UI V2 Rules
+
+The landing page is the visual source of truth, but product screens are task
+surfaces, not smaller landing pages. Preserve the landing markup, layout,
+assets, and motion when evolving the product UI.
+
+### Product Hierarchy
+
+- Use a compact, unframed page header for product routes. Reserve a large framed
+  header for a true focused tool or a context-rich event page.
+- Give every route one primary user task and one visually dominant action.
+- Use full-width sections and subtle rules before adding another card.
+- Use cards for an independently actionable item, a small task, or a focused
+  tool. Avoid card-inside-card composition.
+- Put plain-language outcome and next action before technical proof, hashes,
+  ledger labels, or contract state. Keep proof one interaction deeper.
+
+### Product Navigation
+
+- Primary destinations are Discover, Passes, and Studio.
+- Create Event is a Studio action, not a peer destination in the information
+  architecture.
+- Evidence remains directly reachable, but is a utility/trust surface rather
+  than the default attendee destination.
+- Wallet and network state belong in one calm account control.
+- Mobile navigation must occupy one stable region and preserve space for the
+  active task.
+
+### Product Typography And Density
+
+- Use Outfit for product headings and body copy. Use Geist Mono only for short,
+  copyable identifiers and numeric data.
+- Use at least 14px for instructions and meaningful support copy. Reserve 12px
+  for tertiary metadata.
+- Keep operational headings in the 24px to 40px range on desktop and 24px to
+  32px on mobile. Do not reuse landing hero scale for tools.
+- Cyan signals primary action, current state, and actionable proof. Green,
+  amber, and coral signal success, caution, and failure only.
+
+### Forms And State
+
+- Every field needs a visible label, optional helper copy, and a reserved error
+  treatment. Validation happens on blur and again before a step advances.
+- Use domain controls for wallet addresses, percentages, dates/timezones,
+  capacity, and cover media rather than generic text inputs when practical.
+- Define and test default, hover, focus, disabled, loading, empty, error,
+  success, wrong-wallet, and wrong-network states for each product flow.
+- Multi-step flows show progress, preserve entered data, and keep a stable
+  action bar on mobile.
+
+### Product Motion
+
+- Product motion is limited to 150ms to 250ms opacity and transform feedback.
+- Motion may clarify navigation, step changes, successful completion, or an
+  expanded proof detail. It must respect reduced-motion preferences.
+- Do not add decorative hero choreography, orbit animation, or repeated reveal
+  effects to operational pages.
