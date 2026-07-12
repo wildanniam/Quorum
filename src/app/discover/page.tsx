@@ -158,8 +158,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
       <ProductPage spacing="loose">
         <ProductPageHeader
           actions={
-            <QuorumButton href="/dashboard/events/new" variant="secondary">
-              Create event
+            <QuorumButton href="/dashboard" variant="secondary">
+              Open Studio
             </QuorumButton>
           }
           description="Browse community events with the important parts up front: date, place, price, available seats, and the proof trail behind each pass."
@@ -264,8 +264,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
                   Clear search
                 </QuorumButton>
               ) : (
-                <QuorumButton href="/dashboard/events/new" variant="secondary">
-                  Create the first event
+                <QuorumButton href="/dashboard" variant="secondary">
+                  Open Studio
                 </QuorumButton>
               )
             }
@@ -284,8 +284,8 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
         <ProductPage spacing="compact">
           <SectionHeader
             actions={
-              <QuorumButton href="/dashboard/events/new" variant="subtle">
-                Create event
+              <QuorumButton href="/dashboard" variant="subtle">
+                Open Studio
               </QuorumButton>
             }
             description="Compare the essentials quickly, then open the event for the complete split, resource, and checkout context."

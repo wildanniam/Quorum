@@ -157,7 +157,6 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       label: "Create event",
       path: "/dashboard/events/new",
       requiredText: [
-        "Create event",
         "Build the page, split, and access in one draft.",
         "Collaborators",
       ],
