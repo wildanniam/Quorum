@@ -81,7 +81,7 @@ export function Alert({
     <div
       aria-live={tone === "danger" ? "assertive" : "polite"}
       className={cn(
-        "flex items-start gap-3 rounded-[8px] border p-4 text-sm leading-6",
+        "flex flex-col gap-3 rounded-[8px] border p-4 text-sm leading-6 sm:flex-row sm:items-start",
         alertToneClassName[tone],
         className,
       )}
@@ -92,7 +92,7 @@ export function Alert({
         <p className="font-medium text-foreground">{title}</p>
         {children ? <div className="mt-1 text-muted">{children}</div> : null}
       </div>
-      {action ? <div className="shrink-0">{action}</div> : null}
+      {action ? <div className="w-full shrink-0 sm:w-auto">{action}</div> : null}
     </div>
   );
 }

@@ -4,8 +4,9 @@ import {
 } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { EvidenceTimeline } from "@/components/evidence-timeline";
+import { Alert } from "@/components/ui/feedback-primitives";
 import { ProductPage } from "@/components/ui/product-layout";
-import { CompactPageHeader, TaskPanel } from "@/components/ui/product-primitives";
+import { CompactPageHeader } from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { listEvidence } from "@/lib/evidence/repository";
 
@@ -51,10 +52,10 @@ export default async function EvidencePage() {
         />
 
         {evidenceUnavailable ? (
-            <TaskPanel tone="muted" className="border-coral/25 bg-coral/10 text-coral">
-              Evidence data is temporarily unavailable. The page shell is ready,
-              but the database connection did not respond in this local session.
-            </TaskPanel>
+          <Alert title="Evidence data is temporarily unavailable." tone="warning">
+            The page shell is ready, but the database connection did not respond in
+            this local session.
+          </Alert>
         ) : null}
 
         <EvidenceTimeline
