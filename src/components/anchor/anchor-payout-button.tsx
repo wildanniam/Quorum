@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, BanknoteArrowUp, Loader2 } from "lucide-react";
+import { ArrowUpRight, BanknoteArrowUp } from "lucide-react";
 import { QuorumButton } from "@/components/ui/quorum-button";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
 import { requestMoneyGramAuthToken as requestMoneyGramBrowserAuthToken } from "@/lib/anchor/moneygram/browser-auth";
 
 type AnchorPayoutButtonProps = {
@@ -23,6 +24,19 @@ type AnchorPayoutResponse = {
   requiresMoneyGramAuth?: boolean;
 };
 
+function isProviderAccessError(message: string) {
+  const normalized = message.toLowerCase();
+
+  return [
+    "allowlist",
+    "allowlisted",
+    "moneygram access",
+    "provider access",
+    "ramps instant access",
+    "temporarily unavailable",
+  ].some((fragment) => normalized.includes(fragment));
+}
+
 export function AnchorPayoutButton({
   actionLabel = "Start cash-out",
   amountUsdc,
@@ -41,6 +55,13 @@ export function AnchorPayoutButton({
     isAuthorizing ||
     Number(amountUsdc) <= 0 ||
     payoutStarted;
+  const actionText = payoutStarted
+    ? "Cash-out started"
+    : isAuthorizing
+      ? "Authorizing wallet"
+      : isSubmitting
+        ? "Starting cash-out"
+        : actionLabel;
 
   async function postPayout(moneyGramAuthToken?: string) {
     const response = await fetch(`/api/events/${eventId}/anchor-payouts`, {
@@ -100,7 +121,7 @@ export function AnchorPayoutButton({
         disabled={disabled}
         icon={
           isSubmitting || isAuthorizing ? (
-            <Loader2 className="animate-spin" size={16} />
+            <Spinner label={actionText} size={16} />
           ) : (
             <BanknoteArrowUp size={16} />
           )
@@ -108,11 +129,7 @@ export function AnchorPayoutButton({
         onClick={handleRequestPayout}
         type="button"
       >
-        {payoutStarted
-          ? "Cash-out started"
-          : isAuthorizing
-            ? "Authorize wallet"
-            : actionLabel}
+        {actionText}
       </QuorumButton>
       {referenceNumber ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
@@ -130,9 +147,23 @@ export function AnchorPayoutButton({
         </a>
       ) : null}
       {error ? (
-        <p className="text-xs leading-5 text-coral" role="alert">
-          {error}
-        </p>
+        <Alert
+          className="text-xs"
+          title={
+            isProviderAccessError(error)
+              ? "MoneyGram access is pending"
+              : "Cash-out needs attention"
+          }
+          tone="danger"
+        >
+          <p>{error}</p>
+          {isProviderAccessError(error) ? (
+            <p>
+              Your settled Quorum balance is unchanged. Try again after MoneyGram
+              enables this wallet domain.
+            </p>
+          ) : null}
+        </Alert>
       ) : null}
     </div>
   );

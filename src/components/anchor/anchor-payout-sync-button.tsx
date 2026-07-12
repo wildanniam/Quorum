@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, RefreshCcw } from "lucide-react";
+import { RefreshCcw } from "lucide-react";
 import { MoneyGramTransferInstructions } from "@/components/anchor/moneygram-transfer-instructions";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
 import { requestMoneyGramAuthToken } from "@/lib/anchor/moneygram/browser-auth";
 import type { MoneyGramWithdrawalTransferInstructions } from "@/lib/anchor/moneygram/sep24";
 
@@ -34,6 +35,19 @@ function moneyGramStatusLabel(value: string) {
   };
 
   return labels[value] ?? value.replaceAll("_", " ");
+}
+
+function isProviderAccessError(message: string) {
+  const normalized = message.toLowerCase();
+
+  return [
+    "allowlist",
+    "allowlisted",
+    "moneygram access",
+    "provider access",
+    "ramps instant access",
+    "temporarily unavailable",
+  ].some((fragment) => normalized.includes(fragment));
 }
 
 export function AnchorPayoutSyncButton({
@@ -94,11 +108,11 @@ export function AnchorPayoutSyncButton({
         type="button"
       >
         {isSyncing ? (
-          <Loader2 className="animate-spin" size={13} />
+          <Spinner label="Refreshing MoneyGram status" size={13} />
         ) : (
           <RefreshCcw size={13} />
         )}
-        Refresh MoneyGram
+        {isSyncing ? "Refreshing MoneyGram" : "Refresh MoneyGram"}
       </button>
       {status ? (
         <p className="text-xs leading-5 text-quorum-cyan-soft">
@@ -106,9 +120,23 @@ export function AnchorPayoutSyncButton({
         </p>
       ) : null}
       {error ? (
-        <p className="text-xs leading-5 text-coral" role="alert">
-          {error}
-        </p>
+        <Alert
+          className="text-xs"
+          title={
+            isProviderAccessError(error)
+              ? "MoneyGram access is pending"
+              : "Could not refresh cash-out status"
+          }
+          tone="danger"
+        >
+          <p>{error}</p>
+          {isProviderAccessError(error) ? (
+            <p>
+              Your settlement record is still available in Quorum. Refresh again
+              after MoneyGram enables this wallet domain.
+            </p>
+          ) : null}
+        </Alert>
       ) : null}
       {transferInstructions ? (
         <MoneyGramTransferInstructions instructions={transferInstructions} />
