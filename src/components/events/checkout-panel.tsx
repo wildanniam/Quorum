@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { Alert, Spinner } from "@/components/ui/feedback-primitives";
-import { StickyActionBar, TaskPanel } from "@/components/ui/product-primitives";
+import { TaskPanel } from "@/components/ui/product-primitives";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
@@ -200,7 +200,7 @@ export function CheckoutPanel({
         </Alert>
       ) : null}
 
-      <StickyActionBar className="mt-5">
+      <div className="mt-5 border-t border-white/10 pt-5">
         <QuorumButton
           aria-busy={isBusy}
           className="w-full"
@@ -217,7 +217,7 @@ export function CheckoutPanel({
         >
           {buttonLabel}
         </QuorumButton>
-      </StickyActionBar>
+      </div>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
         Live testnet actions still ask for explicit Freighter approval.
