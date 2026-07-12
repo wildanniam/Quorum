@@ -6,6 +6,7 @@ import {
   MobileNavigation,
 } from "@/components/app-navigation";
 import { ProductMark } from "@/components/ui/product-layout";
+import { QuorumToaster } from "@/components/ui/quorum-toaster";
 import { WalletButton } from "@/components/wallet-button";
 
 type AppShellProps = {
@@ -54,6 +55,7 @@ export function ProductShell({ children }: AppShellProps) {
           </Link>
         </div>
       </footer>
+      <QuorumToaster />
     </div>
   );
 }
