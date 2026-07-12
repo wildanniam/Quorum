@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { Alert } from "@/components/ui/feedback-primitives";
 import {
   EmptyState,
   ProductPage,
@@ -209,28 +210,25 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
           )}
 
           {!hasAccess && resources.length > 0 ? (
-            <div className="mt-5 rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-3 text-muted">
-                {session ? (
-                  <ShieldCheck className="mt-0.5 text-amber" size={18} />
-                ) : (
-                  <LockKeyhole className="mt-0.5 text-coral" size={18} />
-                )}
-                <p className="text-sm leading-6">
-                  {session
-                    ? "A pass is non-transferable. Use the wallet that bought or claimed it."
-                    : "A wallet session is required before Quorum can check pass ownership."}
-                </p>
-              </div>
-              <QuorumButton
-                href={`/events/${event.slug}/checkout`}
-                variant={session ? "secondary" : "primary"}
-              >
-                {session ? "Get another pass" : "Get pass"}
-              </QuorumButton>
-            </div>
-            </div>
+            <Alert
+              action={
+                <QuorumButton
+                  className="w-full sm:w-auto"
+                  href={`/events/${event.slug}/checkout`}
+                  variant={session ? "secondary" : "primary"}
+                >
+                  {session ? "Get another pass" : "Get pass"}
+                </QuorumButton>
+              }
+              className="mt-5"
+              icon={session ? ShieldCheck : LockKeyhole}
+              title={session ? "Use the pass owner wallet" : "Connect the pass wallet"}
+              tone={session ? "warning" : "info"}
+            >
+              {session
+                ? "A pass is non-transferable. Use the wallet that bought or claimed it."
+                : "A wallet session is required before Quorum can check pass ownership."}
+            </Alert>
           ) : null}
         </ProductSection>
       </ProductPage>
