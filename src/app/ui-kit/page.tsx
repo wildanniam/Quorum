@@ -16,10 +16,16 @@ import {
   TaskPanel,
   CompactPageHeader,
   FieldMessage,
-  productInputClassName,
 } from "@/components/ui/product-primitives";
 import { EmptyState, ProductPage } from "@/components/ui/product-layout";
 import { Alert, Skeleton } from "@/components/ui/feedback-primitives";
+import {
+  Input,
+  InputGroup,
+  InputGroupAddon,
+  Select,
+  Textarea,
+} from "@/components/ui/form-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 
@@ -89,8 +95,7 @@ export default function UiKitPage() {
               label="Event name"
               required
             >
-              <input
-                className={productInputClassName}
+              <Input
                 name="fixture-event-name"
                 placeholder="APAC Stellar Builder Meetup"
               />
@@ -102,8 +107,7 @@ export default function UiKitPage() {
               label="Collaborator wallet"
               required
             >
-              <input
-                className={productInputClassName}
+              <Input
                 defaultValue="GBRPYHIL2CI3K3KOLY4X5VHO6CBQ4SZP"
                 name="fixture-wallet"
               />
@@ -115,8 +119,7 @@ export default function UiKitPage() {
               label="Revenue share"
               required
             >
-              <input
-                className={productInputClassName}
+              <Input
                 defaultValue="120"
                 inputMode="numeric"
                 name="fixture-split"
@@ -128,9 +131,9 @@ export default function UiKitPage() {
               htmlFor="fixture-network"
               label="Network"
             >
-              <select className={productInputClassName} defaultValue="testnet" disabled name="fixture-network">
+              <Select defaultValue="testnet" disabled name="fixture-network">
                 <option value="testnet">Stellar Testnet</option>
-              </select>
+              </Select>
             </FormField>
 
             <FormField
@@ -139,12 +142,26 @@ export default function UiKitPage() {
               htmlFor="fixture-description"
               label="Event description"
             >
-              <textarea
-                className={`${productInputClassName} min-h-28 py-3`}
+              <Textarea
                 defaultValue="A concise fixture for reviewing multiline product form behavior."
                 name="fixture-description"
               />
             </FormField>
+          </div>
+          <div className="mt-5 max-w-sm">
+            <label className="mb-2 block text-sm font-medium text-foreground" htmlFor="fixture-price">
+              Ticket price
+            </label>
+            <InputGroup>
+              <Input
+                className="pr-16"
+                defaultValue="5"
+                id="fixture-price"
+                inputMode="decimal"
+                name="fixture-price"
+              />
+              <InputGroupAddon position="end">USDC</InputGroupAddon>
+            </InputGroup>
           </div>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             <FieldMessage>Draft saved locally. No transaction has been created.</FieldMessage>
