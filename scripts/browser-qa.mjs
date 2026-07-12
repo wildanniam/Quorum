@@ -27,9 +27,19 @@ const moneyGramDestination =
   "GCVU24AUYIXAJNIRWCAXX5OKF6AZY23R6IYGPMRGFN5XDDFMW6I7XKUW";
 
 const viewports = [
-  { label: "Desktop", width: 1280, height: 720 },
+  { label: "Wide desktop", width: 1440, height: 900 },
+  { label: "Tablet", width: 1024, height: 768 },
   { label: "Mobile", width: 390, height: 844 },
 ];
+const screenshotPages = new Set([
+  "Discover",
+  "Paid event detail",
+  "Checkout",
+  "Studio wallet gate",
+  "Create event",
+  "Collaborator ledger",
+  "Evidence hub",
+]);
 
 function encodeBase64Url(value) {
   return Buffer.from(value)
@@ -398,11 +408,11 @@ async function inspectPage(browser, viewport, pageSpec) {
     });
     let screenshotPath = null;
 
-    if (screenshotDir && pageSpec.label === "Collaborator ledger") {
+    if (screenshotDir && screenshotPages.has(pageSpec.label)) {
       fs.mkdirSync(screenshotDir, { recursive: true });
       screenshotPath = path.join(
         screenshotDir,
-        `collaborator-ledger-${viewport.label.toLowerCase()}.png`,
+        `${pageSpec.label.toLowerCase().replaceAll(" ", "-")}-${viewport.label.toLowerCase().replaceAll(" ", "-")}.png`,
       );
       await page.screenshot({ fullPage: true, path: screenshotPath });
     }
@@ -444,6 +454,17 @@ function renderMarkdown({ generatedAt, pages, results }) {
   const missingTextCount = results.filter(
     (result) => result.missingText.length > 0,
   ).length;
+  const viewportSections = viewports
+    .map(
+      (viewport) => `## ${viewport.label}
+
+- Viewport: \`${viewport.width} x ${viewport.height}\`
+
+| Page | Path | HTTP | Required text | Horizontal overflow | Console/page errors |
+|---|---|---:|---|---|---:|
+${renderPageRows(results, viewport.label)}`,
+    )
+    .join("\n\n");
 
   return `# Quorum Browser QA
 
@@ -468,21 +489,7 @@ verification for the hackathon demo surface and complements
 - Horizontal overflow: ${overflowCount === 0 ? "none observed" : overflowCount}
 - Missing required text: ${missingTextCount === 0 ? "none observed" : missingTextCount}
 
-## Desktop Viewport
-
-- Viewport: \`1280 x 720\`
-
-| Page | Path | HTTP | Required text | Horizontal overflow | Console/page errors |
-|---|---|---:|---|---|---:|
-${renderPageRows(results, "Desktop")}
-
-## Mobile Viewport
-
-- Viewport: \`390 x 844\`
-
-| Page | Path | HTTP | Required text | Horizontal overflow | Console/page errors |
-|---|---|---:|---|---|---:|
-${renderPageRows(results, "Mobile")}
+${viewportSections}
 
 ## Readiness Signals
 
@@ -496,10 +503,10 @@ ${renderPageRows(results, "Mobile")}
 - Pass library and pass receipt render from a temporary pass-owner session.
 - Organizer check-in renders from a temporary organizer session with a checked-in
   local-proof pass.
-- Dashboard renders wallet readiness, contract readiness, \`Local proof mode\`,
-  \`USDC asset\` readiness, and action execution policy.
+- Studio renders a focused wallet gate before a wallet session exists, followed
+  by the hosting, collaborating, and attending work it will organize.
 - Create event, collaborator ledger, event proof, and global evidence routes are
-  included in the desktop/mobile matrix.
+  included in the wide-desktop, tablet, and mobile matrix.
 
 ## Remaining Boundary
 
