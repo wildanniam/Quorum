@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import {
   CalendarPlus,
+  ChevronLeft,
+  ChevronRight,
   CheckCircle2,
   FileKey2,
   Loader2,
@@ -82,6 +84,7 @@ function toIsoDateTime(value: string) {
 export function CreateEventForm() {
   const { sessionWalletAddress, status } = useWallet();
   const [mode, setMode] = useState<"paid" | "free">("paid");
+  const [currentStep, setCurrentStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [result, setResult] = useState<DraftResponse | null>(null);
@@ -166,6 +169,13 @@ export function CreateEventForm() {
     if (!result?.issues?.length) return null;
     return result.issues.map((issue) => issue.message).join(" ");
   }, [result]);
+  const steps = [
+    { label: "Event", detail: "Story and schedule" },
+    { label: "Tickets", detail: "Price and capacity" },
+    { label: "Revenue split", detail: "Collaborator wallets" },
+    { label: "Resources", detail: "Pass-holder access" },
+    { label: "Review", detail: "Save and publish" },
+  ];
 
   function updateForm(name: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [name]: value }));
@@ -310,7 +320,39 @@ export function CreateEventForm() {
 
   return (
     <form className="grid gap-5" onSubmit={handleSubmit}>
-      <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+      <div className="overflow-x-auto border-b border-white/10 pb-5">
+        <ol className="flex min-w-max gap-2">
+          {steps.map((step, index) => {
+            const isCurrent = index === currentStep;
+            const isComplete = index < currentStep;
+
+            return (
+              <li key={step.label}>
+                <button
+                  aria-current={isCurrent ? "step" : undefined}
+                  className={`flex min-h-11 items-center gap-3 rounded-[6px] border px-3 text-left transition ${
+                    isCurrent
+                      ? "border-quorum-cyan/55 bg-quorum-cyan/12 text-foreground"
+                      : isComplete
+                        ? "border-success/35 bg-success/10 text-success"
+                        : "border-white/10 bg-white/[0.025] text-muted hover:border-white/25"
+                  }`}
+                  onClick={() => setCurrentStep(index)}
+                  type="button"
+                >
+                  <span className="font-mono text-xs">0{index + 1}</span>
+                  <span>
+                    <span className="block text-sm font-medium">{step.label}</span>
+                    <span className="block text-xs opacity-75">{step.detail}</span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+
+      <div className={currentStep === 0 ? "grid gap-5 lg:grid-cols-[1.3fr_0.7fr]" : "hidden"}>
         <ProofSurface elevated>
           <StatusPill icon={CalendarPlus} tone="cyan">
             Event story
@@ -391,8 +433,16 @@ export function CreateEventForm() {
         </ProofSurface>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-3">
-        <ProofSurface className="lg:col-span-2" elevated>
+      <div
+        className={
+          currentStep === 0
+            ? "grid gap-5 lg:grid-cols-3"
+            : currentStep === 1
+              ? "grid gap-5"
+              : "hidden"
+        }
+      >
+        <ProofSurface className={currentStep === 0 ? "lg:col-span-2" : "hidden"} elevated>
           <StatusPill icon={CalendarPlus} tone="cyan">
             Schedule
           </StatusPill>
@@ -469,7 +519,7 @@ export function CreateEventForm() {
           </div>
         </ProofSurface>
 
-        <ProofSurface>
+        <ProofSurface className={currentStep === 1 ? "max-w-xl" : "hidden"}>
           <StatusPill icon={FileKey2} tone="cyan">
             Access
           </StatusPill>
@@ -520,7 +570,7 @@ export function CreateEventForm() {
         </ProofSurface>
       </div>
 
-      <ProofSurface elevated>
+      <ProofSurface className={currentStep === 2 ? undefined : "hidden"} elevated>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <StatusPill icon={Percent} tone={splitReady ? "success" : "warning"}>
@@ -628,7 +678,7 @@ export function CreateEventForm() {
         </div>
       </ProofSurface>
 
-      <ProofSurface elevated>
+      <ProofSurface className={currentStep === 3 ? undefined : "hidden"} elevated>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <StatusPill icon={FileKey2} tone="cyan">
@@ -730,6 +780,32 @@ export function CreateEventForm() {
         </div>
       </ProofSurface>
 
+      {currentStep === 4 ? (
+        <ProofSurface elevated>
+          <StatusPill icon={CheckCircle2} tone={splitReady ? "ready" : "warning"}>
+            Review draft
+          </StatusPill>
+          <p className="mt-4 font-product text-2xl font-medium">Ready to save the event draft.</p>
+          <p className="mt-2 text-sm leading-6 text-muted">
+            Confirm the event story, ticket access, revenue split, and gated resources before you save. Publishing remains an explicit second action.
+          </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[6px] border border-white/10 bg-background/40 p-4">
+              <p className={fieldHintClass}>Event</p>
+              <p className="mt-2 font-medium">{form.title || "Untitled event"}</p>
+              <p className="mt-1 text-sm text-muted">{mode === "free" ? "Free claim" : `${form.priceUsdc} USDC`} · {form.capacity || "0"} capacity</p>
+            </div>
+            <div className="rounded-[6px] border border-white/10 bg-background/40 p-4">
+              <p className={fieldHintClass}>Access setup</p>
+              <p className="mt-2 font-medium">{splitTotal}% split · {resources.length} resources</p>
+              <p className={`mt-1 text-sm ${splitReady ? "text-success" : "text-amber"}`}>
+                {splitReady ? "Revenue split is ready." : "Revenue split must total 100%."}
+              </p>
+            </div>
+          </div>
+        </ProofSurface>
+      ) : null}
+
       {result?.event ? (
         <div className="grid grid-cols-[auto_1fr] items-center gap-3 rounded-[12px] border border-success/45 bg-success/10 p-4 text-sm">
           <CheckCircle2 className="text-success" size={20} />
@@ -764,8 +840,28 @@ export function CreateEventForm() {
         </div>
       ) : null}
 
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <div className="flex flex-wrap justify-end gap-3">
+      <div className="sticky bottom-4 z-10 border-t border-white/10 bg-[#0c0b0b]/92 pt-3 backdrop-blur-xl">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <button
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 px-4 text-sm font-medium text-muted transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft disabled:opacity-45"
+              disabled={currentStep === 0}
+              onClick={() => setCurrentStep((step) => Math.max(step - 1, 0))}
+              type="button"
+            >
+              <ChevronLeft size={16} /> Previous
+            </button>
+            {currentStep < steps.length - 1 ? (
+              <button
+                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-quorum-cyan/45 bg-quorum-cyan/10 px-4 text-sm font-medium text-quorum-cyan-soft transition hover:bg-quorum-cyan/18"
+                onClick={() => setCurrentStep((step) => Math.min(step + 1, steps.length - 1))}
+                type="button"
+              >
+                Continue <ChevronRight size={16} />
+              </button>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap justify-end gap-3">
           {savedEventId && result?.event?.status !== "published" ? (
             <button
               className="inline-flex min-h-11 items-center gap-2 rounded-full border border-white/12 bg-quorum-grey-700/90 px-5 text-sm font-semibold text-foreground shadow-[0_14px_40px_rgba(0,0,0,0.28)] backdrop-blur-xl transition hover:border-quorum-cyan/45 hover:text-quorum-cyan-soft disabled:cursor-wait disabled:opacity-70"
@@ -793,6 +889,7 @@ export function CreateEventForm() {
             )}
             {savedEventId ? "Save changes" : "Save draft"}
           </button>
+        </div>
         </div>
       </div>
     </form>
