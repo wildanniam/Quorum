@@ -5,11 +5,11 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowRight,
-  Loader2,
   TicketCheck,
 } from "lucide-react";
 import { QuorumButton } from "@/components/ui/quorum-button";
-import { StickyActionBar, TaskPanel } from "@/components/ui/product-primitives";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
+import { TaskPanel } from "@/components/ui/product-primitives";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
 import { executeLiveBrowserContractAction } from "@/lib/stellar/live-browser-flow";
@@ -189,32 +189,25 @@ export function CheckoutPanel({
       </div>
 
       {activeError ? (
-        <div
-          className="mt-4 rounded-[8px] border border-coral/55 bg-coral/10 p-3 text-sm text-coral"
-          role="alert"
+        <Alert
+          className="mt-4"
+          icon={AlertTriangle}
+          title="Checkout needs attention"
+          tone="danger"
         >
-          <div className="flex gap-2">
-            <AlertTriangle className="mt-0.5 shrink-0" size={16} />
-            <div>
-              <p className="font-semibold">Checkout needs attention</p>
-              <p className="mt-1 leading-5">{activeError}</p>
-              <p className="mt-1 leading-5">
-                Reconnect the wallet or try the action again after Freighter is
-                ready.
-              </p>
-            </div>
-          </div>
-        </div>
+          <p>{activeError}</p>
+          <p>Reconnect the wallet or try the action again after Freighter is ready.</p>
+        </Alert>
       ) : null}
 
-      <StickyActionBar className="mt-5">
+      <div className="mt-5 border-t border-white/10 pt-5">
         <QuorumButton
           aria-busy={isBusy}
           className="w-full"
           disabled={isBusy || isSoldOut}
           icon={
             isBusy ? (
-              <Loader2 className="animate-spin" size={16} />
+              <Spinner label={buttonLabel} size={16} />
             ) : !isSoldOut ? (
               <ArrowRight size={16} />
             ) : null
@@ -224,7 +217,7 @@ export function CheckoutPanel({
         >
           {buttonLabel}
         </QuorumButton>
-      </StickyActionBar>
+      </div>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
         Live testnet actions still ask for explicit Freighter approval.
