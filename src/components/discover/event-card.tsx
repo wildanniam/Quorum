@@ -6,8 +6,6 @@ import {
   MapPin,
   ShieldCheck,
   TicketCheck,
-  Users,
-  WalletCards,
 } from "lucide-react";
 import { HoverCard } from "@/components/motion/hover-card";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -90,35 +88,10 @@ export function EventCard({ className, event, priority = false }: EventCardProps
             </span>
           </div>
 
-          <div className="mt-6 grid grid-cols-3 gap-2">
-            {[
-              { icon: Users, label: event.splitLabel, value: "split" },
-              { icon: WalletCards, label: event.mintedLabel, value: "passes" },
-              { icon: ShieldCheck, label: event.capacityLabel, value: "capacity" },
-            ].map((item) => {
-              const Icon = item.icon;
-
-              return (
-                <div
-                  className="rounded-[10px] border border-white/10 bg-quorum-grey-900/42 p-3"
-                  key={item.value}
-                >
-                  <Icon className="text-quorum-cyan-soft" size={15} />
-                  <p className="mt-2 truncate font-mono text-sm text-foreground">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 text-[0.7rem] leading-4 text-muted">
-                    {item.value}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-
           <div className="mt-6 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
             <span className="inline-flex items-center gap-2 text-xs font-medium text-muted">
               <ShieldCheck size={14} />
-              Wallet pass proof
+              {event.mintedLabel} minted · {event.splitLabel}% split
             </span>
             <span className="inline-flex items-center gap-2 text-sm font-medium text-quorum-cyan-soft">
               Open event <ArrowRight size={15} />

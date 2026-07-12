@@ -15,9 +15,13 @@ import { AppShell } from "@/components/app-shell";
 import {
   EmptyState,
   ProductPage,
-  ProductPageHeader,
-  SectionHeader,
 } from "@/components/ui/product-layout";
+import {
+  CompactPageHeader,
+  DataRow,
+  ProductSection,
+  TaskPanel,
+} from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
@@ -64,7 +68,7 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
 
   return (
     <AppShell>
-      <ProductPage spacing="loose">
+      <ProductPage className="space-y-7" spacing="default">
         <Link
           className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-quorum-cyan-soft"
           href={`/events/${event.slug}`}
@@ -72,7 +76,7 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
           <ArrowLeft size={15} /> Back to event
         </Link>
 
-        <ProductPageHeader
+        <CompactPageHeader
           actions={
             hasAccess ? (
               <StatusPill icon={UnlockKeyhole} tone="success">
@@ -93,59 +97,59 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
           eyebrow="Resources"
           icon={hasAccess ? UnlockKeyhole : LockKeyhole}
           title={accessTitle}
-        >
-          <div className="grid gap-4 lg:grid-cols-[0.82fr_1.18fr]">
+        />
+
+        <TaskPanel tone={hasAccess ? "ready" : "muted"}>
+          <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
             <div
-              className="event-cover min-h-64 rounded-[14px] bg-cover bg-center lg:min-h-[380px]"
+              className="event-cover min-h-48 rounded-[6px] bg-cover bg-center lg:min-h-[260px]"
               style={eventCoverStyle(event)}
             />
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-              {[
-                {
-                  icon: FileKey2,
-                  label: "resources",
-                  value: resources.length,
-                },
-                {
-                  icon: WalletCards,
-                  label: "wallet",
-                  value: session ? "Connected" : "Connect",
-                },
-                {
-                  icon: TicketCheck,
-                  label: "pass",
-                  value: hasAccess ? "Verified" : "Locked",
-                },
-              ].map((item) => {
-                const Icon = item.icon;
+            <div>
+              <p className="text-sm font-medium text-foreground">{event.title}</p>
+              <div className="mt-3">
+                {[
+                  {
+                    icon: FileKey2,
+                    label: "resources",
+                    value: resources.length,
+                  },
+                  {
+                    icon: WalletCards,
+                    label: "wallet",
+                    value: session ? "Connected" : "Connect",
+                  },
+                  {
+                    icon: TicketCheck,
+                    label: "pass",
+                    value: hasAccess ? "Verified" : "Locked",
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
 
-                return (
-                  <div
-                    className="rounded-[12px] border border-white/10 bg-quorum-grey-900/42 p-4"
-                    key={item.label}
-                  >
-                    <Icon className="text-quorum-cyan-soft" size={18} />
-                    <p className="mt-4 font-product text-2xl font-medium tracking-normal text-foreground">
-                      {item.value}
-                    </p>
-                    <p className="mt-2 text-sm text-muted">{item.label}</p>
-                  </div>
-                );
-              })}
+                  return (
+                    <DataRow
+                      icon={Icon}
+                      key={item.label}
+                      label={item.label}
+                      value={item.value}
+                    />
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </ProductPageHeader>
+        </TaskPanel>
       </ProductPage>
 
-      <ProductPage spacing="compact">
-        <SectionHeader
+      <ProductPage spacing="default">
+        <ProductSection
           description="Resources stay listed so attendees know what the pass unlocks. Private URLs only appear for the wallet that owns the pass."
           eyebrow="Access library"
           title={event.title}
-        />
-
-        {resources.length > 0 ? (
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+        >
+          {resources.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-3">
             {resources.map((resource) => (
               <article
                 className="rounded-[14px] border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
@@ -190,9 +194,9 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
                 )}
               </article>
             ))}
-          </div>
-        ) : (
-          <EmptyState
+            </div>
+          ) : (
+            <EmptyState
             action={
               <QuorumButton href={`/events/${event.slug}`} variant="secondary">
                 Back to event
@@ -201,11 +205,11 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
             description="This event does not have gated links, files, or text resources yet. A pass can still be used for check-in."
             icon={FileKey2}
             title="No resources attached"
-          />
-        )}
+            />
+          )}
 
-        {!hasAccess && resources.length > 0 ? (
-          <div className="mt-5 rounded-[14px] border border-white/10 bg-white/[0.04] p-5">
+          {!hasAccess && resources.length > 0 ? (
+            <div className="mt-5 rounded-[8px] border border-white/10 bg-white/[0.04] p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div className="flex items-start gap-3 text-muted">
                 {session ? (
@@ -226,8 +230,9 @@ export default async function ResourcesPage({ params }: ResourcesPageProps) {
                 {session ? "Get another pass" : "Get pass"}
               </QuorumButton>
             </div>
-          </div>
-        ) : null}
+            </div>
+          ) : null}
+        </ProductSection>
       </ProductPage>
     </AppShell>
   );

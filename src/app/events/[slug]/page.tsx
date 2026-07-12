@@ -2,7 +2,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CalendarDays,
-  CheckCircle2,
   FileKey2,
   MapPin,
   ShieldCheck,
@@ -12,12 +11,13 @@ import {
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { SplitPreview } from "@/components/events/split-preview";
+import { EmptyState, ProductPage } from "@/components/ui/product-layout";
 import {
-  EmptyState,
-  MetricTile,
-  ProductPage,
-  SectionHeader,
-} from "@/components/ui/product-layout";
+  DataRow,
+  ProductSection,
+  StickyActionBar,
+  TaskPanel,
+} from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { EventRecord } from "@/lib/db/models";
@@ -68,15 +68,9 @@ export default async function EventPage({ params }: EventPageProps) {
   const checkoutHref = `/events/${event.slug}/checkout`;
   const primaryAction = event.isFree ? "Claim pass" : "Get pass";
 
-  const trustNotes = [
-    "Wallet approval is explicit before anything is submitted.",
-    "Each wallet can hold one non-transferable event pass.",
-    "Resources and check-in depend on pass ownership.",
-  ];
-
   return (
     <AppShell>
-      <ProductPage spacing="loose">
+      <ProductPage spacing="default">
         <Link
           className="inline-flex items-center gap-2 text-sm text-muted transition hover:text-quorum-cyan-soft"
           href="/discover"
@@ -122,111 +116,96 @@ export default async function EventPage({ params }: EventPageProps) {
             </div>
           </article>
 
-          <aside className="rounded-[16px] border border-white/10 bg-white/[0.045] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.26),inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-xl lg:sticky lg:top-24 lg:self-start">
-            <StatusPill icon={TicketCheck} tone="cyan">
-              Event pass
-            </StatusPill>
-            <div className="mt-5 flex items-start justify-between gap-4">
-              <div>
-                <p className="font-mono text-4xl leading-none text-quorum-cyan-soft">
-                  {priceLabel(event)}
-                </p>
-                <p className="mt-2 text-sm text-muted">
-                  {remainingCapacity} of {event.capacity} seats available
-                </p>
-              </div>
-              <TicketCheck className="text-quorum-cyan-soft" size={28} />
-            </div>
-
-            <div className="mt-6 grid gap-3">
-              <QuorumButton href={checkoutHref}>{primaryAction}</QuorumButton>
-              <QuorumButton
-                href={`/events/${event.slug}/proof`}
-                variant="secondary"
-              >
-                Settlement proof
-              </QuorumButton>
-              <QuorumButton
-                href={`/events/${event.slug}/resources`}
-                variant="subtle"
-              >
-                View resources
-              </QuorumButton>
-            </div>
-
-            <div className="mt-6 grid gap-3">
-              {[
-                { icon: CalendarDays, label: "When", value: formatDate(event) },
-                { icon: MapPin, label: "Where", value: locationLabel(event) },
-                {
-                  icon: WalletCards,
-                  label: "Pass",
-                  value: "One wallet-bound pass",
-                },
-              ].map((fact) => {
-                const Icon = fact.icon;
-
-                return (
-                  <div
-                    className="grid grid-cols-[auto_1fr] gap-3 rounded-[12px] border border-white/10 bg-quorum-grey-900/38 p-3"
-                    key={fact.label}
-                  >
-                    <Icon className="mt-0.5 text-quorum-cyan-soft" size={16} />
-                    <div>
-                      <p className="font-product text-xs text-muted">
-                        {fact.label}
-                      </p>
-                      <p className="mt-1 text-sm leading-5 text-foreground">
-                        {fact.value}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="mt-6 grid gap-2 text-sm text-muted">
-              {trustNotes.map((note) => (
-                <div className="flex items-start gap-2" key={note}>
-                  <CheckCircle2
-                    className="mt-0.5 shrink-0 text-quorum-cyan-soft"
-                    size={16}
-                  />
-                  <span>{note}</span>
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <TaskPanel className="p-5" tone="default">
+              <StatusPill icon={TicketCheck} tone="cyan">
+                Event pass
+              </StatusPill>
+              <div className="mt-5 flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-mono text-4xl leading-none text-quorum-cyan-soft">
+                    {priceLabel(event)}
+                  </p>
+                  <p className="mt-2 text-sm text-muted">
+                    {remainingCapacity} of {event.capacity} seats available
+                  </p>
                 </div>
-              ))}
-            </div>
+                <TicketCheck className="text-quorum-cyan-soft" size={28} />
+              </div>
+
+              <div className="mt-6">
+                <QuorumButton href={checkoutHref}>{primaryAction}</QuorumButton>
+                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+                  <Link
+                    className="text-muted transition hover:text-quorum-cyan-soft"
+                    href={`/events/${event.slug}/proof`}
+                  >
+                    View settlement proof
+                  </Link>
+                  <Link
+                    className="text-muted transition hover:text-quorum-cyan-soft"
+                    href={`/events/${event.slug}/resources`}
+                  >
+                    Browse resources
+                  </Link>
+                </div>
+              </div>
+
+              <div className="mt-6">
+                {[
+                  { icon: CalendarDays, label: "When", value: formatDate(event) },
+                  { icon: MapPin, label: "Where", value: locationLabel(event) },
+                  {
+                    icon: WalletCards,
+                    label: "Pass",
+                    value: "One wallet-bound pass",
+                  },
+                ].map((fact) => (
+                  <DataRow
+                    detail={fact.value}
+                    icon={fact.icon}
+                    key={fact.label}
+                    label={fact.label}
+                  />
+                ))}
+              </div>
+
+              <p className="mt-6 text-sm leading-6 text-muted">
+                Wallet approval is explicit. Each wallet can hold one non-transferable pass.
+              </p>
+            </TaskPanel>
           </aside>
         </div>
+
+        <StickyActionBar className="lg:hidden">
+          <QuorumButton className="w-full" href={checkoutHref}>
+            {primaryAction}
+          </QuorumButton>
+        </StickyActionBar>
       </ProductPage>
 
-      <ProductPage spacing="compact">
+      <ProductPage spacing="default">
         <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <section className="rounded-[16px] border border-white/10 bg-white/[0.04] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] lg:p-6">
-            <SectionHeader
-              description="The event page should let attendees understand the event before they think about the chain. Proof stays available when trust matters."
-              eyebrow="About"
-              title="Event-first checkout, with proof one step away."
-            />
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
-              <MetricTile
-                icon={TicketCheck}
-                label="passes minted"
-                value={mintedPasses}
-              />
-              <MetricTile
+          <ProductSection
+            description="The event page should let attendees understand the event before they think about the chain. Proof stays available when trust matters."
+            eyebrow="About"
+            title="Event-first checkout, with proof one step away."
+          >
+            <div>
+              <DataRow icon={TicketCheck} label="Passes minted" value={mintedPasses} />
+              <DataRow
+                detail="Non-transferable access for the wallet that checks out."
                 icon={ShieldCheck}
-                detail="Non-transferable access."
-                label="pass per wallet"
-                value="1"
+                label="Pass policy"
+                value="1 per wallet"
               />
-              <MetricTile
+              <DataRow
                 icon={FileKey2}
-                label="resources"
+                label="Pass-holder resources"
                 value={resources.length}
               />
             </div>
-          </section>
+          </ProductSection>
 
           <section style={eventThemeStyle(event)}>
             <SplitPreview collaborators={collaborators} />
@@ -234,8 +213,8 @@ export default async function EventPage({ params }: EventPageProps) {
         </div>
       </ProductPage>
 
-      <ProductPage spacing="compact">
-        <SectionHeader
+      <ProductPage spacing="default">
+        <ProductSection
           actions={
             <QuorumButton
               href={`/events/${event.slug}/resources`}
@@ -247,37 +226,37 @@ export default async function EventPage({ params }: EventPageProps) {
           description="Show the shape of the gated experience without exposing private links to wallets that do not own a pass."
           eyebrow="Pass-holder resources"
           title="Resources unlock after pass ownership is verified."
-        />
-
-        {resources.length > 0 ? (
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            {resources.map((resource) => (
-              <article
-                className="rounded-[14px] border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
-                key={resource.id}
-              >
-                <FileKey2 className="text-quorum-cyan-soft" size={20} />
-                <p className="mt-4 font-product text-lg font-medium tracking-normal">
-                  {resource.title}
-                </p>
-                <p className="mt-2 font-product text-xs font-medium uppercase leading-[1.4] tracking-[0.08em] text-muted">
-                  {resource.type}
-                </p>
-                {resource.description ? (
-                  <p className="mt-3 text-sm leading-6 text-muted">
-                    {resource.description}
+        >
+          {resources.length > 0 ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              {resources.map((resource) => (
+                <article
+                  className="rounded-[14px] border border-white/10 bg-white/[0.035] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                  key={resource.id}
+                >
+                  <FileKey2 className="text-quorum-cyan-soft" size={20} />
+                  <p className="mt-4 font-product text-lg font-medium tracking-normal">
+                    {resource.title}
                   </p>
-                ) : null}
-              </article>
-            ))}
-          </div>
-        ) : (
-          <EmptyState
-            description="This event does not publish gated links or files yet. Pass ownership can still be used for check-in."
-            icon={FileKey2}
-            title="No resources attached"
-          />
-        )}
+                  <p className="mt-2 font-product text-xs font-medium uppercase leading-[1.4] tracking-[0.08em] text-muted">
+                    {resource.type}
+                  </p>
+                  {resource.description ? (
+                    <p className="mt-3 text-sm leading-6 text-muted">
+                      {resource.description}
+                    </p>
+                  ) : null}
+                </article>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              description="This event does not publish gated links or files yet. Pass ownership can still be used for check-in."
+              icon={FileKey2}
+              title="No resources attached"
+            />
+          )}
+        </ProductSection>
       </ProductPage>
     </AppShell>
   );
