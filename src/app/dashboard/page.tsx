@@ -4,7 +4,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   BadgeCheck,
-  BanknoteArrowUp,
   CalendarDays,
   CheckCircle2,
   Handshake,
@@ -17,14 +16,14 @@ import { ContractReadiness } from "@/components/contract-readiness";
 import { WalletReadiness } from "@/components/wallet-readiness";
 import { PublishButton } from "@/components/events/publish-button";
 import { WithdrawButton } from "@/components/events/withdraw-button";
+import { WalletButton } from "@/components/wallet-button";
 import {
   EmptyState,
-  MetricTile,
   ProductPage,
-  ProductPageHeader,
   SectionHeader,
 } from "@/components/ui/product-layout";
 import { ProofSurface } from "@/components/ui/proof-surface";
+import { CompactPageHeader, DataRow, ProductSection, TaskPanel } from "@/components/ui/product-primitives";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
@@ -57,6 +56,57 @@ function amountForAction(value: number) {
 export default async function DashboardPage() {
   const cookieStore = await cookies();
   const session = readSessionToken(cookieStore.get(SESSION_COOKIE)?.value);
+
+  if (!session) {
+    return (
+      <AppShell>
+        <ProductPage className="space-y-8" spacing="default">
+          <CompactPageHeader
+            actions={<WalletButton />}
+            description="Connect the wallet you use for events. Studio will then show the work that belongs to that wallet."
+            eyebrow="Studio"
+            icon={LayoutDashboard}
+            title="Your event workspace starts with your wallet."
+          />
+
+          <TaskPanel className="grid gap-6 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center" tone="ready">
+            <div>
+              <p className="text-lg font-medium text-foreground">Connect to continue</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
+                After a wallet session is confirmed, Quorum can show the events you host, the revenue shares you can withdraw, and the passes you own.
+              </p>
+            </div>
+            <WalletButton />
+          </TaskPanel>
+
+          <ProductSection
+            description="One Studio adapts to the event roles already attached to your wallet."
+            eyebrow="What Studio organizes"
+            title="Work, not system status"
+          >
+            <div>
+              <DataRow
+                icon={CalendarDays}
+                label="Hosting"
+                detail="Create a draft, publish an event, and monitor check-in."
+              />
+              <DataRow
+                icon={Handshake}
+                label="Collaborating"
+                detail="See your revenue share and withdraw when funds are settled."
+              />
+              <DataRow
+                icon={TicketCheck}
+                label="Attending"
+                detail="Keep wallet-bound passes, resources, and receipt proof together."
+              />
+            </div>
+          </ProductSection>
+        </ProductPage>
+      </AppShell>
+    );
+  }
+
   const organizerEvents = session
     ? await listOrganizerEvents(session.walletAddress)
     : [];
@@ -116,36 +166,6 @@ export default async function DashboardPage() {
       active: attendeePasses.length > 0,
     },
   ];
-  const cards = [
-    {
-      icon: CalendarDays,
-      label: "Hosted events",
-      value: String(organizerEvents.length),
-      detail: `${organizerEvents.filter((event) => event.status === "published").length} published`,
-      tone: "cyan" as const,
-    },
-    {
-      icon: Handshake,
-      label: "Collaborations",
-      value: String(collaborations.length),
-      detail: `${formatUsdc(withdrawableUsdc)} USDC withdrawable`,
-      tone: "cyan" as const,
-    },
-    {
-      icon: TicketCheck,
-      label: "Attendee passes",
-      value: String(attendeePasses.length),
-      detail: `${attendeePasses.filter(({ pass }) => pass.checkedIn).length} checked in`,
-      tone: "success" as const,
-    },
-    {
-      icon: BanknoteArrowUp,
-      label: "Revenue routed",
-      value: `${formatUsdc(organizerRevenue)} USDC`,
-      detail: "from completed checkouts",
-      tone: "warning" as const,
-    },
-  ];
   const proofRows = [
     {
       label: "Wallet",
@@ -177,8 +197,8 @@ export default async function DashboardPage() {
 
   return (
     <AppShell>
-      <ProductPage className="space-y-5">
-        <ProductPageHeader
+      <ProductPage className="space-y-8" spacing="default">
+        <CompactPageHeader
           actions={
             <QuorumButton href="/dashboard/events/new" icon={<ArrowRight size={16} />}>
               Create event
@@ -193,11 +213,24 @@ export default async function DashboardPage() {
             </StatusPill>
           }
           title="Run your events from one calm workspace."
-        >
+        />
+
+        <TaskPanel className="p-5 sm:p-6" tone="default">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-foreground">{walletLabel}</p>
+              <p className="mt-1 text-sm text-muted">Your wallet roles shape the work shown below.</p>
+            </div>
+            {withdrawableUsdc > 0 ? (
+              <span className="font-mono text-sm text-amber">
+                {formatUsdc(withdrawableUsdc)} USDC ready to withdraw
+              </span>
+            ) : null}
+          </div>
           <div className="grid gap-2 sm:grid-cols-3">
             {roleBadges.map((role) => (
               <div
-                className="flex items-center justify-between gap-3 rounded-full border border-white/10 bg-background/36 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-[6px] border border-white/10 bg-background/36 px-4 py-3"
                 key={role.label}
               >
                 <span className="text-sm text-muted">{role.label}</span>
@@ -211,20 +244,7 @@ export default async function DashboardPage() {
               </div>
             ))}
           </div>
-        </ProductPageHeader>
-
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {cards.map((card) => (
-            <MetricTile
-              detail={card.detail}
-              icon={card.icon}
-              key={card.label}
-              label={card.label}
-              tone={card.tone}
-              value={card.value}
-            />
-          ))}
-        </div>
+        </TaskPanel>
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.18fr)_0.82fr] xl:items-start">
           <div className="grid gap-5">
@@ -430,9 +450,6 @@ export default async function DashboardPage() {
           </div>
 
           <aside className="grid content-start gap-5">
-            <WalletReadiness />
-            <ContractReadiness />
-
             <ProofSurface>
               <p className="eyebrow">Attendee passes</p>
               <div className="mt-5 grid gap-3">
@@ -493,6 +510,19 @@ export default async function DashboardPage() {
                 })}
               </div>
             </ProofSurface>
+
+            <details className="rounded-[8px] border border-white/10 bg-white/[0.025] p-4">
+              <summary className="cursor-pointer list-none text-sm font-medium text-muted">
+                Diagnostics and testnet readiness
+              </summary>
+              <p className="mt-2 text-sm leading-6 text-muted">
+                Open this only when checking wallet session or contract setup.
+              </p>
+              <div className="mt-4 grid gap-4">
+                <WalletReadiness />
+                <ContractReadiness />
+              </div>
+            </details>
 
             <ProofSurface>
               <div className="flex items-start gap-3 text-muted">
