@@ -7,7 +7,6 @@ import {
   ChevronRight,
   CheckCircle2,
   FileKey2,
-  Loader2,
   Percent,
   Plus,
   Rocket,
@@ -15,6 +14,8 @@ import {
   WalletCards,
 } from "lucide-react";
 import Link from "next/link";
+import { Alert, Spinner } from "@/components/ui/feedback-primitives";
+import { Input, Select, Textarea } from "@/components/ui/form-primitives";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
 import { useWallet } from "@/components/wallet-provider";
@@ -61,8 +62,6 @@ type ResourceFormRow = {
   sortOrder: string;
 };
 
-const inputClass =
-  "min-h-11 w-full rounded-[10px] border border-white/10 bg-background/60 px-3 text-sm text-foreground outline-none transition placeholder:text-muted focus:border-quorum-cyan focus:bg-background/80";
 const labelClass = "text-sm font-medium text-foreground";
 const fieldHintClass =
   "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted";
@@ -366,8 +365,7 @@ export function CreateEventForm() {
           <div className="mt-5 grid gap-4">
             <label className="grid gap-2">
               <span className={labelClass}>Event title</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) => updateForm("title", event.target.value)}
                 required
                 value={form.title}
@@ -376,8 +374,8 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>Description</span>
-              <textarea
-                className={`${inputClass} min-h-28 py-3 leading-6`}
+              <Textarea
+                className="leading-6"
                 maxLength={280}
                 onChange={(event) =>
                   updateForm("shortDescription", event.target.value)
@@ -390,8 +388,7 @@ export function CreateEventForm() {
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-2">
                 <span className={labelClass}>Event type</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) => updateForm("eventType", event.target.value)}
                   required
                   value={form.eventType}
@@ -400,8 +397,7 @@ export function CreateEventForm() {
 
               <label className="grid gap-2">
                 <span className={labelClass}>Cover image URL</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateForm("coverImageUrl", event.target.value)
                   }
@@ -453,8 +449,7 @@ export function CreateEventForm() {
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <label className="grid gap-2">
               <span className={labelClass}>Start</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) =>
                   updateForm("startDateTime", event.target.value)
                 }
@@ -466,8 +461,7 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>End</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) => updateForm("endDateTime", event.target.value)}
                 required
                 type="datetime-local"
@@ -477,8 +471,7 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>Timezone</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) => updateForm("timezone", event.target.value)}
                 required
                 value={form.timezone}
@@ -487,21 +480,19 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>Location type</span>
-              <select
-                className={inputClass}
+              <Select
                 onChange={(event) => updateForm("locationType", event.target.value)}
                 value={form.locationType}
               >
                 <option value="physical">Physical</option>
                 <option value="virtual">Virtual</option>
                 <option value="hybrid">Hybrid</option>
-              </select>
+              </Select>
             </label>
 
             <label className="grid gap-2">
               <span className={labelClass}>Location</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) => updateForm("locationText", event.target.value)}
                 value={form.locationText}
               />
@@ -509,8 +500,7 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>Meeting URL</span>
-              <input
-                className={inputClass}
+              <Input
                 onChange={(event) => updateForm("meetingUrl", event.target.value)}
                 type="url"
                 value={form.meetingUrl}
@@ -544,8 +534,7 @@ export function CreateEventForm() {
           <div className="mt-4 grid gap-4">
             <label className="grid gap-2">
               <span className={labelClass}>Price USDC</span>
-              <input
-                className={inputClass}
+              <Input
                 disabled={mode === "free"}
                 min="0"
                 onChange={(event) => updateForm("priceUsdc", event.target.value)}
@@ -557,8 +546,7 @@ export function CreateEventForm() {
 
             <label className="grid gap-2">
               <span className={labelClass}>Capacity</span>
-              <input
-                className={inputClass}
+              <Input
                 min="1"
                 onChange={(event) => updateForm("capacity", event.target.value)}
                 required
@@ -613,8 +601,7 @@ export function CreateEventForm() {
             >
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Name</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateCollaborator(index, "displayName", event.target.value)
                   }
@@ -624,8 +611,7 @@ export function CreateEventForm() {
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Role</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateCollaborator(index, "role", event.target.value)
                   }
@@ -635,8 +621,8 @@ export function CreateEventForm() {
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Wallet</span>
-                <input
-                  className={`${inputClass} font-mono text-xs`}
+                <Input
+                  className="font-mono text-xs"
                   onChange={(event) =>
                     updateCollaborator(index, "walletAddress", event.target.value)
                   }
@@ -647,8 +633,7 @@ export function CreateEventForm() {
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Split</span>
-                <input
-                  className={inputClass}
+                <Input
                   min="0"
                   onChange={(event) =>
                     updateCollaborator(
@@ -709,8 +694,7 @@ export function CreateEventForm() {
             >
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Title</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateResource(index, "title", event.target.value)
                   }
@@ -720,8 +704,7 @@ export function CreateEventForm() {
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Type</span>
-                <select
-                  className={inputClass}
+                <Select
                   onChange={(event) =>
                     updateResource(index, "type", event.target.value)
                   }
@@ -730,12 +713,11 @@ export function CreateEventForm() {
                   <option value="link">Link</option>
                   <option value="file">File</option>
                   <option value="text">Text</option>
-                </select>
+                </Select>
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>URL</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateResource(index, "url", event.target.value)
                   }
@@ -745,8 +727,7 @@ export function CreateEventForm() {
               </label>
               <label className="grid gap-2">
                 <span className={fieldHintClass}>Order</span>
-                <input
-                  className={inputClass}
+                <Input
                   min="0"
                   onChange={(event) =>
                     updateResource(index, "sortOrder", event.target.value)
@@ -767,8 +748,7 @@ export function CreateEventForm() {
               </div>
               <label className="grid gap-2 lg:col-span-5">
                 <span className={fieldHintClass}>Description</span>
-                <input
-                  className={inputClass}
+                <Input
                   onChange={(event) =>
                     updateResource(index, "description", event.target.value)
                   }
@@ -835,12 +815,13 @@ export function CreateEventForm() {
       ) : null}
 
       {result?.error ? (
-        <div className="rounded-[12px] border border-coral/60 bg-coral/10 p-4 text-sm text-coral">
-          {result.error} {issueText}
-        </div>
+        <Alert title="Event draft needs attention" tone="danger">
+          <p>{result.error}</p>
+          {issueText ? <p>{issueText}</p> : null}
+        </Alert>
       ) : null}
 
-      <div className="sticky bottom-4 z-10 border-t border-white/10 bg-[#0c0b0b]/92 pt-3 backdrop-blur-xl">
+      <div className="border-t border-white/10 pt-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             <button
@@ -870,11 +851,11 @@ export function CreateEventForm() {
               type="button"
             >
               {publishing ? (
-                <Loader2 className="animate-spin" size={17} />
+                <Spinner label="Publishing event" size={17} />
               ) : (
                 <Rocket size={17} />
               )}
-              Publish
+              {publishing ? "Publishing" : "Publish"}
             </button>
           ) : null}
           <button
@@ -883,11 +864,11 @@ export function CreateEventForm() {
             type="submit"
           >
             {submitting ? (
-              <Loader2 className="animate-spin" size={17} />
+              <Spinner label="Saving event draft" size={17} />
             ) : (
               <CalendarPlus size={17} />
             )}
-            {savedEventId ? "Save changes" : "Save draft"}
+            {submitting ? "Saving draft" : savedEventId ? "Save changes" : "Save draft"}
           </button>
         </div>
         </div>
