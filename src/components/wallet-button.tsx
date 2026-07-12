@@ -20,6 +20,7 @@ export function WalletButton() {
 
   const isBusy = status === "checking";
   const connectedAddress = sessionWalletAddress ?? walletAddress;
+  const sessionNetworkLabel = network === "TESTNET" ? "Stellar Testnet" : network;
 
   if (connectedAddress) {
     return (
@@ -31,7 +32,7 @@ export function WalletButton() {
               {shorten(connectedAddress)}
             </p>
             <p className="hidden text-[11px] leading-none text-muted sm:block">
-              {network ?? "Signed session"}
+              {sessionNetworkLabel ?? "Signed session"}
             </p>
           </div>
         </div>
@@ -72,6 +73,7 @@ export function WalletButton() {
           {isBusy ? "Checking" : "Connect wallet"}
         </span>
         <span className="sm:hidden">{isBusy ? "Check" : "Wallet"}</span>
+        {!isBusy ? <span className="hidden text-xs text-quorum-cyan-soft xl:inline">Testnet</span> : null}
       </button>
     </div>
   );
