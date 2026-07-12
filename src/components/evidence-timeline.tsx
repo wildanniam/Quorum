@@ -211,24 +211,27 @@ export function EvidenceTimeline({
               <h3 className="mt-3 truncate font-product text-xl font-medium">
                 {record.eventTitle ?? record.sourceLabel}
               </h3>
-              <p className="mt-1 text-sm leading-6 text-muted">
-                {mode.helper}
-              </p>
-              <div className="mt-3 grid gap-2 rounded-[10px] border border-white/10 bg-background/34 p-3 text-xs text-muted md:grid-cols-2">
-                <p className="min-w-0 break-all font-mono">
-                  <span className="text-foreground/70">source:</span>{" "}
-                  {record.txHash ?? record.sourceLabel}
-                </p>
-                <p className="min-w-0 break-all font-mono">
-                  <span className="text-foreground/70">actor:</span>{" "}
-                  {shorten(record.actorWallet)}
-                </p>
-              </div>
+              <p className="mt-1 text-sm leading-6 text-muted">{mode.helper}</p>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
                 <span>{formatDate(record.occurredAt)} UTC</span>
-                {record.tokenId ? <span>token {record.tokenId}</span> : null}
-                {record.ledger !== null ? <span>ledger {record.ledger}</span> : null}
               </div>
+              <details className="mt-3 rounded-[6px] border border-white/10 bg-background/34 p-3">
+                <summary className="cursor-pointer text-xs font-medium text-muted">
+                  Technical details
+                </summary>
+                <div className="mt-3 grid gap-2 text-xs text-muted md:grid-cols-2">
+                  <p className="min-w-0 break-all font-mono">
+                    <span className="text-foreground/70">source:</span>{" "}
+                    {record.txHash ?? record.sourceLabel}
+                  </p>
+                  <p className="min-w-0 break-all font-mono">
+                    <span className="text-foreground/70">actor:</span>{" "}
+                    {shorten(record.actorWallet)}
+                  </p>
+                  {record.tokenId ? <p className="break-all font-mono">token: {record.tokenId}</p> : null}
+                  {record.ledger !== null ? <p className="font-mono">ledger: {record.ledger}</p> : null}
+                </div>
+              </details>
             </div>
 
             <div className="flex flex-wrap gap-2 lg:justify-end">
