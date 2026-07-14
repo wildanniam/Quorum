@@ -350,6 +350,7 @@ export default async function DashboardPage() {
                         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                           {metricCards.map((metric) => (
                             <div
+                              aria-label={`${metric.value} ${metric.label}`}
                               className="rounded-[10px] border border-white/10 bg-white/[0.035] p-3"
                               key={metric.label}
                             >

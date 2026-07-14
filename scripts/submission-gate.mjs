@@ -133,6 +133,11 @@ const checks = [
     args: ["run", "contracts:doctor"],
   },
   {
+    id: "isolated-db-gate-guard",
+    command: "npm",
+    args: ["run", "submission:db:gate:smoke"],
+  },
+  {
     id: "submission-package",
     command: "npm",
     args: ["run", "submission:package:smoke"],
@@ -234,7 +239,7 @@ const report = {
     {
       id: "isolated-db-integration",
       reason:
-        "DB-backed demo, settlement, persistence, policy, and auth smokes need an explicitly isolated writable Postgres URL.",
+        "Run submission:db:gate separately with QUORUM_RELEASE_DATABASE_URL pointing to disposable localhost Postgres.",
     },
     {
       id: "browser-qa",

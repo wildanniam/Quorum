@@ -141,7 +141,10 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - `npm run submission:gate` is the non-destructive source gate.
 - `npm run submission:hosted:probe` checks only public GET routes and contract
   status; it never calls mutation, cron, signing, or provider endpoints.
-- DB-backed integration smokes require an explicitly isolated writable Postgres
-  URL and are excluded from the default gate.
+- `npm run submission:db:gate` runs DB-backed integration smokes sequentially
+  only when `QUORUM_RELEASE_DATABASE_URL` points to disposable localhost
+  Postgres. The command rejects hosted and production database hosts.
+- DB-backed integration remains separate from the default source gate because
+  it migrates and seeds its explicitly isolated writable database.
 - Browser QA, production migration, hosted cron, fresh Freighter evidence,
   deployment, and final submission remain explicit checkpoints.

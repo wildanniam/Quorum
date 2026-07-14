@@ -3,7 +3,10 @@ import { createHmac, randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { StrKey } from "@stellar/stellar-sdk";
 import { withClient } from "./postgres-utils.mjs";
-import { createFutureEventWindow } from "./demo-event-schedule.mjs";
+import {
+  createFutureEventWindow,
+  createPastEventWindow,
+} from "./demo-event-schedule.mjs";
 
 const projectRoot = process.cwd();
 const port = Number(process.env.LIVE_POLICY_SMOKE_PORT ?? 3036);
@@ -321,7 +324,13 @@ async function main() {
       "all contract actions should require live submission",
     );
 
-    const dashboard = await fetch(`${baseUrl}/dashboard`);
+    const attendeeCookie = `quorum_session=${createSession(attendeeWallet)}`;
+    const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
+    const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
+
+    const dashboard = await fetch(`${baseUrl}/dashboard`, {
+      headers: { cookie: organizerCookie },
+    });
     const dashboardHtml = await dashboard.text();
     assert(dashboard.status === 200, "dashboard should render in live policy mode");
     assert(
@@ -330,17 +339,13 @@ async function main() {
     );
     assert(
       dashboardHtml.includes("Freighter approval is required before submission.") &&
-        dashboardHtml.includes("live required"),
+        dashboardHtml.includes("wallet signing required"),
       "dashboard should show live-required action policy",
     );
     assert(
       dashboardHtml.includes("USDC asset") && dashboardHtml.includes("Configured"),
       "dashboard should show configured USDC payment asset",
     );
-
-    const attendeeCookie = `quorum_session=${createSession(attendeeWallet)}`;
-    const organizerCookie = `quorum_session=${createSession(organizerWallet)}`;
-    const speakerCookie = `quorum_session=${createSession(speakerWallet)}`;
 
     const draftResponse = await fetch(`${baseUrl}/api/events`, {
       method: "POST",
@@ -540,12 +545,22 @@ async function main() {
     assert(counts.checkIns === 0, "live policy should not create local check-ins");
     assert(counts.withdrawals === 0, "live policy should not create local withdrawals");
 
+    const endedEventWindow = createPastEventWindow({ durationHours: 3 });
+
     await withClient(
       (client) =>
-        client.query("UPDATE events SET end_date_time = $1 WHERE id = $2", [
-          "2026-01-01T12:00:00.000Z",
-          eventId,
-        ]),
+        client.query(
+          `
+          UPDATE events
+          SET start_date_time = $1, end_date_time = $2
+          WHERE id = $3
+          `,
+          [
+            endedEventWindow.startDateTime,
+            endedEventWindow.endDateTime,
+            eventId,
+          ],
+        ),
       { migration: true },
     );
     const endedCheckoutPrepare = await fetch(

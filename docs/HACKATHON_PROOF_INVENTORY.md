@@ -63,6 +63,9 @@ not yet the final submission candidate.
 Run `npm run submission:gate` for the complete non-destructive source suite and
 `npm run submission:hosted:probe` for the read-only Vercel snapshot. Neither
 command replaces the explicit production, browser, signing, or provider gates.
+Use `npm run submission:db:gate` only with `QUORUM_RELEASE_DATABASE_URL`
+pointing to disposable localhost Postgres; the gate rejects hosted database
+hosts before running migrations or seed data.
 
 ## Judge-Safe Links
 
