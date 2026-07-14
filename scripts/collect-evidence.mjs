@@ -17,6 +17,7 @@ const checks = [
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
   { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
   { label: "Settlement smoke", command: "npm", args: ["run", "settlement:smoke"] },
+  { label: "Indexer security smoke", command: "npm", args: ["run", "indexer:security:smoke"] },
   { label: "Browser QA", command: "npm", args: ["run", "browser:qa"] },
   { label: "Deploy env smoke", command: "npm", args: ["run", "deploy:env:smoke"] },
   { label: "Deploy hosted preflight smoke", command: "npm", args: ["run", "deploy:hosted:preflight:smoke"] },

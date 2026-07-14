@@ -78,16 +78,103 @@ export type RunIndexerOptions = {
 };
 
 export type IngestStellarEventsOptions = {
+  allowedContractIds?: string[];
   events: unknown[];
 };
 
 const DEFAULT_STATE_ID = "quorum-testnet-contracts";
 const DEFAULT_LIMIT = 100;
-const DEFAULT_RECENT_LEDGER_WINDOW = 2_000;
+const DEFAULT_RECENT_LEDGER_WINDOW = 100_000;
+const INDEXER_ACTIVE_RUN_TIMEOUT_SECONDS = 15 * 60;
+const MAX_RECENT_LEDGER_WINDOW = 100_000;
 const HEX_64_PATTERN = /^[a-f0-9]{64}$/i;
 
 function optionalEnv(value: string | undefined) {
   return value && value.trim().length > 0 ? value.trim() : null;
+}
+
+export function validateIndexerRunOptions({
+  cursor = null,
+  limit = DEFAULT_LIMIT,
+  startLedger = null,
+}: {
+  cursor?: string | null;
+  limit?: number;
+  startLedger?: number | null;
+}) {
+  const normalizedCursor = optionalEnv(cursor ?? undefined);
+
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) {
+    throw new Error("Indexer limit must be an integer between 1 and 500.");
+  }
+
+  if (
+    startLedger !== null &&
+    (!Number.isSafeInteger(startLedger) || startLedger < 0)
+  ) {
+    throw new Error("Indexer start ledger must be a non-negative integer.");
+  }
+
+  if (normalizedCursor && startLedger !== null) {
+    throw new Error("Indexer cursor and start ledger cannot be combined.");
+  }
+
+  return {
+    cursor: normalizedCursor,
+    limit,
+    startLedger,
+  };
+}
+
+export function resolveIndexerCheckpoint({
+  currentCursor,
+  currentLatestLedger,
+  nextCursor,
+  observedLatestLedger,
+}: {
+  currentCursor: string | null;
+  currentLatestLedger: number | null;
+  nextCursor: string | null;
+  observedLatestLedger: number;
+}) {
+  const regressed =
+    currentLatestLedger !== null &&
+    observedLatestLedger < currentLatestLedger;
+
+  return {
+    cursor: regressed ? currentCursor : nextCursor ?? currentCursor,
+    latestLedger: Math.max(currentLatestLedger ?? 0, observedLatestLedger),
+  };
+}
+
+function recentLedgerWindow() {
+  const raw = optionalEnv(process.env.QUORUM_INDEXER_RECENT_LEDGER_WINDOW);
+  if (!raw) return DEFAULT_RECENT_LEDGER_WINDOW;
+
+  const value = Number(raw);
+
+  if (!Number.isSafeInteger(value) || value < 1 || value > MAX_RECENT_LEDGER_WINDOW) {
+    throw new Error(
+      `QUORUM_INDEXER_RECENT_LEDGER_WINDOW must be an integer between 1 and ${MAX_RECENT_LEDGER_WINDOW}.`,
+    );
+  }
+
+  return value;
+}
+
+function configuredStartLedger() {
+  const raw = optionalEnv(process.env.QUORUM_INDEXER_START_LEDGER);
+  if (!raw) return null;
+
+  const value = Number(raw);
+
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new Error(
+      "QUORUM_INDEXER_START_LEDGER must be a non-negative integer.",
+    );
+  }
+
+  return value;
 }
 
 function toIndexerStateRecord(row: IndexerStateRow): IndexerStateRecord {
@@ -440,12 +527,26 @@ async function markIndexerStarted({
       contract_ids = EXCLUDED.contract_ids,
       last_started_at = now(),
       last_error = NULL
+    WHERE
+      indexer_state.last_started_at IS NULL
+      OR indexer_state.last_success_at >= indexer_state.last_started_at
+      OR indexer_state.last_error IS NOT NULL
+      OR indexer_state.last_started_at <
+        now() - make_interval(secs => $5)
     RETURNING *
     `,
-    [stateId, network, rpcUrl, contractIds],
+    [
+      stateId,
+      network,
+      rpcUrl,
+      contractIds,
+      INDEXER_ACTIVE_RUN_TIMEOUT_SECONDS,
+    ],
   );
 
-  if (!row) throw new Error("Could not initialize indexer state.");
+  if (!row) {
+    throw new Error("A Stellar event indexer run is already active.");
+  }
 
   return toIndexerStateRecord(row);
 }
@@ -464,7 +565,11 @@ async function markIndexerSuccess({
     UPDATE indexer_state
     SET
       cursor = COALESCE($2, cursor),
-      latest_ledger = COALESCE($3, latest_ledger),
+      latest_ledger = CASE
+        WHEN $3::integer IS NULL THEN latest_ledger
+        WHEN latest_ledger IS NULL THEN $3::integer
+        ELSE GREATEST(latest_ledger, $3::integer)
+      END,
       last_success_at = now(),
       last_error = NULL
     WHERE id = $1
@@ -485,12 +590,14 @@ async function markIndexerFailure({
   error: unknown;
   stateId: string;
 }) {
+  const message = (error instanceof Error ? error.message : String(error)).slice(
+    0,
+    1_000,
+  );
+
   await execute(
     "UPDATE indexer_state SET last_error = $2 WHERE id = $1",
-    [
-      stateId,
-      error instanceof Error ? error.message : String(error),
-    ],
+    [stateId, message],
   );
 }
 
@@ -514,15 +621,33 @@ export function getQuorumIndexerContracts() {
 }
 
 export async function ingestStellarEvents({
+  allowedContractIds,
   events,
 }: IngestStellarEventsOptions) {
+  const normalizedEvents = events.map((event, eventIndex) =>
+    normalizeStellarEvent(event, eventIndex),
+  );
+  const allowedContracts = allowedContractIds
+    ? new Set(allowedContractIds)
+    : null;
+
+  if (allowedContracts) {
+    const unexpected = normalizedEvents.find(
+      (event) => !allowedContracts.has(event.contractId),
+    );
+
+    if (unexpected) {
+      throw new Error(
+        `Stellar RPC returned an event for unconfigured contract ${unexpected.contractId}.`,
+      );
+    }
+  }
+
   const records: StellarEventRecord[] = [];
   let insertedCount = 0;
 
-  for (const [eventIndex, rawEvent] of events.entries()) {
-    const result = await recordNormalizedStellarEvent(
-      normalizeStellarEvent(rawEvent, eventIndex),
-    );
+  for (const event of normalizedEvents) {
+    const result = await recordNormalizedStellarEvent(event);
 
     if (result.inserted) insertedCount += 1;
     records.push(result.record);
@@ -531,7 +656,7 @@ export async function ingestStellarEvents({
   return {
     insertedCount,
     records,
-    totalCount: events.length,
+    totalCount: normalizedEvents.length,
   };
 }
 
@@ -560,9 +685,18 @@ export async function runStellarEventIndexer({
   startLedger: startLedgerOverride = null,
   stateId = DEFAULT_STATE_ID,
 }: RunIndexerOptions = {}) {
+  const startedAt = new Date();
+  const runStartedMs = startedAt.getTime();
+  const validated = validateIndexerRunOptions({
+    cursor: cursorOverride,
+    limit,
+    startLedger: startLedgerOverride,
+  });
   const { contractIds: configuredContractIds, readiness } =
     getQuorumIndexerContracts();
-  const contractIds = contractIdsOverride ?? configuredContractIds;
+  const contractIds = [
+    ...new Set(contractIdsOverride ?? configuredContractIds),
+  ].sort();
 
   if (!readiness.configured && !contractIdsOverride) {
     throw new Error("Valid Quorum contract IDs are required before indexing.");
@@ -578,18 +712,18 @@ export async function runStellarEventIndexer({
     rpcUrl: readiness.rpcUrl,
     stateId,
   });
-  const boundedLimit = Math.max(1, Math.min(Math.trunc(limit), 500));
-  const cursor = cursorOverride ?? state.cursor;
-  const envStartLedger = optionalEnv(process.env.QUORUM_INDEXER_START_LEDGER);
+  const cursor =
+    validated.startLedger !== null
+      ? null
+      : validated.cursor ?? state.cursor;
+  const envStartLedger = configuredStartLedger();
   let startLedger =
-    startLedgerOverride ??
+    validated.startLedger ??
     (cursor
       ? null
       : state.latestLedger !== null
         ? state.latestLedger + 1
-        : envStartLedger && /^\d+$/.test(envStartLedger)
-          ? Number(envStartLedger)
-          : null);
+        : envStartLedger);
 
   try {
     if (startLedger === null && !cursor) {
@@ -597,11 +731,7 @@ export async function runStellarEventIndexer({
         requester,
         rpcUrl: readiness.rpcUrl,
       });
-      const recentLedgerWindow = Number(
-        process.env.QUORUM_INDEXER_RECENT_LEDGER_WINDOW ??
-          DEFAULT_RECENT_LEDGER_WINDOW,
-      );
-      startLedger = Math.max(latestLedger - recentLedgerWindow, 0);
+      startLedger = Math.max(latestLedger - recentLedgerWindow(), 0);
     }
 
     const result = await requester({
@@ -616,37 +746,48 @@ export async function runStellarEventIndexer({
         ],
         pagination: {
           ...(cursor ? { cursor } : {}),
-          limit: boundedLimit,
+          limit: validated.limit,
         },
         ...(startLedger !== null ? { startLedger } : {}),
       },
       rpcUrl: readiness.rpcUrl,
     });
     const events = eventArrayFromRpcResult(result);
-    const ingested = await ingestStellarEvents({ events });
-    const latestLedger =
-      latestLedgerFromRpcResult(result) ??
-      Math.max(
-        startLedger ?? 0,
-        ...ingested.records.map((record) => record.ledger),
-      );
-    const nextCursor = cursorFromRpcResult(result, events);
+    const ingested = await ingestStellarEvents({
+      allowedContractIds: contractIds,
+      events,
+    });
+    const reportedLatestLedger = latestLedgerFromRpcResult(result);
+    const observedLatestLedger = Math.max(
+      reportedLatestLedger ?? 0,
+      startLedger ?? 0,
+      ...ingested.records.map((record) => record.ledger),
+    );
+    const checkpoint = resolveIndexerCheckpoint({
+      currentCursor: cursor,
+      currentLatestLedger: state.latestLedger,
+      nextCursor: cursorFromRpcResult(result, events),
+      observedLatestLedger,
+    });
     const finalState = await markIndexerSuccess({
-      cursor: nextCursor,
-      latestLedger,
+      cursor: checkpoint.cursor,
+      latestLedger: checkpoint.latestLedger,
       stateId,
     });
 
     return {
       contractIds,
-      cursor: nextCursor,
+      cursor: checkpoint.cursor,
+      durationMs: Date.now() - runStartedMs,
       fetchedCount: events.length,
+      finishedAt: new Date().toISOString(),
       insertedCount: ingested.insertedCount,
-      latestLedger,
+      latestLedger: checkpoint.latestLedger,
+      startedAt: startedAt.toISOString(),
       state: finalState,
     };
   } catch (error) {
-    await markIndexerFailure({ error, stateId });
+    await markIndexerFailure({ error, stateId }).catch(() => undefined);
     throw error;
   }
 }

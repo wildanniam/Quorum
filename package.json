@@ -25,6 +25,7 @@
     "anchor:status:smoke": "tsx scripts/anchor-status-sync-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",
     "indexer:run": "tsx scripts/stellar-indexer-run.ts",
+    "indexer:security:smoke": "tsx scripts/indexer-security-smoke.ts",
     "settlement:smoke": "tsx scripts/settlement-smoke.ts",
     "browser:qa": "node scripts/browser-qa.mjs",
     "deploy:env:smoke": "tsx scripts/deploy-env-smoke.ts",
