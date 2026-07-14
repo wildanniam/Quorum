@@ -1,118 +1,79 @@
-# Quorum MVP Readiness Matrix
+# Quorum Submission Readiness
 
-Last updated: 2026-06-09.
+Last reviewed: 2026-07-15.
 
-This matrix maps the final definition of done in `DEVELOPMENT_PLAN.md` to the
-current proof available in the repository. It separates locally verified MVP
-behavior from live testnet work that still requires funded signing credentials.
+Quorum has a strong implemented product core and genuine Stellar testnet history,
+but the current Vercel deployment is not yet the final submission candidate.
+The remaining work is release evidence and production readiness, not a new
+product concept.
 
-## Acceptance Criteria Snapshot
+## Readiness Legend
 
-Quorum is considered locally demo-ready when these criteria pass:
+- **Current hosted**: observed on the current Vercel deployment.
+- **Historically live**: real Stellar testnet execution from an older app origin.
+- **Verified in code**: deterministic smoke/contract coverage without a current
+  hosted transaction claim.
+- **Blocked**: requires an explicit production, signing, or provider checkpoint.
 
-1. Published paid and free events are visible in the public marketplace.
-2. A wallet session can complete paid checkout and free claim flows.
-3. Each attendee receives one unique, non-transferable pass proof per event.
-4. Event resources are locked without a pass and unlocked for the pass owner.
-5. Organizer check-in records pass attendance proof and rejects invalid access.
-6. Collaborator balances are visible and withdrawal proof can be recorded.
-7. Organizer, attendee, collaborator, and proof readiness dashboard surfaces are
-   visible in the app.
-8. Local DB, lint, build, audit, API origin smoke, demo smoke, live policy
-   smoke, browser QA, deploy env smoke, live args smoke, live flow smoke,
-   live persistence smoke, live preflight smoke, live signing smoke, live
-   submission smoke, live XDR smoke, hosted preflight smoke, live deployment
-   validation, contract tests, contract build, contract approval smoke, and
-   deployment doctor checks pass with live signing exceptions documented.
-9. The non-signing readiness audit passes after evidence is refreshed.
+## Current Matrix
 
-The live hackathon acceptance criteria add two gated requirements:
+| Area | Status | Evidence / next gate |
+| --- | --- | --- |
+| Public product deployment | Current hosted | `https://quorum-sandy-eight.vercel.app` responds successfully. |
+| Landing and product navigation | Current hosted | Landing routes to Discover, Studio, Passes, and Evidence. |
+| Event discovery, detail, checkout review | Current hosted | Routes respond; final release QA is still required after the PR chain lands. |
+| Core and pass contracts | Historically live | IDs and deployment/init hashes are in `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. |
+| Contract runtime configuration | Current hosted, configured | `/api/contracts/status` reports expected testnet IDs and RPC reachability. |
+| Live publish/checkout/claim/check-in/withdraw | Historically live | Real July 4 hashes exist in `docs/LIVE_TESTNET_EVIDENCE.json`; the origin is historical ngrok. |
+| Current evidence feed | Blocked | Production is missing `0005_anchor_cashout_proof.sql`; explicit migration approval is required. |
+| Soroban indexer | Verified in code, blocked hosted | Hardened auth/cursor/concurrency logic exists; Vercel still needs a strong `CRON_SECRET` and fresh run proof. |
+| Event lifecycle | Verified in code | Upcoming/live/ended behavior and ended-sales guards are covered by `event:lifecycle:smoke`. Contract-level end-time enforcement is not implemented. |
+| Proof classification | Verified in code | Only explorer-valid hashes are labeled Stellar transactions; app and indexed proof remain distinct. |
+| Collaborator ledger | Verified in code, data-dependent hosted | Wallet-scoped credits/debits and event proof links exist; hosted data depends on migration/indexer readiness. |
+| MoneyGram integration | Verified in code, provider blocked | SEP-1/10/24 paths exist; provider allowlist approval and a successful pickup are not proven. |
+| MoneyGram safety invariant | Verified in code | Server and UI require explorer-valid settlement for MoneyGram; mock mode remains explicitly local. |
+| Responsive/browser QA | Historical local | `docs/BROWSER_QA.md` must be regenerated on the final candidate. |
+| Submission package | In progress | This matrix, proof inventory, and judge runbook are current; final screenshots/video remain. |
 
-1. Contracts are deployed to Stellar testnet with recorded contract IDs.
-2. The testnet USDC token contract ID is confirmed and configured.
-3. The hosted app submits real Freighter-signed publish, checkout, mint,
-   check-in, and withdraw transactions.
+## What Is Already Strong
 
-## Status Legend
+- custom Soroban core and non-transferable pass contracts;
+- preconfigured collaborator split and escrow accounting;
+- wallet-bound pass, resources, check-in, and settlement surfaces;
+- Freighter challenge/session flow and explicit signing boundary;
+- current contract-status endpoint with testnet IDs;
+- public/event/wallet proof scopes;
+- custom event indexer with fail-closed cron authentication and monotonic cursor;
+- historical real testnet flow covering the major product actions;
+- deterministic smoke coverage for XDR, preflight, signing adapter, submission,
+  persistence, lifecycle, proof classification, and MoneyGram eligibility.
 
-- `Verified local`: implemented and covered by local app, smoke, browser, or
-  contract evidence.
-- `Contract-ready`: contract behavior is implemented, built, and tested, but the
-  app is still using local proof records until deployment.
-- `Gated`: requires funded `STELLAR_ACCOUNT`,
-  `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING`, deployed contract
-  IDs, hosted app env vars, or explicit approval before signing live
-  transactions.
+## Release-Critical Work
 
-## Final Definition Of Done Mapping
+1. Approve and apply production migration `0005`.
+2. Add Vercel `CRON_SECRET`, redeploy, and verify an authenticated indexer run.
+3. Review and merge the stacked recovery PRs in dependency order.
+4. Redeploy the resulting main branch.
+5. Run one fresh approved testnet flow on the Vercel origin.
+6. Confirm evidence, event proof, pass, and ledger pages show that same flow.
+7. Regenerate browser QA and final screenshots.
+8. Run `npm run readiness:final` on the release commit and record its output.
 
-| Requirement | Current status | Evidence |
-|---|---|---|
-| App is deployed | Gated | Requires hosted deployment URL, Supabase project credentials, Vercel env configuration, hosted Postgres migrations, and the `docs/PRODUCTION_ENV_HANDOFF.md` checklist. |
-| Contracts are deployed on Stellar testnet | Read-only verified | `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json` records deployed contract IDs, admin wallet, deployment/init transaction hashes, and decoded init/set-core evidence; `npm run live:deployment:validate` validates it against Horizon, Soroban RPC events, and fetched contract interfaces without signing. |
-| Organizer can create and publish event | Verified local | `npm run demo:smoke` covers `draft-validation` and `publish-lifecycle`. |
-| Public marketplace shows event | Verified local | `npm run demo:smoke` covers `marketplace`; `npm run browser:qa` verifies desktop/mobile marketplace rendering. |
-| Attendee can buy paid pass | Verified local, contract-ready | `npm run demo:smoke` covers `checkout`; `QuorumCore` tests cover paid purchase, payment token transfer into escrow, capacity, duplicate guard, invalid amount, split accounting, zero-fee demo accounting, and purchase/balance proof events. |
-| Attendee can claim free pass | Verified local, contract-ready | `npm run demo:smoke` covers `free-claim` and duplicate free claim; `QuorumCore` tests cover free claim, duplicate guard, capacity, and invalid non-zero amount. |
-| Each purchase/claim mints unique non-transferable NFT pass | Verified local, contract-ready | `npm run demo:smoke` covers pass creation; `QuorumPassNFT` tests cover unique owner/event pass, core-only mint, duplicate prevention, disabled transfer, and pass mint proof events. |
-| Resources are gated by NFT/pass ownership | Verified local | `npm run demo:smoke` covers locked anonymous resources and unlocked pass-owner resources. |
-| Organizer can check in pass | Verified local, contract-ready | `npm run demo:smoke` covers organizer check-in and duplicate guard; `QuorumCore` tests cover organizer-only, unknown token, cross-event mismatch, idempotent duplicate check-in, and check-in proof events. |
-| Collaborator can see balance and withdraw | Verified local, contract-ready | `npm run demo:smoke` covers collaborator withdraw and duplicate empty-balance guard; `QuorumCore` tests cover collaborator balance, token transfer out of escrow, platform fee withdrawal, zero-balance rejection, and withdraw proof events. |
-| Dashboards show proof surfaces | Verified local | `npm run demo:smoke` covers `dashboard-proof`; `npm run browser:qa` verifies dashboard proof mode and readiness panels. |
-| DB schema protects live proof identity | Verified local | `npm run db:smoke` verifies Postgres constraints, partial unique indexes, and the global `live_proof_hashes` registry across publish, pass, check-in, purchase, and withdrawal transaction hashes. |
-| Wallet auth HTTP flow issues signed sessions | Verified local | `npm run wallet:auth:smoke` covers invalid wallet challenge rejection, wallet-bound challenge cookie issuance, encoded multiline challenge cookies, signed challenge verification, session cookie creation, `/api/me` session reads, and logout. |
-| Cookie-backed mutation routes are same-origin guarded | Verified local | `npm run api:origin:smoke` covers same-origin, missing-origin, and forwarded same-origin mutation allowance; cross-origin and invalid-origin rejection; and static guard wiring across all POST/PATCH API routes that mutate auth, event, or live transaction state. |
-| Live contract argument encoding is deterministic | Verified local | `npm run live:args:smoke` covers USDC decimal-to-atomic and atomic-to-decimal conversion, event ID derivation, split bps, metadata hashes, and publish/checkout/check-in/withdraw argument DTOs without signing. |
-| Live mode requires Stellar testnet network config | Verified local | `npm run live:readiness:smoke` verifies valid testnet contract/payment/network env enables live action policy, while non-testnet or mismatched passphrase env remains in local proof mode even when contract IDs are valid. |
-| Hosted deployment preflight is fail-safe | Verified local | `npm run deploy:hosted:preflight:smoke` verifies public HTTPS hosted URL rules, production session secret presence, exact runtime env match against read-only deployment evidence, absence of operator signing env, RPC-reachable `/api/contracts/status`, and live action policies without signing. |
-| Contract deployment commands are testnet-only | Verified local | `npm run contracts:approval:smoke` verifies `contracts:doctor`, `contracts:deploy:testnet`, and `contracts:init:testnet` reject non-testnet `STELLAR_NETWORK` values before live signing, verifies non-zero platform fees are blocked without fee-policy approval, and verifies deploy CLI output is parsed only when it contains valid Soroban contract IDs. |
-| Mock live transaction flow persists only after success | Verified local | `npm run live:flow:smoke` covers publish, paid checkout, free claim, check-in, and withdraw action preparation from DB state, RPC preflight, mock Freighter signing options, mock submission/finality, decoded token ID and withdraw amount persistence through `live-result-persistence.ts`, mismatched result rejection, and no persistence after failed finality. |
-| Verified live transaction results can be recorded | Verified local | `npm run live:persistence:smoke` covers recording live publish/pass/check-in/withdrawal results with 64-hex transaction hashes while rejecting local `stub:` hashes, replayed live proof hashes for publish/pass/check-in/withdrawal, duplicate check-ins, and live withdrawal amounts that exceed DB withdrawable balance. |
-| Soroban event indexer can persist Quorum contract events | Verified local | `npm run settlement:smoke` covers idempotent `stellar_events` ingestion, app event mapping, indexer cursor/latest-ledger state, and the Vercel Cron worker path used by `/api/indexer/stellar-events`. |
-| Public and event-specific evidence pages read persisted proof | Verified local | `/evidence` and `/events/[slug-or-id]/proof` read publish, checkout, check-in, withdrawal, and indexed contract event rows from Postgres; `npm run settlement:smoke` verifies event filtering and Stellar explorer links. |
-| Collaborator ledger shows auditable credits/debits | Verified local | `/dashboard/ledger` scopes ledger entries to the connected wallet and shows checkout split credits, withdrawal debits, running balance, event proof links, and explorer links; `npm run settlement:smoke` verifies the ledger math. |
-| Live RPC preflight can prepare transaction XDR for signing | Verified local | `npm run live:preflight:smoke` covers signer sequence lookup, Soroban `prepareTransaction` orchestration through a mock RPC boundary, parseable prepared XDR, and preflight error normalization without signing; `npm run demo:live-policy` verifies the HTTP preflight route fails invalid requests before RPC. |
-| Freighter signing boundary validates signed transaction output | Verified local | `npm run live:signing:smoke` covers the browser signing adapter with a mock signer, including Freighter options, prepared XDR source/contract/function/argument validation before wallet signing, signer mismatch rejection, wallet rejection normalization, and returned signed XDR validation without requesting a real signature. |
-| Signed transaction submission boundary polls finality and decodes return values | Verified local | `npm run live:submission:smoke` covers signed transaction submission, source wallet validation, signed XDR contract/function/argument validation before RPC, duplicate submission status polling for retries, `getTransaction` finality polling, purchase token ID decoding, withdraw amount decoding, RPC rejection, failed finality, timeout handling, and missing/wrong return values with a mock RPC boundary. |
-| Browser live flow can preflight, sign, and submit signed XDR | Verified local | `npm run live:browser-flow:smoke` covers the browser helper calling the preflight route, rejecting mismatched preflight metadata and argument XDR before signing, passing Freighter signer options, posting signed XDR to the submit route, and surfacing preflight/submit errors without opening Freighter. |
-| UI actions are wired to live browser flow fallback | Verified local | `npm run live:ui-wiring:smoke` verifies publish, checkout, check-in, and withdraw UI actions call `executeLiveBrowserContractAction` when the server returns `live_required`. |
-| Unsigned Soroban XDR templates are parseable | Verified local | `npm run live:xdr:smoke` covers pre-simulation unsigned invokeHostFunction XDR templates for publish/checkout/check-in/withdraw, including typed split recipient maps. |
-| Live action preparation and submit boundaries are fail-safe | Verified local | `npm run demo:live-policy` covers `GET /api/events/[eventId]/contract-action` prepare responses for publish/checkout/check-in/withdraw with fake valid contract IDs, verifies short numeric live check-in token IDs reach `live_required`, verifies `POST /api/events/[eventId]/contract-action` rejects invalid signed XDR before persistence, then verifies mutation routes still return live-required responses without local proof writes. |
-| Hosted session configuration is fail-safe | Verified local | `npm run deploy:env:smoke` verifies production rejects missing, placeholder, local fallback, and short `QUORUM_SESSION_SECRET` values, accepts a valid 32+ character secret, rejects malformed/invalid/expired/future-dated session tokens, and rejects expired, malformed, or wallet-mismatched login challenges. |
-| Final verification commands pass or exceptions are documented | Verified local | `docs/DEMO_EVIDENCE.md` records DB, lint, build, audit, API origin smoke, demo smoke, live policy smoke, browser QA, deploy env smoke, live args smoke, live flow smoke, live persistence smoke, live preflight smoke, live signing smoke, live submission smoke, live XDR smoke, live browser flow smoke, live UI wiring smoke, contract tests, contract build, contract approval smoke, and contract doctor; `npm run readiness:audit` checks evidence/doc consistency. |
-| Hackathon evidence is recorded | Verified local | `docs/DEMO_EVIDENCE.md`, `docs/BROWSER_QA.md`, and `docs/HACKATHON_DEMO_RUNBOOK.md`; `npm run live:evidence:audit:smoke` verifies filled live evidence rejects placeholders, local/non-HTTPS hosted URLs, reused transaction hashes, token mismatches, origin mismatches, and zero-value withdrawal evidence. |
+## Explicit Non-Claims
 
-## Live Testnet Gate
+- Quorum is not mainnet production software.
+- The current Vercel evidence feed is not healthy until migration `0005` lands.
+- A configured contract status is not the same as a successful user transaction.
+- Historical ngrok proof is not current Vercel proof.
+- MoneyGram pickup is not complete while provider approval is pending.
+- Event end time is enforced by Quorum server/UI policy, not by the currently
+  deployed Soroban contract.
 
-The contracts are already deployed on Stellar testnet and read-only validated in
-`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. The remaining critical gate for
-the full final definition of done is hosted app readiness plus manual
-Freighter-signed app-flow evidence:
+## Go / No-Go Rule
 
-1. Create/configure the Supabase Postgres and Vercel projects described in
-   `docs/PRODUCTION_ENV_HANDOFF.md`.
-2. Run hosted Postgres migrations against Supabase.
-3. Configure the hosted runtime env with the recorded testnet contract IDs, the
-   confirmed USDC contract ID, and a non-placeholder `QUORUM_SESSION_SECRET` of
-   at least 32 characters.
-4. Run `npm run deploy:hosted:preflight -- --url https://<hosted-app> --env-file <pulled-env-file>`.
-5. After explicit approval for the current live testnet wallet session, follow
-   `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md`.
-6. Record hosted URLs, deployment transaction hashes, and Freighter-signed app
-   flow transaction hashes in `docs/LIVE_TESTNET_EVIDENCE.json`, then run
-   `npm run live:evidence:audit`.
+The final submission is **GO** only when production schema, hosted indexer,
+current-origin evidence, final browser QA, and release checks are all green.
+Until then, the honest status is **candidate code ready; hosted evidence pending**.
 
-Until those steps are intentionally approved and executed, Quorum is demo-ready
-in local proof mode, live-contract deployed, and app-live-signing ready.
-Use `docs/LIVE_SIGNING_HANDOFF.md` for the endpoint-by-endpoint signing
-architecture and `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the human
-approval sequence.
-
-## Current Submission State
-
-The current repository is suitable for a local hackathon demo and technical
-review. It is not yet a complete live testnet submission because Supabase/Vercel
-cloud resources, funded Freighter signing, hosted environment variables, and
-real app-flow transaction hashes are intentionally outside the local repo state.
-The machine-readable template for that future live proof is
-`docs/LIVE_TESTNET_EVIDENCE.example.json`.
+See `docs/HACKATHON_PROOF_INVENTORY.md` for artifact-level proof and
+`docs/HACKATHON_DEMO_RUNBOOK.md` for the judge sequence.

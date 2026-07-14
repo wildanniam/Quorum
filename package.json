@@ -50,6 +50,8 @@
     "live:ui-wiring:smoke": "node scripts/live-ui-wiring-smoke.mjs",
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
+    "readiness:final": "node scripts/readiness-audit.mjs --require-fresh-evidence",
+    "submission:package:smoke": "node scripts/submission-package-smoke.mjs",
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
     "contracts:doctor": "node scripts/contracts/doctor.mjs",

@@ -15,6 +15,10 @@ const checks = [
   { label: "Wallet auth smoke", command: "npm", args: ["run", "wallet:auth:smoke"] },
   { label: "API origin smoke", command: "npm", args: ["run", "api:origin:smoke"] },
   { label: "Demo smoke", command: "npm", args: ["run", "demo:smoke"] },
+  { label: "Event lifecycle smoke", command: "npm", args: ["run", "event:lifecycle:smoke"] },
+  { label: "Product messaging smoke", command: "npm", args: ["run", "product:messaging:smoke"] },
+  { label: "Anchor config smoke", command: "npm", args: ["run", "anchor:config:smoke"] },
+  { label: "Anchor eligibility smoke", command: "npm", args: ["run", "anchor:eligibility:smoke"] },
   { label: "Live policy smoke", command: "npm", args: ["run", "demo:live-policy"] },
   { label: "Settlement smoke", command: "npm", args: ["run", "settlement:smoke"] },
   { label: "Indexer security smoke", command: "npm", args: ["run", "indexer:security:smoke"] },
@@ -38,6 +42,7 @@ const checks = [
   { label: "Contract build", command: "npm", args: ["run", "contracts:build"] },
   { label: "Contract approval smoke", command: "npm", args: ["run", "contracts:approval:smoke"] },
   { label: "Contract doctor", command: "npm", args: ["run", "contracts:doctor"] },
+  { label: "Submission package smoke", command: "npm", args: ["run", "submission:package:smoke"] },
 ];
 
 const contractCoverage = [
@@ -158,6 +163,10 @@ const evidence = `# Quorum Demo Evidence
 
 Generated at: \`${generatedAt}\`
 
+> Command-level verification snapshot for the source state below. It does not
+> prove current hosted database health, indexer execution, wallet signing, or
+> MoneyGram provider completion.
+
 ## Source State
 
 - Branch: \`${branch.output || "unknown"}\`
@@ -197,7 +206,7 @@ ${contractCoverageLines}
 |---|---|---:|---:|---|
 ${wasmRows}
 
-## Deployment Readiness
+## Contract Tooling Readiness
 
 - Ready to deploy: \`${doctorJson?.readyToDeploy ?? false}\`
 - RPC reachable: \`${doctorJson?.network?.rpcReachable ?? "unknown"}\`
@@ -219,9 +228,11 @@ Warnings:
 
 ${warningLines}
 
-## Live Deployment Boundary
+## Hosted Evidence Boundary
 
-Live testnet deployment and app-side live transaction signing remain gated by a funded Stellar identity and explicit approval. The local proof flow is verified end to end; contract deployment is intentionally not attempted by this evidence command.
+This command does not deploy contracts, mutate hosted configuration, sign a
+wallet transaction, run the hosted indexer, or prove the current Vercel origin.
+Use \`docs/HACKATHON_PROOF_INVENTORY.md\` for release-level status.
 
 ## Command Details
 

@@ -6,9 +6,21 @@ The MVP follows the locked direction in `TECHNICAL_SPEC.md` and `DEVELOPMENT_PLA
 
 ## Current Status
 
-The local hackathon demo flow is implemented and verified on Postgres. The app can create, update, publish, publicly list local paid/free events, run wallet-authenticated checkout/claim, issue a unique local pass proof, show attendee pass pages, gate event resources from the connected wallet session, record organizer check-ins, and let collaborators withdraw local proof balances.
+Quorum is publicly deployed at
+`https://quorum-sandy-eight.vercel.app`. The Soroban core and pass contracts are
+deployed on Stellar testnet, the runtime exposes the expected contract and USDC
+IDs, and a historical July 4 live flow records real publish, paid checkout, free
+claim, check-in, and withdrawal hashes.
 
-The Soroban contracts cover event registry, token escrow transfer, NFT pass minting, split accounting, collaborator withdrawal transfer, platform fee withdrawal, check-in, and proof event emission. Testnet contract IDs and the USDC contract ID are recorded and read-only validated. Live on-chain publish/checkout/withdraw/check-in from the hosted app still needs Supabase/Vercel configuration, hosted migrations, and explicit wallet signing approval.
+The current Vercel deployment is not yet the final submission candidate.
+Production Postgres is missing migration `0005_anchor_cashout_proof.sql`, the
+hosted indexer still needs a strong `CRON_SECRET` and fresh run evidence, and the
+historical app-flow URLs use an older ngrok origin. MoneyGram SEP integration is
+implemented, but provider allowlist approval and a successful cash pickup are
+not proven.
+
+Use `docs/MVP_READINESS.md` for current status and
+`docs/HACKATHON_PROOF_INVENTORY.md` for claim-to-evidence mapping.
 
 Implemented in the app shell:
 
@@ -25,7 +37,8 @@ Implemented in the app shell:
 - signed wallet session API routes;
 - Postgres migration foundation for local, Supabase, and isolated smoke schemas;
 - custom Soroban event indexer storage and Vercel Cron route;
-- public live evidence page and event-specific proof pages;
+- public evidence ledger and event-specific proof pages with explicit app,
+  indexed, and explorer-verifiable labels;
 - collaborator ledger page with credit/debit rows and explorer proof links;
 - draft event create/update API routes;
 - publish-to-marketplace DB stub;
@@ -39,12 +52,17 @@ Implemented in the app shell:
 - organizer-authorized local check-in API route;
 - collaborator local withdrawal API route;
 - dashboard metrics for organizer revenue, collaborator balances, attendee passes, and proof queue.
-- settlement smoke proof for indexer, evidence pages, and collaborator ledger.
+- settlement smoke proof for indexer, evidence pages, and collaborator ledger;
+- event lifecycle guards for upcoming, live, and ended events;
+- MoneyGram eligibility guard that rejects local settlement proof.
 
-Not completed yet:
+Release checkpoints still open:
 
-- Vercel project/env configuration;
-- real Freighter-signed hosted publish, checkout, free claim, check-in, and withdraw evidence.
+- production migration `0005`;
+- hosted indexer secret and fresh ingestion evidence;
+- current-Vercel Freighter-signed evidence after explicit approval;
+- final responsive browser QA and screenshot packet;
+- MoneyGram provider approval, if it arrives before submission.
 
 ## Local Development
 
@@ -76,8 +94,13 @@ npm run lint
 npm run build
 npm audit --audit-level=moderate
 npm run demo:smoke
+npm run event:lifecycle:smoke
+npm run product:messaging:smoke
 npm run demo:live-policy
 npm run settlement:smoke
+npm run indexer:security:smoke
+npm run anchor:config:smoke
+npm run anchor:eligibility:smoke
 npm run browser:qa
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
@@ -94,10 +117,17 @@ npm run live:deployment:validate
 npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
+npm run readiness:final
+npm run submission:package:smoke
 cargo test
 stellar contract build
 npm run contracts:doctor
 ```
+
+`npm run readiness:audit` verifies source readiness while accepting the two
+clearly labeled historical QA snapshots. `npm run readiness:final` is the final
+submission gate: it rejects those historical snapshots and requires freshly
+generated command and browser evidence from the release candidate.
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary Postgres schema, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
@@ -197,10 +227,11 @@ npm run contracts:init:testnet
 Those scripts refuse to run unless `QUORUM_LIVE_SIGNING_APPROVED` is set to
 `I_APPROVE_TESTNET_SIGNING` after explicit approval.
 
-Current read-only deployment evidence is recorded in
-`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. After approved hosted app signing,
-record public hosted URLs and real app flow transaction hashes in
-`docs/LIVE_TESTNET_EVIDENCE.json`, then run `npm run live:evidence:audit`.
+Read-only deployment evidence is recorded in
+`docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. The current
+`docs/LIVE_TESTNET_EVIDENCE.json` is a historical July 4 ngrok run. After an
+approved Vercel signing session, refresh that packet with current-origin URLs
+and unique app-flow transaction hashes, then run `npm run live:evidence:audit`.
 Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the manual browser wallet
 signing sequence.
 
@@ -210,6 +241,8 @@ signing sequence.
 - `DEVELOPMENT_PLAN.md`
 - `docs/QUORUM_PM_GOAL_BRIEF.md`
 - `docs/HACKATHON_DEMO_RUNBOOK.md`
+- `docs/HACKATHON_PROOF_INVENTORY.md`
+- `docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md`
 - `docs/DEMO_EVIDENCE.md`
 - `docs/MVP_READINESS.md`
 - `docs/PRODUCTION_ENV_HANDOFF.md`
