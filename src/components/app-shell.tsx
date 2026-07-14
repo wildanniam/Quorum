@@ -46,7 +46,7 @@ export function ProductShell({ children }: AppShellProps) {
       </main>
       <footer className="border-t border-white/10 bg-[#0c0b0b]/84 pb-24 lg:pb-0">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 py-6 text-sm text-muted md:flex-row md:items-center md:justify-between lg:px-8">
-          <p>Quorum uses Stellar Testnet. Wallet approval remains explicit for every action.</p>
+          <p>Quorum targets Stellar Testnet. Every wallet transaction requires explicit approval.</p>
           <Link
             href="/dashboard"
             className="inline-flex items-center gap-2 text-foreground transition hover:text-quorum-cyan-soft"

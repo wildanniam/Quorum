@@ -14,16 +14,18 @@ import {
 import { getContractReadiness } from "@/lib/stellar/contracts";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
+import { getContractSetupPresentation } from "@/lib/capability-presentation";
 
 export function ContractReadiness() {
   const readiness = getContractReadiness();
+  const setup = getContractSetupPresentation(readiness);
   const actions = CONTRACT_ACTIONS.map((action) => getContractActionPolicy(action));
 
   const rows = [
     {
       icon: FileKey2,
       label: "Proof mode",
-      value: readiness.configured ? "Live contracts" : "Local proof mode",
+      value: setup.proofMode,
       active: readiness.configured,
     },
     {
@@ -72,16 +74,14 @@ export function ContractReadiness() {
 
   return (
     <ProofSurface>
-      <StatusPill icon={RadioTower} tone={readiness.configured ? "live" : "local"}>
-        Live setup
+      <StatusPill icon={RadioTower} tone={setup.tone}>
+        {setup.status}
       </StatusPill>
       <p className="mt-4 font-product text-xl font-medium">
-        {readiness.configured ? "Testnet configured" : "Setup pending"}
+        {setup.title}
       </p>
       <p className="mt-3 text-sm leading-6 text-muted">
-        {readiness.configured
-          ? "Stellar testnet contracts and payment asset settings are ready for wallet-approved actions."
-          : "Preview records keep the product flow visible until Stellar testnet settings are complete."}
+        {setup.description}
       </p>
 
       <div className="mt-5 grid gap-3">
@@ -134,7 +134,7 @@ export function ContractReadiness() {
               }`}
             >
               {action.executionMode === "live_required"
-                ? "live required"
+                ? "wallet signing required"
                 : "local proof"}
             </span>
           </div>

@@ -21,6 +21,7 @@ import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { getEvidenceEvent, listEvidence } from "@/lib/evidence/repository";
 import { eventThemeStyle } from "@/lib/events/theme";
+import { hasLiveStellarProof } from "@/lib/capability-presentation";
 
 type EventProofPageProps = {
   params: Promise<{
@@ -52,7 +53,7 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
   } catch {
     evidenceUnavailable = true;
   }
-  const liveCount = records.filter((record) => record.txHash).length;
+  const liveCount = records.filter(hasLiveStellarProof).length;
   const indexedCount = records.filter(
     (record) => record.kind === "indexed_event",
   ).length;
@@ -102,9 +103,9 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
                 value={records.length}
               />
               <MetricTile
-                detail="Rows with external explorer links."
+                detail="Rows with explorer-valid Stellar testnet hashes."
                 icon={BadgeCheck}
-                label="Stellar tx hashes"
+                label="Explorer tx"
                 tone="success"
                 value={liveCount}
               />
@@ -119,7 +120,7 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
 
           {evidenceUnavailable ? (
             <Alert title="Event proof is temporarily unavailable." tone="warning">
-              Quorum could not load the verified activity for this event. No local
+              Quorum could not load the recorded activity for this event. No local
               or placeholder rows are shown in its place.
             </Alert>
           ) : null}
