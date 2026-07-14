@@ -7,6 +7,7 @@ const requiredDocs = [
   "docs/HACKATHON_DEMO_RUNBOOK.md",
   "docs/HACKATHON_PROOF_INVENTORY.md",
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
+  "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/MVP_READINESS.md",
   "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_TESTNET_EVIDENCE.json",
@@ -24,21 +25,28 @@ const readiness = read("docs/MVP_READINESS.md");
 const recovery = read("docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md");
 const packageJson = JSON.parse(read("package.json"));
 const liveEvidence = JSON.parse(read("docs/LIVE_TESTNET_EVIDENCE.json"));
+const hostedReleaseEvidence = JSON.parse(
+  read("docs/HOSTED_RELEASE_EVIDENCE.json"),
+);
 
 for (const document of [readme, inventory, readiness]) {
   assert.match(document, new RegExp(currentHostedUrl.replaceAll(".", "\\.")));
 }
 
 assert.match(inventory, /Historically live/);
-assert.match(inventory, /currently degraded in production/i);
+assert.match(inventory, /Current hosted and healthy/i);
 assert.match(inventory, /CRON_SECRET/);
 assert.match(inventory, /provider approval/i);
-assert.match(readiness, /candidate code ready; hosted evidence pending/i);
+assert.match(
+  readiness,
+  /hosted release operational; fresh transaction evidence and final QA pending/i,
+);
 assert.match(readiness, /not mainnet production software/i);
 assert.match(runbook, /Open `\/`\./);
 assert.match(runbook, /Open `\/discover`/);
 assert.match(runbook, /Do not promise pickup/i);
-assert.match(recovery, /Production migration `0005`/);
+assert.match(recovery, /Production migration status is ready/i);
+assert.match(recovery, /Two authenticated runs completed without error/i);
 assert.equal(
   packageJson.scripts?.["readiness:final"],
   "node scripts/readiness-audit.mjs --require-fresh-evidence",
@@ -53,6 +61,82 @@ assert.equal(
   packageJson.scripts?.["submission:gate"],
   "node scripts/submission-gate.mjs",
 );
+
+assert.equal(hostedReleaseEvidence.schemaVersion, 1);
+assert.equal(hostedReleaseEvidence.network, "TESTNET");
+assert.match(hostedReleaseEvidence.release.gitCommit, /^[0-9a-f]{40}$/);
+assert.equal(hostedReleaseEvidence.release.deploymentStatus, "READY");
+assert.equal(hostedReleaseEvidence.release.publicUrl, currentHostedUrl);
+assert.match(hostedReleaseEvidence.release.deploymentUrl, /^https:\/\//);
+assert.match(hostedReleaseEvidence.release.scope, /immutable operational checkpoint/i);
+assert.ok(
+  Date.parse(hostedReleaseEvidence.capturedAt) >=
+    Date.parse(hostedReleaseEvidence.release.deploymentCreatedAt),
+  "Hosted release evidence must be captured after deployment creation.",
+);
+
+const expectedMigrations = [
+  "0001_initial_schema.sql",
+  "0002_live_proof_uniqueness.sql",
+  "0003_indexer_evidence_ledger.sql",
+  "0004_anchor_payouts.sql",
+  "0005_anchor_cashout_proof.sql",
+];
+
+assert.deepEqual(hostedReleaseEvidence.database.expectedMigrations, expectedMigrations);
+assert.deepEqual(hostedReleaseEvidence.database.appliedMigrations, expectedMigrations);
+assert.deepEqual(hostedReleaseEvidence.database.missingMigrations, []);
+assert.deepEqual(hostedReleaseEvidence.database.extraMigrations, []);
+assert.equal(hostedReleaseEvidence.database.ready, true);
+
+assert.deepEqual(hostedReleaseEvidence.hostedProbe.routes, {
+  "/": 200,
+  "/discover": 200,
+  "/.well-known/stellar.toml": 200,
+  "/api/contracts/status": 200,
+  "/evidence": 200,
+});
+assert.equal(hostedReleaseEvidence.hostedProbe.contractsConfigured, true);
+assert.equal(hostedReleaseEvidence.hostedProbe.paymentAssetConfigured, true);
+assert.equal(hostedReleaseEvidence.hostedProbe.proofMode, "live");
+assert.equal(hostedReleaseEvidence.hostedProbe.rpcReachable, true);
+assert.equal(hostedReleaseEvidence.hostedProbe.evidenceHealthy, true);
+assert.equal(hostedReleaseEvidence.hostedProbe.evidenceDegraded, false);
+assert.equal(hostedReleaseEvidence.hostedProbe.currentOriginEvidenceProven, false);
+
+const hostedIndexer = hostedReleaseEvidence.hostedIndexer;
+assert.equal(hostedIndexer.cronSchedule, "0 3 * * *");
+assert.deepEqual(hostedIndexer.cronSecretConfiguredFor, ["Preview", "Production"]);
+assert.equal(hostedIndexer.cronSecretStoredAsSensitive, true);
+assert.equal(hostedIndexer.cronSecretValueRecorded, false);
+assert.equal(hostedIndexer.missingAuthorizationHttpStatus, 401);
+assert.equal(hostedIndexer.runs.length, 2);
+
+for (const run of hostedIndexer.runs) {
+  assert.match(run.cursor, /^\d+-\d+$/);
+  assert.ok(Number.isInteger(run.latestLedger) && run.latestLedger > 0);
+  assert.ok(Number.isInteger(run.fetchedCount) && run.fetchedCount >= 0);
+  assert.ok(Number.isInteger(run.insertedCount) && run.insertedCount >= 0);
+  assert.equal(run.lastError, null);
+  assert.ok(Date.parse(run.finishedAt) >= Date.parse(run.startedAt));
+}
+
+const [firstRun, secondRun] = hostedIndexer.runs;
+const cursorLedger = (cursor) => BigInt(cursor.split("-")[0]);
+assert.ok(cursorLedger(secondRun.cursor) > cursorLedger(firstRun.cursor));
+assert.ok(secondRun.latestLedger > firstRun.latestLedger);
+assert.equal(hostedIndexer.cursorAdvanced, true);
+assert.equal(hostedIndexer.latestLedgerAdvanced, true);
+assert.equal(hostedIndexer.freshQuorumEventsIndexed, false);
+assert.match(hostedIndexer.freshEventRequirement, /wallet-signed testnet flow/i);
+
+assert.deepEqual(hostedReleaseEvidence.externalBoundaries, {
+  freshFreighterFlowComplete: false,
+  finalBrowserQaComplete: false,
+  moneyGramProviderApproved: false,
+  moneyGramPickupProven: false,
+  finalHackathonSubmissionComplete: false,
+});
 
 assert.doesNotMatch(readme, /Vercel project\/env configuration;/);
 assert.doesNotMatch(readme, /public live evidence page/);
@@ -89,7 +173,9 @@ console.log(
         "current-hosted-url",
         "historical-live-evidence-label",
         "production-migration-disclosure",
-        "indexer-secret-disclosure",
+        "hosted-release-evidence-shape",
+        "indexer-secret-non-disclosure",
+        "indexer-monotonic-progress",
         "moneygram-provider-disclosure",
         "judge-runbook-route-wiring",
         "reject-stale-deployment-claims",

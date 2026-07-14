@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-14T22:32:58.495Z",
+  "network": "TESTNET",
+  "release": {
+    "gitCommit": "a35b3dee401920eb240c6ce180e359150667f4b4",
+    "deploymentId": "dpl_CNx9wwxnRDNB3eCiXnB2QvKqK1Qr",
+    "deploymentUrl": "https://quorum-czl19cyyx-wildanniams-projects.vercel.app",
+    "publicUrl": "https://quorum-sandy-eight.vercel.app",
+    "deploymentCreatedAt": "2026-07-14T22:22:54.704Z",
+    "deploymentStatus": "READY",
+    "scope": "Immutable operational checkpoint captured before this evidence-only documentation change; a later docs-only deployment may supersede the public alias without changing application runtime code."
+  },
+  "database": {
+    "schema": "public",
+    "expectedMigrations": [
+      "0001_initial_schema.sql",
+      "0002_live_proof_uniqueness.sql",
+      "0003_indexer_evidence_ledger.sql",
+      "0004_anchor_payouts.sql",
+      "0005_anchor_cashout_proof.sql"
+    ],
+    "appliedMigrations": [
+      "0001_initial_schema.sql",
+      "0002_live_proof_uniqueness.sql",
+      "0003_indexer_evidence_ledger.sql",
+      "0004_anchor_payouts.sql",
+      "0005_anchor_cashout_proof.sql"
+    ],
+    "missingMigrations": [],
+    "extraMigrations": [],
+    "ready": true
+  },
+  "hostedProbe": {
+    "routes": {
+      "/": 200,
+      "/discover": 200,
+      "/.well-known/stellar.toml": 200,
+      "/api/contracts/status": 200,
+      "/evidence": 200
+    },
+    "contractsConfigured": true,
+    "paymentAssetConfigured": true,
+    "proofMode": "live",
+    "rpcReachable": true,
+    "evidenceHealthy": true,
+    "evidenceDegraded": false,
+    "currentOriginEvidenceProven": false
+  },
+  "hostedIndexer": {
+    "cronSchedule": "0 3 * * *",
+    "cronSecretConfiguredFor": [
+      "Preview",
+      "Production"
+    ],
+    "cronSecretStoredAsSensitive": true,
+    "cronSecretValueRecorded": false,
+    "missingAuthorizationHttpStatus": 401,
+    "runs": [
+      {
+        "startedAt": "2026-07-14T22:26:16.446Z",
+        "finishedAt": "2026-07-14T22:26:18.109Z",
+        "cursor": "0015050012081782783-4294967295",
+        "latestLedger": 3610267,
+        "fetchedCount": 0,
+        "insertedCount": 0,
+        "lastError": null
+      },
+      {
+        "startedAt": "2026-07-14T22:32:56.887Z",
+        "finishedAt": "2026-07-14T22:32:58.495Z",
+        "cursor": "0015092957459775487-4294967295",
+        "latestLedger": 3610347,
+        "fetchedCount": 0,
+        "insertedCount": 0,
+        "lastError": null
+      }
+    ],
+    "cursorAdvanced": true,
+    "latestLedgerAdvanced": true,
+    "freshQuorumEventsIndexed": false,
+    "freshEventRequirement": "Run one explicitly approved wallet-signed testnet flow on the current Vercel origin, then run the indexer again."
+  },
+  "externalBoundaries": {
+    "freshFreighterFlowComplete": false,
+    "finalBrowserQaComplete": false,
+    "moneyGramProviderApproved": false,
+    "moneyGramPickupProven": false,
+    "finalHackathonSubmissionComplete": false
+  }
+}
