@@ -94,13 +94,3 @@ export function getAnchorProviderPresentation(provider: AnchorPayoutProvider) {
     title: "Preview the settled-funds cash-out workflow.",
   };
 }
-
-export function canStartAnchorPayout({
-  provider,
-  settlementTxHash,
-}: {
-  provider: AnchorPayoutProvider;
-  settlementTxHash: string | null;
-}) {
-  return provider === "mock" || isLiveTransactionHash(settlementTxHash);
-}

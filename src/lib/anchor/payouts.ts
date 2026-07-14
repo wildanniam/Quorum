@@ -7,6 +7,8 @@ import type {
 } from "@/lib/db/models";
 import { query, queryOne, withTransaction, type DatabaseClient } from "@/lib/db/client";
 import { getAnchorPayoutProvider } from "@/lib/anchor/provider";
+import { getAnchorProviderName } from "@/lib/anchor/config";
+import { assertAnchorPayoutSettlementEligibility } from "@/lib/anchor/payout-eligibility";
 import {
   fetchMoneyGramSep24Transaction,
   getMoneyGramWithdrawalTransferInstructions,
@@ -195,6 +197,7 @@ type SettlementWithdrawalRow = {
   amount_usdc: string;
   event_status: "draft" | "published";
   id: string;
+  tx_hash: string;
 };
 
 async function getSettlementWithdrawal(
@@ -208,6 +211,7 @@ async function getSettlementWithdrawal(
     SELECT
       w.id,
       w.amount_usdc,
+      w.tx_hash,
       e.status AS event_status
     FROM withdrawals w
     JOIN events e ON e.id = w.event_id
@@ -284,6 +288,12 @@ export async function createAnchorPayout({
     if (settlement.event_status !== "published") {
       throw new Error("Only published events can be paid out.");
     }
+
+    const providerName = getAnchorProviderName();
+    assertAnchorPayoutSettlementEligibility({
+      provider: providerName,
+      settlementTxHash: settlement.tx_hash,
+    });
 
     const existingPayout = await queryOne<AnchorPayoutRow>(
       "SELECT * FROM anchor_payouts WHERE withdrawal_id = $1 LIMIT 1",
