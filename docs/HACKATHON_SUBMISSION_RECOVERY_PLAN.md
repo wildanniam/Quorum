@@ -104,6 +104,21 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Both UI and server require an explorer-valid settlement before the MoneyGram
   provider can be invoked. Mock mode remains explicitly local.
 
+### Submission package and autonomous release gate
+
+- Draft PRs: [#85](https://github.com/wildanniam/Quorum/pull/85) and
+  [#87](https://github.com/wildanniam/Quorum/pull/87)
+- The claim-to-proof inventory, judge runbook, readiness matrix, and historical
+  evidence boundaries now agree.
+- `npm run submission:gate` passes all 36 non-destructive source checks.
+- The isolated localhost PostgreSQL gate passes migration, seed, database,
+  wallet-auth, lifecycle, settlement, flow, and persistence checks.
+- The protected PR #87 Vercel preview passes read-only landing, Discover,
+  `stellar.toml`, and contract-status checks. Evidence remains intentionally
+  degraded until hosted migration `0005` is approved and applied.
+- All recovery PRs from #75 through #87 are mergeable with green GitHub and
+  Vercel checks as of 2026-07-15.
+
 ## Event Lifecycle Acceptance
 
 - Lifecycle is derived as draft, upcoming, live, or ended without a new database
@@ -123,8 +138,9 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   but not a completed cash-out.
 - Fresh testnet transaction: needed because RPC event retention cannot recover old
   contract events indefinitely.
-- Hosted cron secret and schedule: needed before the indexer can run reliably in
-  production.
+- Hosted cron secret and schedule: a read-only Vercel env-name audit confirmed
+  that `CRON_SECRET` is absent; it is needed before the indexer can run reliably
+  in production.
 - Production migration `0005`: needed before evidence and anchor cash-out proof
   can be treated as hosted-ready.
 

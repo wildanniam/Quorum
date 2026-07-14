@@ -9,6 +9,8 @@ testnet execution, deterministic local verification, and external blockers.
 ## Status Vocabulary
 
 - **Current hosted**: observed on `https://quorum-sandy-eight.vercel.app`.
+- **Recovery preview**: observed on the protected Vercel preview for PR #87;
+  useful for release validation, but not a judge-facing public URL.
 - **Historically live**: executed on Stellar testnet, but through the July 4
   ngrok app origin rather than the current Vercel deployment.
 - **Verified in code**: exercised through deterministic smoke or contract tests
@@ -48,16 +50,39 @@ Read-only checks on 2026-07-15 confirmed:
 The current Vercel deployment is therefore public and contract-configured, but
 not yet the final submission candidate.
 
+## Recovery Preview Snapshot
+
+Read-only checks on 2026-07-15 also confirmed the protected PR #87 preview at
+`https://quorum-git-codex-86-submission-gate-wildanniams-projects.vercel.app`:
+
+- the landing page, Discover, and `stellar.toml` respond successfully through
+  authenticated Vercel CLI access;
+- `/api/contracts/status` reports the expected testnet contract and USDC IDs,
+  `proofMode: live`, and a reachable RPC;
+- `/evidence` still shows the intentional degraded state because the preview
+  shares the hosted database that is missing migration `0005`;
+- GitHub CI, Vercel deployment, and Vercel preview checks are green for every
+  PR in the recovery stack from #75 through #87;
+- `npm run submission:gate` passes all 36 non-destructive source checks, and
+  the isolated localhost PostgreSQL release gate passes all nine DB-backed
+  checks.
+
+A read-only Vercel environment-name audit found the expected database, Stellar,
+contract, session, and anchor variables for Preview and Production. It also
+confirmed that `CRON_SECRET` is not configured. No environment values were read
+or recorded.
+
 ## Release-Critical Gaps
 
-1. Review and explicitly approve production migration `0005`.
-2. Configure a strong Vercel `CRON_SECRET` and verify the cron route without
+1. Review and explicitly approve the stacked recovery PRs before merging them.
+2. Review and explicitly approve production migration `0005`.
+3. Configure a strong Vercel `CRON_SECRET` and verify the cron route without
    exposing the value.
-3. Merge the approved recovery PR chain and redeploy Vercel.
-4. Generate one fresh, explicitly approved testnet flow so current app URLs,
+4. Redeploy the approved release from `main`.
+5. Generate one fresh, explicitly approved testnet flow so current app URLs,
    transaction hashes, pass token, and proof rows share the same release origin.
-5. Regenerate browser QA and capture final desktop/mobile screenshots.
-6. Keep MoneyGram as an integration preview unless provider approval arrives
+6. Regenerate browser QA and capture final desktop/mobile screenshots.
+7. Keep MoneyGram as an integration preview unless provider approval arrives
    and an actual provider response is recorded.
 
 Run `npm run submission:gate` for the complete non-destructive source suite and

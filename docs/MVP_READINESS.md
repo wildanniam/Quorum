@@ -20,20 +20,21 @@ product concept.
 | Area | Status | Evidence / next gate |
 | --- | --- | --- |
 | Public product deployment | Current hosted | `https://quorum-sandy-eight.vercel.app` responds successfully. |
+| Recovery release candidate | Verified preview and source | PRs #75-#87 are mergeable with green CI/Vercel checks; the protected PR #87 preview passed read-only route and contract checks. |
 | Landing and product navigation | Current hosted | Landing routes to Discover, Studio, Passes, and Evidence. |
 | Event discovery, detail, checkout review | Current hosted | Routes respond; final release QA is still required after the PR chain lands. |
 | Core and pass contracts | Historically live | IDs and deployment/init hashes are in `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. |
 | Contract runtime configuration | Current hosted, configured | `/api/contracts/status` reports expected testnet IDs and RPC reachability. |
 | Live publish/checkout/claim/check-in/withdraw | Historically live | Real July 4 hashes exist in `docs/LIVE_TESTNET_EVIDENCE.json`; the origin is historical ngrok. |
 | Current evidence feed | Blocked | Production is missing `0005_anchor_cashout_proof.sql`; explicit migration approval is required. |
-| Soroban indexer | Verified in code, blocked hosted | Hardened auth/cursor/concurrency logic exists; Vercel still needs a strong `CRON_SECRET` and fresh run proof. |
+| Soroban indexer | Verified in code, blocked hosted | Hardened auth/cursor/concurrency logic exists; a read-only env-name audit confirmed that Vercel still has no `CRON_SECRET`, and fresh run proof is missing. |
 | Event lifecycle | Verified in code | Upcoming/live/ended behavior and ended-sales guards are covered by `event:lifecycle:smoke`. Contract-level end-time enforcement is not implemented. |
 | Proof classification | Verified in code | Only explorer-valid hashes are labeled Stellar transactions; app and indexed proof remain distinct. |
 | Collaborator ledger | Verified in code, data-dependent hosted | Wallet-scoped credits/debits and event proof links exist; hosted data depends on migration/indexer readiness. |
 | MoneyGram integration | Verified in code, provider blocked | SEP-1/10/24 paths exist; provider allowlist approval and a successful pickup are not proven. |
 | MoneyGram safety invariant | Verified in code | Server and UI require explorer-valid settlement for MoneyGram; mock mode remains explicitly local. |
 | Responsive/browser QA | Historical local | `docs/BROWSER_QA.md` must be regenerated on the final candidate. |
-| Submission package | In progress | This matrix, proof inventory, and judge runbook are current; final screenshots/video remain. |
+| Submission package | Source package ready | This matrix, proof inventory, judge runbook, and automated source/DB gates are current; final hosted evidence, screenshots, and video remain. |
 
 ## What Is Already Strong
 
@@ -50,10 +51,11 @@ product concept.
 
 ## Release-Critical Work
 
-1. Approve and apply production migration `0005`.
-2. Add Vercel `CRON_SECRET`, redeploy, and verify an authenticated indexer run.
-3. Review and merge the stacked recovery PRs in dependency order.
-4. Redeploy the resulting main branch.
+1. Review and approve the stacked recovery PRs in dependency order.
+2. Apply production migration `0005` after explicit approval.
+3. Add Vercel `CRON_SECRET` after explicit approval and verify an authenticated
+   indexer run without exposing the secret.
+4. Redeploy the resulting release from `main`.
 5. Run one fresh approved testnet flow on the Vercel origin.
 6. Confirm evidence, event proof, pass, and ledger pages show that same flow.
 7. Regenerate browser QA and final screenshots.
