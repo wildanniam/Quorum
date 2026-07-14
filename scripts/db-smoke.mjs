@@ -7,6 +7,7 @@ const eventId = `evt_${id}`;
 const slug = `smoke-${id.slice(0, 8)}`;
 const organizerWallet = "GBRPYHILQKWXPH7F6TRXA3J2ZWW63CMUDSJ2Y5X6MX4F2YQN6LQG3YYW";
 const requiredUniqueIndexes = {
+  anchor_payouts: ["idx_anchor_payouts_stellar_transaction_id"],
   check_ins: ["idx_check_ins_tx_hash_unique"],
   events: [
     "idx_events_core_event_id_unique",
@@ -61,6 +62,22 @@ async function assertUniqueLiveProofIndexes(client) {
     [databaseSchema()],
   );
   assert.equal(indexerTables.rowCount, 2, "indexer tables are missing");
+
+  const anchorCashoutProofColumn = await client.query(
+    `
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_schema = $1
+      AND table_name = 'anchor_payouts'
+      AND column_name = 'stellar_transaction_id'
+    `,
+    [databaseSchema()],
+  );
+  assert.equal(
+    anchorCashoutProofColumn.rowCount,
+    1,
+    "anchor_payouts.stellar_transaction_id is missing",
+  );
 }
 
 await withClient(async (client) => {
@@ -186,6 +203,8 @@ await withClient(async (client) => {
         "unique-live-proof-indexes",
         "live-proof-hash-registry",
         "indexer-tables",
+        "anchor-cashout-proof-column",
+        "anchor-cashout-proof-index",
         "event-crud",
         "collaborator-split-total",
         "resource-crud",

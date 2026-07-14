@@ -15,6 +15,7 @@ import {
   ProductPage,
   ProductPageHeader,
 } from "@/components/ui/product-layout";
+import { Alert } from "@/components/ui/feedback-primitives";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -43,7 +44,14 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
     notFound();
   }
 
-  const records = await listEvidence({ eventId: event.id, limit: 100 });
+  let evidenceUnavailable = false;
+  let records = [] as Awaited<ReturnType<typeof listEvidence>>;
+
+  try {
+    records = await listEvidence({ eventId: event.id, limit: 100 });
+  } catch {
+    evidenceUnavailable = true;
+  }
   const liveCount = records.filter((record) => record.txHash).length;
   const indexedCount = records.filter(
     (record) => record.kind === "indexed_event",
@@ -108,6 +116,13 @@ export default async function EventProofPage({ params }: EventProofPageProps) {
               />
             </div>
           </ProductPageHeader>
+
+          {evidenceUnavailable ? (
+            <Alert title="Event proof is temporarily unavailable." tone="warning">
+              Quorum could not load the verified activity for this event. No local
+              or placeholder rows are shown in its place.
+            </Alert>
+          ) : null}
 
           <ProofSurface>
             <div className="grid gap-4 md:grid-cols-[0.8fr_1.2fr] md:items-center">

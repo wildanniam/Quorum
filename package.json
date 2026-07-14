@@ -11,6 +11,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:migrate": "node scripts/db-migrate.mjs",
+    "db:migrations:status": "node scripts/db-migration-status.mjs",
+    "db:migrations:status:smoke": "node scripts/db-migration-status.mjs --smoke",
     "db:seed": "node scripts/db-seed.mjs",
     "db:smoke": "node scripts/db-smoke.mjs",
     "demo:smoke": "node scripts/demo-smoke.mjs",
