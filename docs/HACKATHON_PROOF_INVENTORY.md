@@ -9,8 +9,8 @@ testnet execution, deterministic local verification, and external blockers.
 ## Status Vocabulary
 
 - **Current hosted**: observed on `https://quorum-sandy-eight.vercel.app`.
-- **Recovery preview**: observed on the protected Vercel preview for PR #87;
-  useful for release validation, but not a judge-facing public URL.
+- **Hosted release evidence**: captured after the recovery stack was merged,
+  production migration `0005` was applied, and the hosted indexer was verified.
 - **Historically live**: executed on Stellar testnet, but through the July 4
   ngrok app origin rather than the current Vercel deployment.
 - **Verified in code**: exercised through deterministic smoke or contract tests
@@ -28,12 +28,12 @@ testnet execution, deterministic local verification, and external blockers.
 | Testnet contracts are deployed | `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json` | Historically live and read-only validated | It does not prove the current Vercel app completed a fresh transaction. |
 | Publish, paid checkout, free claim, check-in, and withdrawal reached Stellar | `docs/LIVE_TESTNET_EVIDENCE.json` | Historically live on 2026-07-04 | Its ngrok URLs are historical and must not be presented as current Vercel URLs. |
 | Current runtime has the expected contract and USDC IDs | `/api/contracts/status` on Vercel | Current hosted, configured | `proofMode: live` means wallet actions require live submission; it is not transaction evidence. |
-| Evidence and event-proof read models exist | `/evidence`, `/events/[slug]/proof`, repository tests | Verified in code, currently degraded in production | Production still needs migration `0005_anchor_cashout_proof.sql`. |
-| Soroban event indexer is implemented and hardened | `src/lib/stellar/indexer.ts`, `npm run indexer:security:smoke` | Verified in code | A current hosted cron run and fresh indexed row are still missing. |
+| Evidence and event-proof read models exist | `/evidence`, `/events/[slug]/proof`, `docs/HOSTED_RELEASE_EVIDENCE.json` | Current hosted and healthy | The current release still has no fresh current-origin transaction rows. |
+| Soroban event indexer is implemented and hardened | `src/lib/stellar/indexer.ts`, `npm run indexer:security:smoke`, `docs/HOSTED_RELEASE_EVIDENCE.json` | Current hosted, authenticated, and cursor-advancing | The verified runs found zero retained Quorum events; a fresh signed flow is still required. |
 | MoneyGram SEP integration exists | SEP-1, SEP-10, SEP-24 modules and anchor smoke tests | Verified in code | MoneyGram domain/wallet approval and successful pickup are not proven. |
 | Local proof cannot masquerade as MoneyGram settlement | `npm run anchor:eligibility:smoke` | Verified in code | It does not call MoneyGram or move USDC. |
 | Event lifecycle closes ended sales | `npm run event:lifecycle:smoke` | Verified in code and server UI policy | The deployed Soroban contract does not encode event end time; direct out-of-app invocation is a known limitation. |
-| UI labels distinguish app proof, indexed proof, and explorer proof | `npm run product:messaging:smoke` | Verified in code | The candidate changes are not current-hosted until their PR chain is approved and deployed. |
+| UI labels distinguish app proof, indexed proof, and explorer proof | `npm run product:messaging:smoke` | Current hosted and verified in code | It does not turn an app reference into a Stellar transaction. |
 | Responsive product routes render without basic overflow/errors | `docs/BROWSER_QA.md` | Historical local browser QA | It predates the submission-recovery branch and must be regenerated before final submission. |
 
 ## Current Hosted Snapshot
@@ -44,46 +44,41 @@ Read-only checks on 2026-07-15 confirmed:
 - `/discover` responds successfully;
 - `/api/contracts/status` responds successfully, reports the expected testnet
   contracts and USDC asset, and can reach the configured RPC;
-- `/evidence` renders an honest degraded state because the production schema is
-  behind the repository.
+- `/evidence` responds successfully without the degraded data-service state;
+- production migration status is ready with migrations `0001` through `0005`;
+- the verified operational checkpoint was built from commit
+  `a35b3dee401920eb240c6ce180e359150667f4b4`;
+- contract and payment configuration is live on Stellar testnet.
 
-The current Vercel deployment is therefore public and contract-configured, but
-not yet the final submission candidate.
+The public Vercel release is schema-ready and operational. The immutable
+checkpoint records the exact deployment that was probed; a later evidence-only
+docs deployment may supersede the alias without changing app runtime code. The
+submission is not ready because fresh current-origin transaction evidence and
+final browser QA are still pending.
 
-## Recovery Preview Snapshot
+## Hosted Indexer Snapshot
 
-Read-only checks on 2026-07-15 also confirmed the protected PR #87 preview at
-`https://quorum-git-codex-86-submission-gate-wildanniams-projects.vercel.app`:
+The release checkpoint in `docs/HOSTED_RELEASE_EVIDENCE.json` records:
 
-- the landing page, Discover, and `stellar.toml` respond successfully through
-  authenticated Vercel CLI access;
-- `/api/contracts/status` reports the expected testnet contract and USDC IDs,
-  `proofMode: live`, and a reachable RPC;
-- `/evidence` still shows the intentional degraded state because the preview
-  shares the hosted database that is missing migration `0005`;
-- GitHub CI, Vercel deployment, and Vercel preview checks are green for every
-  PR in the recovery stack from #75 through #87;
-- `npm run submission:gate` passes all 36 non-destructive source checks, and
-  the isolated localhost PostgreSQL release gate passes all nine DB-backed
-  checks.
-
-A read-only Vercel environment-name audit found the expected database, Stellar,
-contract, session, and anchor variables for Preview and Production. It also
-confirmed that `CRON_SECRET` is not configured. No environment values were read
-or recorded.
+- `CRON_SECRET` is stored as a sensitive Preview and Production variable, while
+  its value is deliberately absent from the repository;
+- an unauthenticated indexer request fails closed with HTTP 401;
+- two authenticated hosted runs completed without an error;
+- the cursor and latest-ledger checkpoint advanced monotonically;
+- both runs fetched zero Quorum events, which is an honest retention boundary,
+  not a successful fresh-event claim.
 
 ## Release-Critical Gaps
 
-1. Review and explicitly approve the stacked recovery PRs before merging them.
-2. Review and explicitly approve production migration `0005`.
-3. Configure a strong Vercel `CRON_SECRET` and verify the cron route without
-   exposing the value.
-4. Redeploy the approved release from `main`.
-5. Generate one fresh, explicitly approved testnet flow so current app URLs,
+1. Generate one fresh, explicitly approved testnet flow so current app URLs,
    transaction hashes, pass token, and proof rows share the same release origin.
-6. Regenerate browser QA and capture final desktop/mobile screenshots.
-7. Keep MoneyGram as an integration preview unless provider approval arrives
+2. Run the authenticated hosted indexer after that flow and verify that fresh
+   Quorum rows appear without cursor regression or duplicate ingestion.
+3. Regenerate browser QA and capture final desktop/tablet/mobile screenshots.
+4. Run `npm run readiness:final` on the final release commit.
+5. Keep MoneyGram as an integration preview unless provider approval arrives
    and an actual provider response is recorded.
+6. Submit only after Wildan explicitly approves the final package.
 
 Run `npm run submission:gate` for the complete non-destructive source suite and
 `npm run submission:hosted:probe` for the read-only Vercel snapshot. Neither
@@ -99,8 +94,10 @@ hosts before running migrations or seed data.
 - Contract status: `https://quorum-sandy-eight.vercel.app/api/contracts/status`
 - Historical deployment evidence: `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`
 - Historical app-flow evidence: `docs/LIVE_TESTNET_EVIDENCE.json`
+- Hosted release evidence: `docs/HOSTED_RELEASE_EVIDENCE.json`
 - Demo sequence: `docs/HACKATHON_DEMO_RUNBOOK.md`
 - Current readiness: `docs/MVP_READINESS.md`
 
-Do not send a judge directly to `/evidence` until the production migration and
-release deployment checks pass.
+`/evidence` is now safe to show as a healthy product surface, but do not describe
+its current rows as fresh Vercel-origin proof until the signed flow and follow-up
+indexer run are recorded.

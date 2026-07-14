@@ -1,5 +1,10 @@
 # Quorum Handoff TODO
 
+> Historical June handoff. Do not use this file as current readiness. The
+> maintained sources of truth are `docs/MVP_READINESS.md`,
+> `docs/HACKATHON_PROOF_INVENTORY.md`, and
+> `docs/HOSTED_RELEASE_EVIDENCE.json`.
+
 Last updated: 2026-06-09
 Current repo checkpoint: `8e1616e`
 

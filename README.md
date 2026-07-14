@@ -12,12 +12,14 @@ deployed on Stellar testnet, the runtime exposes the expected contract and USDC
 IDs, and a historical July 4 live flow records real publish, paid checkout, free
 claim, check-in, and withdrawal hashes.
 
-The current Vercel deployment is not yet the final submission candidate.
-Production Postgres is missing migration `0005_anchor_cashout_proof.sql`, the
-hosted indexer still needs a strong `CRON_SECRET` and fresh run evidence, and the
-historical app-flow URLs use an older ngrok origin. MoneyGram SEP integration is
-implemented, but provider allowlist approval and a successful cash pickup are
-not proven.
+The current release is deployed from `main`, production Postgres has all five
+repository migrations, the evidence page is healthy, and the hosted indexer is
+protected by a sensitive `CRON_SECRET`. Two authenticated indexer runs advanced
+the cursor and latest-ledger checkpoint without errors. They found no recoverable
+Quorum events because the older flow is outside RPC event retention, so a fresh
+current-origin Freighter-signed flow is still required before final submission.
+MoneyGram SEP integration is implemented, but provider allowlist approval and a
+successful cash pickup are not proven.
 
 Use `docs/MVP_READINESS.md` for current status and
 `docs/HACKATHON_PROOF_INVENTORY.md` for claim-to-evidence mapping.
@@ -58,11 +60,11 @@ Implemented in the app shell:
 
 Release checkpoints still open:
 
-- production migration `0005`;
-- hosted indexer secret and fresh ingestion evidence;
-- current-Vercel Freighter-signed evidence after explicit approval;
+- current-Vercel Freighter-signed evidence after explicit approval, followed by
+  one hosted indexer run that captures those fresh events;
 - final responsive browser QA and screenshot packet;
 - MoneyGram provider approval, if it arrives before submission.
+- final hackathon submission approval.
 
 ## Local Development
 

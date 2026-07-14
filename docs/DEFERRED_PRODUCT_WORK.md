@@ -1,6 +1,6 @@
 # Deferred Quorum Product Work
 
-Last audited: 2026-07-12.
+Last audited: 2026-07-15.
 
 This note preserves verified product work that is intentionally deferred while
 the team focuses on the product UI and UX refactor.
@@ -16,26 +16,23 @@ the team focuses on the product UI and UX refactor.
   claim, check-in, and collaborator withdrawal.
 - MoneyGram SEP-10 authentication and SEP-24 sandbox withdrawal initiation have
   succeeded for the Quorum client domain.
+- Production migration `0005_anchor_cashout_proof.sql` is applied.
+- Hosted indexer auth and monotonic cursor progress are recorded in
+  `docs/HOSTED_RELEASE_EVIDENCE.json`.
 
 ## Deferred Required Work
 
-1. Apply `db/migrations/0005_anchor_cashout_proof.sql` to the hosted Supabase
-   database. The audit found migrations `0001` through `0004` applied, but not
-   `0005`.
-2. Run the manual MoneyGram end-to-end flow with a real Freighter testnet
+1. Run the manual MoneyGram end-to-end flow with a real Freighter testnet
    session: hosted identity/pickup details, exact testnet USDC transfer, status
    refresh, pickup reference, and final evidence capture.
-3. Decide whether the final classic Stellar USDC transfer remains an explicit
+2. Decide whether the final classic Stellar USDC transfer remains an explicit
    wallet step or is constructed and submitted from Quorum. The current product
    validates and displays the transfer instructions but does not submit that
    transfer in-app.
-4. Refresh final evidence so public proof points to the Vercel production host,
+3. Refresh final evidence so public proof points to the Vercel production host,
    not the older temporary ngrok host.
-5. Reconcile stale readiness language in `README.md`, `TODO.md`, and evidence
-   documentation with the current deployed state.
 
 ## Safety Boundary
 
-Applying the hosted migration and running the final wallet/MoneyGram flow are
-high-risk operations. They require a dedicated issue/branch, explicit approval,
-focused smoke checks, and no automatic merge.
+The final wallet/MoneyGram flow is a high-risk operation. It requires explicit
+approval, focused checks, and no automatic provider or signing claims.

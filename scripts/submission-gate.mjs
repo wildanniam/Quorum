@@ -247,12 +247,9 @@ const report = {
         "Fresh desktop/tablet/mobile evidence needs the user-approved browser workflow and an isolated database.",
     },
     {
-      id: "production-migration",
-      reason: "Applying migration 0005 to hosted Postgres requires explicit approval.",
-    },
-    {
-      id: "hosted-indexer",
-      reason: "Setting CRON_SECRET and triggering hosted ingestion requires explicit approval.",
+      id: "fresh-hosted-indexing",
+      reason:
+        "Hosted indexer auth and cursor progress are proven; fresh rows require an approved signed flow first.",
     },
     {
       id: "current-origin-testnet-evidence",
@@ -264,8 +261,9 @@ const report = {
         "MoneyGram allowlist approval, live SEP-10 auth, and provider execution are external.",
     },
     {
-      id: "deploy-and-submit",
-      reason: "Production deployment and final hackathon submission remain explicit checkpoints.",
+      id: "final-release-and-submit",
+      reason:
+        "Final deployment verification and hackathon submission remain explicit checkpoints.",
     },
   ],
 };

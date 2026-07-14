@@ -18,6 +18,7 @@ const requiredFiles = [
   "docs/HACKATHON_DEMO_RUNBOOK.md",
   "docs/HACKATHON_PROOF_INVENTORY.md",
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
+  "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_SIGNING_HANDOFF.md",
   "docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md",
@@ -730,7 +731,7 @@ function checkLiveBoundaries() {
     "current-origin evidence",
     "provider allowlist approval",
     "Contract-level end-time enforcement is not implemented",
-    "candidate code ready; hosted evidence pending",
+    "hosted release operational; fresh transaction evidence and final QA pending",
     "Quorum is not mainnet production software",
   ]) {
     if (!readiness.includes(term)) {

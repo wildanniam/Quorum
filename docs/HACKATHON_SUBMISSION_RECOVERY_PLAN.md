@@ -12,23 +12,23 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Capability messaging issue: [#80](https://github.com/wildanniam/Quorum/issues/80)
 - MoneyGram eligibility issue: [#82](https://github.com/wildanniam/Quorum/issues/82)
 - Submission package issue: [#84](https://github.com/wildanniam/Quorum/issues/84)
+- Hosted release evidence issue: [#88](https://github.com/wildanniam/Quorum/issues/88)
 - Starting commit: `379003f`
 - Hosted application: `https://quorum-sandy-eight.vercel.app`
 - Target network: Stellar testnet
 - Production database: hosted Postgres through server-only environment variables
 
-## Confirmed Gaps
+## Original Gaps And Current Resolution
 
-1. Hosted Postgres has migrations `0001` through `0004`, while the application
-   requires `0005_anchor_cashout_proof.sql`.
-2. The schema mismatch makes the global evidence feed unavailable and can return
-   HTTP 500 on event proof pages.
-3. The hosted preflight validates environment and contract configuration but did
-   not previously compare repository migrations with the live database.
-4. The Soroban event indexer has no current hosted execution proof or fresh rows.
-5. Demo event dates, generated evidence, and several submission claims are stale.
-6. MoneyGram Ramps approval remains external and must not be represented as a
-   completed cash-pickup flow.
+1. **Resolved:** production Postgres now has migrations `0001` through `0005`.
+2. **Resolved:** the global evidence feed is healthy on the current release.
+3. **Resolved:** migration drift is checked before hosted readiness is accepted.
+4. **Partially resolved:** hosted indexer auth and monotonic progress are proven;
+   fresh Quorum rows still require a new signed testnet flow.
+5. **Resolved in source:** lifecycle, proof wording, and submission documents are
+   aligned with current capabilities.
+6. **Still external:** MoneyGram Ramps approval and successful cash pickup remain
+   unproven and must not be presented as completed.
 
 ## Locked Execution Order
 
@@ -70,22 +70,22 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 
 ### Evidence readiness
 
-- Draft PR: [#75](https://github.com/wildanniam/Quorum/pull/75)
+- Merged PR: [#75](https://github.com/wildanniam/Quorum/pull/75)
 - A read-only migration status command and hosted preflight guard now expose the
   missing production migration before evidence routes are exercised.
-- Production migration `0005` remains unapplied pending explicit approval.
+- Production migration `0005` was subsequently reviewed, approved, and applied.
 
 ### Indexer hardening
 
-- Draft PR: [#77](https://github.com/wildanniam/Quorum/pull/77)
+- Merged PR: [#77](https://github.com/wildanniam/Quorum/pull/77)
 - Cron authentication fails closed, the cursor cannot regress, overlapping runs
   are rejected, and invalid contract events are rejected before persistence.
-- A strong hosted `CRON_SECRET` and a fresh signed testnet action remain explicit
-  approval checkpoints.
+- A strong hosted `CRON_SECRET` is configured as sensitive for Preview and
+  Production. A fresh signed testnet action remains an explicit checkpoint.
 
 ### Event lifecycle
 
-- Draft PR: [#79](https://github.com/wildanniam/Quorum/pull/79)
+- Merged PR: [#79](https://github.com/wildanniam/Quorum/pull/79)
 - Discover, event, checkout, publish, and persistence paths now share the same
   future-safe lifecycle rules.
 - The deployed contract still has no event end-time field; direct out-of-app
@@ -93,31 +93,41 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 
 ### Capability truth
 
-- Draft PR: [#81](https://github.com/wildanniam/Quorum/pull/81)
+- Merged PR: [#81](https://github.com/wildanniam/Quorum/pull/81)
 - App references, indexed events, and explorer-valid Stellar transactions now
   have distinct labels. Configured contracts and detected wallet network are no
   longer presented as completed execution.
 
 ### MoneyGram eligibility
 
-- Draft PR: [#83](https://github.com/wildanniam/Quorum/pull/83)
+- Merged PR: [#83](https://github.com/wildanniam/Quorum/pull/83)
 - Both UI and server require an explorer-valid settlement before the MoneyGram
   provider can be invoked. Mock mode remains explicitly local.
 
 ### Submission package and autonomous release gate
 
-- Draft PRs: [#85](https://github.com/wildanniam/Quorum/pull/85) and
+- Merged PRs: [#85](https://github.com/wildanniam/Quorum/pull/85) and
   [#87](https://github.com/wildanniam/Quorum/pull/87)
 - The claim-to-proof inventory, judge runbook, readiness matrix, and historical
   evidence boundaries now agree.
 - `npm run submission:gate` passes all 36 non-destructive source checks.
 - The isolated localhost PostgreSQL gate passes migration, seed, database,
   wallet-auth, lifecycle, settlement, flow, and persistence checks.
-- The protected PR #87 Vercel preview passes read-only landing, Discover,
-  `stellar.toml`, and contract-status checks. Evidence remains intentionally
-  degraded until hosted migration `0005` is approved and applied.
-- All recovery PRs from #75 through #87 are mergeable with green GitHub and
-  Vercel checks as of 2026-07-15.
+- The release stack from #75 through #87 is merged into `main` with green GitHub
+  and Vercel checks.
+
+### Hosted release checkpoint
+
+- Production migration status is ready with all five migrations applied.
+- The captured operational release is `READY` on Vercel and `/evidence` is
+  healthy. The evidence is an immutable checkpoint, not a promise that its
+  deployment ID will always remain behind the public alias.
+- `CRON_SECRET` is configured as sensitive; its value is not recorded.
+- Missing indexer authorization returns HTTP 401.
+- Two authenticated runs completed without error and advanced both cursor and
+  latest-ledger state.
+- The canonical machine-readable record is
+  `docs/HOSTED_RELEASE_EVIDENCE.json`.
 
 ## Event Lifecycle Acceptance
 
@@ -138,11 +148,9 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   but not a completed cash-out.
 - Fresh testnet transaction: needed because RPC event retention cannot recover old
   contract events indefinitely.
-- Hosted cron secret and schedule: a read-only Vercel env-name audit confirmed
-  that `CRON_SECRET` is absent; it is needed before the indexer can run reliably
-  in production.
-- Production migration `0005`: needed before evidence and anchor cash-out proof
-  can be treated as hosted-ready.
+- Final browser QA: requires the user-approved browser workflow on the final
+  release candidate.
+- Final submission: remains an explicit Wildan approval checkpoint.
 
 ## Submission Source Of Truth
 
@@ -151,6 +159,7 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Judge sequence: `docs/HACKATHON_DEMO_RUNBOOK.md`
 - Historical live app flow: `docs/LIVE_TESTNET_EVIDENCE.json`
 - Historical deployment evidence: `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`
+- Hosted release checkpoint: `docs/HOSTED_RELEASE_EVIDENCE.json`
 
 ## Autonomous Release Gate
 
@@ -162,5 +171,6 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   Postgres. The command rejects hosted and production database hosts.
 - DB-backed integration remains separate from the default source gate because
   it migrates and seeds its explicitly isolated writable database.
-- Browser QA, production migration, hosted cron, fresh Freighter evidence,
-  deployment, and final submission remain explicit checkpoints.
+- Production migration, hosted cron auth, and release deployment are complete.
+- Browser QA, fresh Freighter evidence, MoneyGram provider execution, and final
+  submission remain explicit checkpoints.
