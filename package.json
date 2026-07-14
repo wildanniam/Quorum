@@ -21,6 +21,7 @@
     "wallet:auth:smoke": "node scripts/wallet-auth-smoke.mjs",
     "api:origin:smoke": "tsx scripts/mutation-origin-smoke.ts",
     "anchor:config:smoke": "tsx scripts/anchor-config-smoke.ts",
+    "anchor:eligibility:smoke": "tsx scripts/anchor-payout-eligibility-smoke.ts",
     "anchor:sep1:smoke": "tsx scripts/anchor-sep1-smoke.ts",
     "anchor:sep10:smoke": "tsx scripts/anchor-sep10-smoke.ts",
     "anchor:sep24:smoke": "tsx scripts/anchor-sep24-smoke.ts",

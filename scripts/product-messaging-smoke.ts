@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import {
-  canStartAnchorPayout,
   getAnchorProviderPresentation,
   getContractSetupPresentation,
   getEvidenceProofPresentation,
   hasLiveStellarProof,
 } from "../src/lib/capability-presentation";
+import { canStartAnchorPayout } from "../src/lib/anchor/payout-eligibility";
 
 const liveHash = "a".repeat(64);
 const localReference = "local-checkout-demo-123";

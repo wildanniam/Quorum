@@ -41,8 +41,8 @@ import {
 } from "@/lib/ledger/repository";
 import { stellarExpertTransactionUrl } from "@/lib/stellar/explorer";
 import { getAnchorProviderName } from "@/lib/anchor/config";
+import { canStartAnchorPayout } from "@/lib/anchor/payout-eligibility";
 import {
-  canStartAnchorPayout,
   getAnchorProviderPresentation,
   hasLiveStellarProof,
 } from "@/lib/capability-presentation";
