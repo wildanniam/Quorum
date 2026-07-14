@@ -53,8 +53,8 @@ export default async function EvidencePage() {
 
         {evidenceUnavailable ? (
           <Alert title="Evidence data is temporarily unavailable." tone="warning">
-            The page shell is ready, but the database connection did not respond in
-            this local session.
+            Verified activity could not be loaded right now. No proof data has been
+            replaced or hidden; try again after the data service recovers.
           </Alert>
         ) : null}
 

@@ -117,6 +117,11 @@ function poolConnectionString(value) {
 
 export function createPool({ migration = false } = {}) {
   const connectionString = databaseUrl({ migration });
+
+  return createPoolFromConnectionString(connectionString);
+}
+
+export function createPoolFromConnectionString(connectionString) {
   const ssl = shouldUseSsl(connectionString)
     ? { rejectUnauthorized: false }
     : undefined;

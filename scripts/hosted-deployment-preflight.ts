@@ -15,6 +15,7 @@ import {
 } from "../src/lib/anchor/config";
 import { fetchMoneyGramSep1Info } from "../src/lib/anchor/moneygram/sep1";
 import { fetchMoneyGramSep24Info } from "../src/lib/anchor/moneygram/sep24";
+import { inspectMigrationStatus } from "./db-migration-status.mjs";
 
 type EnvMap = Record<string, string | undefined>;
 
@@ -39,6 +40,27 @@ type ExpectedHostedRuntime = {
 };
 
 type FetchLike = Pick<typeof globalThis, "fetch">["fetch"];
+
+type MigrationStatus = {
+  ready: boolean;
+  schema: string;
+  expected: string[];
+  applied: string[];
+  missing: string[];
+  extra: string[];
+};
+
+type MigrationStatusLoader = (options: {
+  connectionString: string;
+  schema: string;
+}) => Promise<MigrationStatus>;
+
+type HostedPreflightOptions = {
+  env: EnvMap;
+  fetcher?: FetchLike;
+  hostedUrlOverride?: string | null;
+  migrationStatusLoader?: MigrationStatusLoader;
+};
 
 const evidencePath = "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json";
 const productionSecret = "hosted-production-session-secret-32-chars-minimum";
@@ -284,6 +306,26 @@ function assertHostedDatabaseEnv(env: EnvMap) {
   }
 }
 
+async function assertHostedDatabaseMigrations(
+  env: EnvMap,
+  migrationStatusLoader: MigrationStatusLoader,
+) {
+  const connectionString = requireString(
+    env.DIRECT_DATABASE_URL?.trim() || env.DATABASE_URL,
+    "DIRECT_DATABASE_URL or DATABASE_URL",
+  );
+  const schema = env.QUORUM_DB_SCHEMA?.trim() || "public";
+  const status = await migrationStatusLoader({ connectionString, schema });
+
+  assert.equal(
+    status.ready,
+    true,
+    `Database migrations are incomplete. Missing: ${status.missing.join(", ") || "unknown"}.`,
+  );
+
+  return status;
+}
+
 function assertHostedSessionSecret(env: EnvMap) {
   resolveSessionSecret({
     NODE_ENV: "production",
@@ -408,11 +450,9 @@ function assertContractStatusPayload(
   }
 }
 
-async function runHostedDeploymentPreflight(options: {
-  env: EnvMap;
-  fetcher?: FetchLike;
-  hostedUrlOverride?: string | null;
-}) {
+export async function runHostedDeploymentPreflight(
+  options: HostedPreflightOptions,
+) {
   const expected = buildExpectedRuntime(
     readDeploymentEvidence(),
     options.env,
@@ -426,6 +466,10 @@ async function runHostedDeploymentPreflight(options: {
   assertHostedEnvMatchesEvidence(options.env, expected);
   assertOperatorOnlyEnvAbsent(options.env);
   assertNoBrowserSupabaseEnv(options.env);
+  const migrationStatus = await assertHostedDatabaseMigrations(
+    options.env,
+    options.migrationStatusLoader ?? inspectMigrationStatus,
+  );
 
   const fetcher = options.fetcher ?? fetch;
   const anchorProvider = await assertHostedAnchorRuntime({
@@ -446,10 +490,12 @@ async function runHostedDeploymentPreflight(options: {
     hostedAppUrl: expected.hostedAppUrl,
     anchorProvider,
     contractStatusUrl: statusUrl,
+    migrationStatus,
     checks: [
       "hosted-url-public-https",
       "production-session-secret-present",
       "server-postgres-database-url-present",
+      "database-migrations-current",
       "hosted-anchor-client-domain-matches-url",
       "hosted-stellar-toml-signing-key-matches-anchor-env",
       "moneygram-sep1-discovery-ready",
@@ -462,6 +508,23 @@ async function runHostedDeploymentPreflight(options: {
       "contract-status-actions-live-required",
     ],
   };
+}
+
+const readyMigrationStatusLoader: MigrationStatusLoader = async ({ schema }) => ({
+  ready: true,
+  schema,
+  expected: ["0001_initial_schema.sql", "0005_anchor_cashout_proof.sql"],
+  applied: ["0001_initial_schema.sql", "0005_anchor_cashout_proof.sql"],
+  missing: [],
+  extra: [],
+});
+
+function runFixtureHostedDeploymentPreflight(options: HostedPreflightOptions) {
+  return runHostedDeploymentPreflight({
+    ...options,
+    migrationStatusLoader:
+      options.migrationStatusLoader ?? readyMigrationStatusLoader,
+  });
 }
 
 function fixtureEnv(overrides: EnvMap = {}) {
@@ -602,14 +665,14 @@ function preflightFetcher({
 }
 
 async function runSmoke() {
-  const pass = await runHostedDeploymentPreflight({
+  const pass = await runFixtureHostedDeploymentPreflight({
     env: fixtureEnv(),
     fetcher: preflightFetcher(),
   });
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ QUORUM_HOSTED_APP_URL: "http://localhost:3000" }),
         fetcher: preflightFetcher(),
       }),
@@ -618,7 +681,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID: StrKey.encodeContract(Buffer.alloc(32, 5)) }),
         fetcher: preflightFetcher(),
       }),
@@ -627,7 +690,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ STELLAR_ACCOUNT: "quorum-admin-testnet" }),
         fetcher: preflightFetcher(),
       }),
@@ -636,7 +699,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ QUORUM_SESSION_SECRET: "short" }),
         fetcher: preflightFetcher(),
       }),
@@ -645,7 +708,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ DATABASE_URL: "file:./data/quorum.db" }),
         fetcher: preflightFetcher(),
       }),
@@ -654,7 +717,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({
           DATABASE_URL:
             "postgresql://postgres:postgres@db.quorum.example.com:6543/postgres",
@@ -666,7 +729,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({
           NEXT_PUBLIC_SUPABASE_URL: "https://quorum.supabase.co",
         }),
@@ -677,7 +740,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({
           SUPABASE_SERVICE_ROLE_KEY: "service-role-secret",
         }),
@@ -688,7 +751,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv(),
         fetcher: preflightFetcher({
           statusPayload: fixtureStatus({ proofMode: "local" }),
@@ -699,7 +762,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv(),
         fetcher: preflightFetcher({
           statusPayload: fixtureStatus({
@@ -716,7 +779,7 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({
           ANCHOR_CLIENT_DOMAIN: "wrong.example.com",
         }),
@@ -727,13 +790,33 @@ async function runSmoke() {
 
   await assert.rejects(
     () =>
-      runHostedDeploymentPreflight({
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({
           ANCHOR_CLIENT_SIGNING_PUBLIC_KEY: DEFAULT_QUORUM_ANCHOR_SIGNING_KEY,
         }),
         fetcher: preflightFetcher(),
       }),
     /SIGNING_KEY/,
+  );
+
+  await assert.rejects(
+    () =>
+      runFixtureHostedDeploymentPreflight({
+        env: fixtureEnv(),
+        fetcher: preflightFetcher(),
+        migrationStatusLoader: async ({ schema }) => ({
+          ready: false,
+          schema,
+          expected: [
+            "0001_initial_schema.sql",
+            "0005_anchor_cashout_proof.sql",
+          ],
+          applied: ["0001_initial_schema.sql"],
+          missing: ["0005_anchor_cashout_proof.sql"],
+          extra: [],
+        }),
+      }),
+    /Database migrations are incomplete.*0005_anchor_cashout_proof\.sql/,
   );
 
   console.log(
@@ -755,6 +838,7 @@ async function runSmoke() {
           "reject-non-live-action-policy",
           "reject-anchor-client-domain-mismatch",
           "reject-hosted-stellar-toml-signing-key-mismatch",
+          "reject-missing-database-migration",
         ],
       },
       null,
