@@ -17,6 +17,7 @@ import type { PreparedLiveContractAction } from "../src/lib/stellar/live-action"
 import type { PurchaseContractArgs } from "../src/lib/stellar/live-encoding";
 import type { LiveTransactionPreflightRpc } from "../src/lib/stellar/live-preflight";
 import type { LiveTransactionSubmissionRpc } from "../src/lib/stellar/live-submission";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 
 type GetTransactionResponse = Awaited<
   ReturnType<LiveTransactionSubmissionRpc["getTransaction"]>
@@ -102,6 +103,10 @@ async function main() {
   let signCalls = 0;
   let sendCalls = 0;
   let pollCalls = 0;
+  const draftSchedule = createFutureEventWindow({
+    durationHours: 2,
+    offsetDays: 21,
+  });
 
   async function runLiveFlow({
     expectedSigner,
@@ -179,8 +184,8 @@ async function main() {
       shortDescription:
         "A smoke-test draft for the full mock live transaction chain.",
       coverImageUrl: null,
-      startDateTime: "2026-07-01T10:00:00.000Z",
-      endDateTime: "2026-07-01T12:00:00.000Z",
+      startDateTime: draftSchedule.startDateTime,
+      endDateTime: draftSchedule.endDateTime,
       timezone: "Asia/Jakarta",
       locationType: "hybrid",
       locationText: "Jakarta + livestream",

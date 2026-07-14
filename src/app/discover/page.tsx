@@ -9,7 +9,7 @@ import { QuorumButton } from "@/components/ui/quorum-button";
 import {
   countPassesForEvent,
   listCollaborators,
-  listPublishedEvents,
+  listDiscoverableEvents,
 } from "@/lib/events/repository";
 import { eventCoverStyle, eventThemeStyle } from "@/lib/events/theme";
 import type { EventRecord } from "@/lib/db/models";
@@ -108,10 +108,10 @@ function cardDataForEvent(event: EventRecord, stats: EventStats): EventCardData 
 export default async function DiscoverPage({ searchParams }: DiscoverPageProps) {
   const params = searchParams ? await searchParams : {};
   const query = (firstParam(params.q) ?? "").trim();
-  const publishedEvents = await listPublishedEvents();
+  const availableEvents = await listDiscoverableEvents();
   const eventStats = new Map(
     await Promise.all(
-      publishedEvents.map(
+      availableEvents.map(
         async (event) =>
           [
             event.id,
@@ -123,11 +123,11 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
       ),
     ),
   );
-  const filteredEvents = publishedEvents.filter((event) =>
+  const filteredEvents = availableEvents.filter((event) =>
     eventMatchesQuery(event, query),
   );
   const eventTypes = Array.from(
-    new Set(publishedEvents.map((event) => event.eventType)),
+    new Set(availableEvents.map((event) => event.eventType)),
   ).slice(0, 6);
   const cardEvents = filteredEvents.map((event) =>
     cardDataForEvent(event, eventStats.get(event.id) ?? { collaborators: [], minted: 0 }),
@@ -221,11 +221,11 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
             }
             description={
               query
-                ? "Try a broader keyword or clear the search to browse every published event."
-                : "Once an organizer publishes an event, it will appear here with pricing, pass, and proof details."
+                ? "Try a broader keyword or clear the search to browse every upcoming or live event."
+                : "Upcoming and live events appear here with pricing, pass, and proof details."
             }
             icon={Search}
-            title={query ? `No events matched "${query}".` : "No published events yet."}
+            title={query ? `No events matched "${query}".` : "No upcoming events yet."}
           />
         ) : (
           <ProductSection
@@ -235,7 +235,11 @@ export default async function DiscoverPage({ searchParams }: DiscoverPageProps) 
               </QuorumButton>
             }
             description="Compare the essentials first. The complete payout, pass, and resource context is one tap away."
-            eyebrow={query ? `${cardEvents.length} results` : `${cardEvents.length} upcoming events`}
+            eyebrow={
+              query
+                ? `${cardEvents.length} results`
+                : `${cardEvents.length} upcoming or live events`
+            }
             title={query ? `Results for "${query}"` : "Choose an event"}
           >
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

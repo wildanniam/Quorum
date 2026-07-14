@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { StrKey } from "@stellar/stellar-sdk";
 import { execute, query, quoteIdentifier } from "../src/lib/db/client";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 
 const projectRoot = process.cwd();
 const databaseSchema = `quorum_live_persistence_smoke_${randomUUID().replaceAll("-", "_")}`;
@@ -40,6 +41,14 @@ async function main() {
   run("node", ["scripts/db-seed.mjs"]);
 
   const repository = await import("../src/lib/events/repository");
+  const draftSchedule = createFutureEventWindow({
+    durationHours: 2,
+    offsetDays: 21,
+  });
+  const replaySchedule = createFutureEventWindow({
+    durationHours: 2,
+    offsetDays: 22,
+  });
 
   const draft = await repository.createDraftEventWithSetup(
     {
@@ -49,8 +58,8 @@ async function main() {
       shortDescription:
         "A smoke-test draft for recording verified live transaction results.",
       coverImageUrl: null,
-      startDateTime: "2026-07-01T10:00:00.000Z",
-      endDateTime: "2026-07-01T12:00:00.000Z",
+      startDateTime: draftSchedule.startDateTime,
+      endDateTime: draftSchedule.endDateTime,
       timezone: "Asia/Jakarta",
       locationType: "hybrid",
       locationText: "Jakarta + livestream",
@@ -105,8 +114,8 @@ async function main() {
       shortDescription:
         "A smoke-test draft for rejecting replayed publish transaction hashes.",
       coverImageUrl: null,
-      startDateTime: "2026-07-02T10:00:00.000Z",
-      endDateTime: "2026-07-02T12:00:00.000Z",
+      startDateTime: replaySchedule.startDateTime,
+      endDateTime: replaySchedule.endDateTime,
       timezone: "Asia/Jakarta",
       locationType: "hybrid",
       locationText: "Jakarta + livestream",

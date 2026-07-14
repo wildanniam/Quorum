@@ -7,6 +7,8 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 
 - Parent tracking issue: [#73](https://github.com/wildanniam/Quorum/issues/73)
 - Evidence readiness issue: [#74](https://github.com/wildanniam/Quorum/issues/74)
+- Indexer hardening issue: [#76](https://github.com/wildanniam/Quorum/issues/76)
+- Event lifecycle issue: [#78](https://github.com/wildanniam/Quorum/issues/78)
 - Starting commit: `379003f`
 - Hosted application: `https://quorum-sandy-eight.vercel.app`
 - Target network: Stellar testnet
@@ -58,6 +60,36 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   placeholder proof.
 - Lint, build, migration-status smoke, hosted-preflight smoke, DB smoke, and
   settlement smoke pass where the required environment is available.
+
+## Implemented Autonomous Checkpoints
+
+### Evidence readiness
+
+- Draft PR: [#75](https://github.com/wildanniam/Quorum/pull/75)
+- A read-only migration status command and hosted preflight guard now expose the
+  missing production migration before evidence routes are exercised.
+- Production migration `0005` remains unapplied pending explicit approval.
+
+### Indexer hardening
+
+- Draft PR: [#77](https://github.com/wildanniam/Quorum/pull/77)
+- Cron authentication fails closed, the cursor cannot regress, overlapping runs
+  are rejected, and invalid contract events are rejected before persistence.
+- A strong hosted `CRON_SECRET` and a fresh signed testnet action remain explicit
+  approval checkpoints.
+
+## Event Lifecycle Acceptance
+
+- Lifecycle is derived as draft, upcoming, live, or ended without a new database
+  migration.
+- Discover queries only published events whose end time is still in the future.
+- Ended event and checkout pages remain readable but cannot start a wallet action.
+- Local proof persistence and live transaction preparation reject ended-event
+  checkout, and publish paths reject already-ended drafts.
+- Demo seed and integration smoke dates are future-safe instead of hard-coded to
+  the hackathon week.
+- `event:lifecycle:smoke`, lint, and build pass. DB-backed smoke additions are
+  present but require an isolated writable Postgres instance before execution.
 
 ## Current External Dependencies
 

@@ -20,6 +20,7 @@ function getSession(request: NextRequest) {
 function statusForMessage(message: string) {
   if (message.includes("already owns")) return 409;
   if (message.includes("sold out")) return 409;
+  if (message.includes("sales are closed")) return 409;
   if (message.includes("not found")) return 404;
   return 400;
 }

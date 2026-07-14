@@ -28,6 +28,11 @@ import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import { SESSION_COOKIE, readSessionToken } from "@/lib/auth/session";
 import {
+  eventLifecycleLabel,
+  getEventLifecycle,
+  hasEventEnded,
+} from "@/lib/events/lifecycle";
+import {
   getEventById,
   getEventDashboardMetrics,
   getEventRevenueUsdc,
@@ -272,6 +277,19 @@ export default async function DashboardPage() {
                       passCount: 0,
                       revenueUsdc: 0,
                     };
+                    const expiredDraft =
+                      event.status === "draft" && hasEventEnded(event);
+                    const lifecycle = getEventLifecycle(event);
+                    const lifecycleLabel = expiredDraft
+                      ? "Expired draft"
+                      : eventLifecycleLabel(lifecycle);
+                    const lifecycleTone = expiredDraft || lifecycle === "ended"
+                      ? "muted"
+                      : lifecycle === "live"
+                        ? "live"
+                        : lifecycle === "upcoming"
+                          ? "cyan"
+                          : "pending";
                     const metricCards = [
                       {
                         label: "passes",
@@ -303,10 +321,8 @@ export default async function DashboardPage() {
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                           <div className="min-w-0">
                             <div className="flex flex-wrap items-center gap-2">
-                              <StatusPill
-                                tone={event.status === "published" ? "success" : "pending"}
-                              >
-                                {event.status}
+                              <StatusPill tone={lifecycleTone}>
+                                {lifecycleLabel}
                               </StatusPill>
                               <span className="rounded-full border border-white/10 bg-white/[0.035] px-2.5 py-1 font-mono text-xs text-muted">
                                 {event.capacity} capacity
@@ -316,8 +332,12 @@ export default async function DashboardPage() {
                               {event.title}
                             </p>
                           </div>
-                          {event.status === "draft" ? (
+                          {event.status === "draft" && !expiredDraft ? (
                             <PublishButton eventId={event.id} />
+                          ) : expiredDraft ? (
+                            <QuorumButton href="/dashboard/events/new" variant="subtle">
+                              Create replacement
+                            </QuorumButton>
                           ) : (
                             <Link
                               href={`/events/${event.slug}`}

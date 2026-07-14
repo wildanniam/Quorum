@@ -21,6 +21,10 @@ import type {
   UserRecord,
   WithdrawalRecord,
 } from "@/lib/db/models";
+import {
+  assertEventPassSalesOpen,
+  assertEventPublishWindowOpen,
+} from "@/lib/events/lifecycle";
 
 type UserRow = {
   id: string;
@@ -753,6 +757,8 @@ export async function publishDraftEventStub(eventId: string, organizerWallet: st
       throw new Error("Only draft events can be published.");
     }
 
+    assertEventPublishWindowOpen({ endDateTime: event.end_date_time });
+
     const splitTotal = await getCollaboratorSplitTotalFromDb(eventId, db);
     const resourceCount = (await listResourcesFromDb(eventId, db)).length;
 
@@ -813,6 +819,8 @@ export async function recordLivePublishedEvent(input: RecordLivePublishInput) {
       throw new Error("Only draft events can be recorded as live published.");
     }
 
+    assertEventPublishWindowOpen({ endDateTime: event.end_date_time });
+
     const splitTotal = await getCollaboratorSplitTotalFromDb(input.eventId, db);
     const resourceCount = (await listResourcesFromDb(input.eventId, db)).length;
 
@@ -869,10 +877,15 @@ export async function getEventBySlug(slug: string) {
   return row ? toEventRecord(row) : null;
 }
 
-export async function listPublishedEvents() {
+export async function listDiscoverableEvents(now = new Date()) {
   return (
     await query<EventRow>(
-      "SELECT * FROM events WHERE status = 'published' ORDER BY start_date_time ASC",
+      `
+      SELECT * FROM events
+      WHERE status = 'published' AND end_date_time > $1
+      ORDER BY start_date_time ASC
+      `,
+      [now.toISOString()],
     )
   ).map(toEventRecord);
 }
@@ -1398,9 +1411,7 @@ export async function createLocalPassProof(eventId: string, ownerWallet: string)
   return withTransaction(async (db) => {
     const event = toEventRecord(await getEventByIdFromDb(eventId, db, true));
 
-    if (event.status !== "published") {
-      throw new Error("Passes can only be claimed for published events.");
-    }
+    assertEventPassSalesOpen(event);
 
     const existingPass = await queryOne<PassRow>(
       `
@@ -1489,9 +1500,7 @@ export async function recordLivePass(input: RecordLivePassInput) {
 
     const event = toEventRecord(await getEventByIdFromDb(input.eventId, db, true));
 
-    if (event.status !== "published") {
-      throw new Error("Passes can only be recorded for published events.");
-    }
+    assertEventPassSalesOpen(event);
 
     const existingPass = await queryOne<PassRow>(
       `

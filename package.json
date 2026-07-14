@@ -16,6 +16,7 @@
     "db:seed": "node scripts/db-seed.mjs",
     "db:smoke": "node scripts/db-smoke.mjs",
     "demo:smoke": "node scripts/demo-smoke.mjs",
+    "event:lifecycle:smoke": "tsx scripts/event-lifecycle-smoke.ts",
     "wallet:auth:smoke": "node scripts/wallet-auth-smoke.mjs",
     "api:origin:smoke": "tsx scripts/mutation-origin-smoke.ts",
     "anchor:config:smoke": "tsx scripts/anchor-config-smoke.ts",
