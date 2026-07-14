@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CalendarDays,
+  CalendarX2,
   FileKey2,
   MapPin,
   ShieldCheck,
@@ -21,6 +22,10 @@ import {
 import { QuorumButton } from "@/components/ui/quorum-button";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { EventRecord } from "@/lib/db/models";
+import {
+  eventLifecycleLabel,
+  getEventLifecycle,
+} from "@/lib/events/lifecycle";
 import {
   countPassesForEvent,
   getEventBySlug,
@@ -65,6 +70,8 @@ export default async function EventPage({ params }: EventPageProps) {
   const resources = await listResources(event.id);
   const mintedPasses = await countPassesForEvent(event.id);
   const remainingCapacity = Math.max(event.capacity - mintedPasses, 0);
+  const lifecycle = getEventLifecycle(event);
+  const salesClosed = lifecycle === "ended";
   const checkoutHref = `/events/${event.slug}/checkout`;
   const primaryAction = event.isFree ? "Claim pass" : "Get pass";
 
@@ -97,7 +104,9 @@ export default async function EventPage({ params }: EventPageProps) {
                     {event.eventType}
                   </span>
                   <span className="rounded-full border border-white/18 bg-quorum-grey-900/66 px-3 py-1 font-product text-xs font-medium text-foreground backdrop-blur-md">
-                    {remainingCapacity} seats left
+                    {salesClosed
+                      ? eventLifecycleLabel(lifecycle)
+                      : `${remainingCapacity} seats left`}
                   </span>
                 </div>
 
@@ -117,9 +126,12 @@ export default async function EventPage({ params }: EventPageProps) {
           </article>
 
           <aside className="lg:sticky lg:top-24 lg:self-start">
-            <TaskPanel className="p-5" tone="default">
-              <StatusPill icon={TicketCheck} tone="cyan">
-                Event pass
+            <TaskPanel className="p-5" tone={salesClosed ? "muted" : "default"}>
+              <StatusPill
+                icon={salesClosed ? CalendarX2 : TicketCheck}
+                tone={salesClosed ? "muted" : lifecycle === "live" ? "live" : "cyan"}
+              >
+                {salesClosed ? "Event ended" : eventLifecycleLabel(lifecycle)}
               </StatusPill>
               <div className="mt-5 flex items-start justify-between gap-4">
                 <div>
@@ -127,14 +139,26 @@ export default async function EventPage({ params }: EventPageProps) {
                     {priceLabel(event)}
                   </p>
                   <p className="mt-2 text-sm text-muted">
-                    {remainingCapacity} of {event.capacity} seats available
+                    {salesClosed
+                      ? `${mintedPasses} passes issued before sales closed`
+                      : `${remainingCapacity} of ${event.capacity} seats available`}
                   </p>
                 </div>
-                <TicketCheck className="text-quorum-cyan-soft" size={28} />
+                {salesClosed ? (
+                  <CalendarX2 className="text-muted" size={28} />
+                ) : (
+                  <TicketCheck className="text-quorum-cyan-soft" size={28} />
+                )}
               </div>
 
               <div className="mt-6">
-                <QuorumButton href={checkoutHref}>{primaryAction}</QuorumButton>
+                {salesClosed ? (
+                  <QuorumButton href="/discover" variant="secondary">
+                    Browse upcoming events
+                  </QuorumButton>
+                ) : (
+                  <QuorumButton href={checkoutHref}>{primaryAction}</QuorumButton>
+                )}
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-sm">
                   <Link
                     className="text-muted transition hover:text-quorum-cyan-soft"
@@ -171,16 +195,24 @@ export default async function EventPage({ params }: EventPageProps) {
               </div>
 
               <p className="mt-6 text-sm leading-6 text-muted">
-                Wallet approval is explicit. Each wallet can hold one non-transferable pass.
+                {salesClosed
+                  ? "Pass sales are closed. Settlement proof and issued pass resources remain available."
+                  : "Wallet approval is explicit. Each wallet can hold one non-transferable pass."}
               </p>
             </TaskPanel>
           </aside>
         </div>
 
         <StickyActionBar className="lg:hidden">
-          <QuorumButton className="w-full" href={checkoutHref}>
-            {primaryAction}
-          </QuorumButton>
+          {salesClosed ? (
+            <QuorumButton className="w-full" href="/discover" variant="secondary">
+              Browse upcoming events
+            </QuorumButton>
+          ) : (
+            <QuorumButton className="w-full" href={checkoutHref}>
+              {primaryAction}
+            </QuorumButton>
+          )}
         </StickyActionBar>
       </ProductPage>
 

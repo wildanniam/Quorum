@@ -3,6 +3,7 @@ import { createHmac, randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
 import { StrKey } from "@stellar/stellar-sdk";
 import { withClient } from "./postgres-utils.mjs";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 
 const projectRoot = process.cwd();
 const port = Number(process.env.LIVE_POLICY_SMOKE_PORT ?? 3036);
@@ -197,6 +198,8 @@ async function assertPreparedAction(
 }
 
 function createDraftPayload() {
+  const schedule = createFutureEventWindow({ durationHours: 2, offsetDays: 21 });
+
   return {
     title: `Live Prepared Draft ${randomUUID().slice(0, 8)}`,
     eventType: "workshop",
@@ -204,8 +207,8 @@ function createDraftPayload() {
       "A live-policy smoke draft used to prepare unsigned contract action inputs.",
     coverImageUrl:
       "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80",
-    startDateTime: "2026-07-01T10:00:00.000Z",
-    endDateTime: "2026-07-01T12:00:00.000Z",
+    startDateTime: schedule.startDateTime,
+    endDateTime: schedule.endDateTime,
     timezone: "Asia/Jakarta",
     locationType: "hybrid",
     locationText: "Jakarta + livestream",
@@ -537,6 +540,28 @@ async function main() {
     assert(counts.checkIns === 0, "live policy should not create local check-ins");
     assert(counts.withdrawals === 0, "live policy should not create local withdrawals");
 
+    await withClient(
+      (client) =>
+        client.query("UPDATE events SET end_date_time = $1 WHERE id = $2", [
+          "2026-01-01T12:00:00.000Z",
+          eventId,
+        ]),
+      { migration: true },
+    );
+    const endedCheckoutPrepare = await fetch(
+      `${baseUrl}/api/events/${eventId}/contract-action?action=checkout_pass`,
+      { headers: { cookie: attendeeCookie } },
+    );
+    const endedCheckoutPrepareBody = await readJson(endedCheckoutPrepare);
+    assert(
+      endedCheckoutPrepare.status === 409,
+      "live checkout preparation should reject an ended event",
+    );
+    assert(
+      endedCheckoutPrepareBody?.error?.includes("sales are closed"),
+      "live checkout preparation should explain the lifecycle boundary",
+    );
+
     console.log(
       JSON.stringify(
         {
@@ -563,6 +588,7 @@ async function main() {
             "check-in-short-live-token-required",
             "withdraw-live-required",
             "no-local-proof-mutations",
+            "ended-live-checkout-guard",
           ],
         },
         null,

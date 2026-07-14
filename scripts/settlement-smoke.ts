@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { StrKey } from "@stellar/stellar-sdk";
@@ -117,12 +118,16 @@ async function main() {
   const evidence = await import("../src/lib/evidence/repository");
   const ledger = await import("../src/lib/ledger/repository");
   const indexer = await import("../src/lib/stellar/indexer");
+  const eventSchedule = createFutureEventWindow({
+    durationHours: 2,
+    offsetDays: 21,
+  });
 
   const draft = await repository.createDraftEventWithSetup(
     {
       capacity: 25,
       coverImageUrl: null,
-      endDateTime: "2026-07-07T12:00:00.000Z",
+      endDateTime: eventSchedule.endDateTime,
       eventType: "workshop",
       isFree: false,
       locationText: "Jakarta + livestream",
@@ -133,7 +138,7 @@ async function main() {
       shortDescription:
         "Temporary event proving indexer, evidence, and collaborator ledger.",
       slug: `settlement-smoke-${randomUUID().slice(0, 8)}`,
-      startDateTime: "2026-07-07T10:00:00.000Z",
+      startDateTime: eventSchedule.startDateTime,
       timezone: "Asia/Jakarta",
       title: "Settlement Smoke Proof",
     },

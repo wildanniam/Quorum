@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHmac, randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 import { Keypair } from "@stellar/stellar-sdk";
 import { withClient } from "./postgres-utils.mjs";
 
@@ -137,6 +138,8 @@ function createDraftPayload({
   collaboratorSplits = [70, 30],
   includeResource = true,
 }) {
+  const schedule = createFutureEventWindow({ durationHours: 2, offsetDays: 21 });
+
   return {
     title,
     eventType: "workshop",
@@ -144,8 +147,8 @@ function createDraftPayload({
       "A smoke-test event that verifies Quorum draft validation and publish lifecycle.",
     coverImageUrl:
       "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=80",
-    startDateTime: "2026-07-01T10:00:00.000Z",
-    endDateTime: "2026-07-01T12:00:00.000Z",
+    startDateTime: schedule.startDateTime,
+    endDateTime: schedule.endDateTime,
     timezone: "Asia/Jakarta",
     locationType: "hybrid",
     locationText: "Jakarta + livestream",
@@ -318,6 +321,35 @@ async function main() {
       },
     );
     assert(duplicatePublish.status === 400, "published event should not republish");
+
+    const expiredDraftPayload = createDraftPayload({
+      title: `Expired Draft ${randomUUID().slice(0, 8)}`,
+    });
+    expiredDraftPayload.startDateTime = "2026-01-01T10:00:00.000Z";
+    expiredDraftPayload.endDateTime = "2026-01-01T12:00:00.000Z";
+    const expiredDraft = await fetch(`${baseUrl}/api/events`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        cookie: organizerCookie,
+      },
+      body: JSON.stringify(expiredDraftPayload),
+    });
+    const expiredDraftBody = await readJson(expiredDraft);
+    assert(expiredDraft.status === 201, "expired draft should remain recoverable as a draft");
+    const expiredPublish = await fetch(
+      `${baseUrl}/api/events/${expiredDraftBody?.event?.id}/publish`,
+      {
+        method: "POST",
+        headers: { cookie: organizerCookie },
+      },
+    );
+    const expiredPublishBody = await readJson(expiredPublish);
+    assert(expiredPublish.status === 400, "expired draft should not publish");
+    assert(
+      expiredPublishBody?.error?.includes("end time has passed"),
+      "expired publish should explain the lifecycle boundary",
+    );
 
     const publishedDraftPage = await fetch(`${baseUrl}/events/${draftSlug}`);
     const publishedDraftHtml = await publishedDraftPage.text();
@@ -544,6 +576,49 @@ async function main() {
       "duplicate withdrawal should fail when balance is empty",
     );
 
+    await withClient(
+      (client) =>
+        client.query(
+          `UPDATE "${databaseSchema}".events SET end_date_time = $1 WHERE id = $2`,
+          ["2026-01-01T12:00:00.000Z", eventId],
+        ),
+      { migration: true },
+    );
+
+    const endedAttendeeCookie = `quorum_session=${createSession(Keypair.random().publicKey())}`;
+    const endedCheckout = await fetch(`${baseUrl}/api/events/${eventId}/passes`, {
+      method: "POST",
+      headers: { cookie: endedAttendeeCookie },
+    });
+    const endedCheckoutBody = await readJson(endedCheckout);
+    assert(endedCheckout.status === 409, "ended event checkout should fail");
+    assert(
+      endedCheckoutBody?.error?.includes("sales are closed"),
+      "ended checkout should explain that pass sales are closed",
+    );
+
+    const endedEventPage = await fetch(`${baseUrl}/events/${eventSlug}`);
+    const endedEventHtml = await endedEventPage.text();
+    assert(endedEventHtml.includes("Event ended"), "event detail should label ended events");
+    assert(
+      endedEventHtml.includes("Browse upcoming events"),
+      "ended event detail should replace the checkout CTA",
+    );
+
+    const endedCheckoutPage = await fetch(`${baseUrl}/events/${eventSlug}/checkout`);
+    const endedCheckoutHtml = await endedCheckoutPage.text();
+    assert(
+      endedCheckoutHtml.includes("Pass sales closed"),
+      "ended checkout page should be visibly non-actionable",
+    );
+
+    const discoverAfterEnd = await fetch(`${baseUrl}/discover`);
+    const discoverAfterEndHtml = await discoverAfterEnd.text();
+    assert(
+      !discoverAfterEndHtml.includes("APAC Stellar Builder Meetup"),
+      "Discover should exclude ended events",
+    );
+
     const organizerDashboard = await fetch(`${baseUrl}/dashboard`, {
       headers: { cookie: organizerCookie },
     });
@@ -554,6 +629,7 @@ async function main() {
       dashboardHtml.includes("APAC Stellar Builder Meetup"),
       "dashboard should show organizer event",
     );
+    assert(dashboardHtml.includes("Event ended"), "dashboard should label ended events");
     assert(
       dashboardHtml.includes("Local proof mode"),
       "dashboard should show local proof mode before live contracts",
@@ -585,6 +661,7 @@ async function main() {
             "event-detail",
             "draft-validation",
             "publish-lifecycle",
+            "expired-publish-guard",
             "contract-status",
             "payment-asset-status",
             "contract-action-policy",
@@ -598,6 +675,9 @@ async function main() {
             "proof-labels",
             "collaborator-withdraw",
             "duplicate-withdraw-guard",
+            "ended-checkout-guard",
+            "ended-event-ui",
+            "discover-ended-filter",
             "pass-page",
             "dashboard-proof",
             "dashboard-payment-asset-readiness",

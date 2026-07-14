@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   ArrowLeft,
   CalendarDays,
+  CalendarX2,
   CircleDollarSign,
   FileKey2,
   MapPin,
@@ -16,6 +17,7 @@ import { EmptyState, ProductPage } from "@/components/ui/product-layout";
 import { CompactPageHeader, DataRow, ProductSection, TaskPanel } from "@/components/ui/product-primitives";
 import { StatusPill } from "@/components/ui/status-pill";
 import type { EventRecord } from "@/lib/db/models";
+import { getEventLifecycle } from "@/lib/events/lifecycle";
 import {
   countPassesForEvent,
   getEventBySlug,
@@ -60,6 +62,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const resources = await listResources(event.id);
   const mintedCount = await countPassesForEvent(event.id);
   const remainingCapacity = Math.max(event.capacity - mintedCount, 0);
+  const salesClosed = getEventLifecycle(event) === "ended";
 
   return (
     <AppShell>
@@ -72,9 +75,13 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
         </Link>
 
         <CompactPageHeader
-          description="Review the pass details, connect the wallet, then approve the explicit Freighter prompt when it appears."
-          eyebrow="Checkout"
-          icon={TicketCheck}
+          description={
+            salesClosed
+              ? "This event has ended, so new passes can no longer be issued. Existing proof and resources remain available."
+              : "Review the pass details, connect the wallet, then approve the explicit Freighter prompt when it appears."
+          }
+          eyebrow={salesClosed ? "Sales closed" : "Checkout"}
+          icon={salesClosed ? CalendarX2 : TicketCheck}
           meta={
             <div className="flex flex-wrap gap-2">
               <StatusPill icon={TicketCheck} tone="cyan">
@@ -88,7 +95,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
               </StatusPill>
             </div>
           }
-          title="Review your pass."
+          title={salesClosed ? "This event has ended." : "Review your pass."}
         />
 
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_410px] lg:items-start">
@@ -140,6 +147,7 @@ export default async function CheckoutPage({ params }: CheckoutPageProps) {
             isFree={event.isFree}
             priceUsdc={event.priceUsdc}
             remainingCapacity={remainingCapacity}
+            salesClosed={salesClosed}
           />
         </div>
       </ProductPage>

@@ -20,6 +20,7 @@ type CheckoutPanelProps = {
   isFree: boolean;
   priceUsdc: string;
   remainingCapacity: number;
+  salesClosed?: boolean;
 };
 
 type CheckoutResponse = {
@@ -42,6 +43,7 @@ export function CheckoutPanel({
   isFree,
   priceUsdc,
   remainingCapacity,
+  salesClosed = false,
 }: CheckoutPanelProps) {
   const router = useRouter();
   const {
@@ -60,7 +62,9 @@ export function CheckoutPanel({
   const isSoldOut = remainingCapacity <= 0;
   const priceLabel = isFree ? "Free claim" : `${priceUsdc} USDC`;
   const activeError = checkoutError ?? walletError;
-  const checkoutState = isSoldOut
+  const checkoutState = salesClosed
+    ? "Event ended"
+    : isSoldOut
     ? "Sold out"
     : isSubmitting
       ? "Submitting"
@@ -68,7 +72,9 @@ export function CheckoutPanel({
         ? "Ready"
         : "Wallet required";
 
-  const buttonLabel = isSoldOut
+  const buttonLabel = salesClosed
+    ? "Pass sales closed"
+    : isSoldOut
     ? "Sold out"
     : isBusy
       ? isSubmitting
@@ -79,7 +85,9 @@ export function CheckoutPanel({
         : isFree
           ? "Claim pass"
           : "Confirm checkout";
-  const nextStep = isSoldOut
+  const nextStep = salesClosed
+    ? "New passes are no longer issued after the event end time."
+    : isSoldOut
     ? "This event has reached capacity."
     : isSubmitting
       ? "Freighter approval and pass creation are in progress."
@@ -91,7 +99,17 @@ export function CheckoutPanel({
     setCheckoutError(null);
 
     if (!isConnected) {
+      if (salesClosed) {
+        setCheckoutError("Pass sales are closed because this event has ended.");
+        return;
+      }
+
       await connectAndSignIn();
+      return;
+    }
+
+    if (salesClosed) {
+      setCheckoutError("Pass sales are closed because this event has ended.");
       return;
     }
 
@@ -146,12 +164,15 @@ export function CheckoutPanel({
   }
 
   return (
-    <TaskPanel className="p-5" tone={isSoldOut ? "muted" : isConnected ? "ready" : "default"}>
+    <TaskPanel
+      className="p-5"
+      tone={salesClosed || isSoldOut ? "muted" : isConnected ? "ready" : "default"}
+    >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <StatusPill
-            icon={isSoldOut ? AlertTriangle : TicketCheck}
-            tone={isSoldOut ? "blocked" : isConnected ? "ready" : "muted"}
+            icon={salesClosed || isSoldOut ? AlertTriangle : TicketCheck}
+            tone={salesClosed || isSoldOut ? "blocked" : isConnected ? "ready" : "muted"}
           >
             {checkoutState}
           </StatusPill>
@@ -204,11 +225,11 @@ export function CheckoutPanel({
         <QuorumButton
           aria-busy={isBusy}
           className="w-full"
-          disabled={isBusy || isSoldOut}
+          disabled={isBusy || isSoldOut || salesClosed}
           icon={
             isBusy ? (
               <Spinner label={buttonLabel} size={16} />
-            ) : !isSoldOut ? (
+            ) : !isSoldOut && !salesClosed ? (
               <ArrowRight size={16} />
             ) : null
           }
@@ -220,7 +241,9 @@ export function CheckoutPanel({
       </div>
 
       <p className="mt-3 text-center text-xs leading-5 text-muted">
-        Live testnet actions still ask for explicit Freighter approval.
+        {salesClosed
+          ? "No wallet connection or transaction approval is needed."
+          : "Live testnet actions still ask for explicit Freighter approval."}
       </p>
     </TaskPanel>
   );

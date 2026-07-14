@@ -1,10 +1,20 @@
 import { withClient, withTransaction } from "./postgres-utils.mjs";
+import { createFutureEventWindow } from "./demo-event-schedule.mjs";
 
 const demoEventId = "evt_apac_stellar_builder_meetup";
 const freeEventId = "evt_stellar_open_office_hours";
 const organizerWallet = "GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF";
 const speakerWallet = "GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH";
 const partnerWallet = "GBUSN4MX7AE3RKAR4DEJEELBAQ4CZ3Q6PZ4QEU7RW3SQ7OX6ZFSIDGER";
+const builderMeetupSchedule = createFutureEventWindow({
+  durationHours: 3,
+  offsetDays: 7,
+});
+const officeHoursSchedule = createFutureEventWindow({
+  durationHours: 1.5,
+  offsetDays: 14,
+  startHourUtc: 9,
+});
 
 await withClient(async (client) => {
   await withTransaction(client, async () => {
@@ -33,8 +43,8 @@ await withClient(async (client) => {
         "Paid Web3 Meetup + Mini Workshop",
         "A builder meetup with USDC split escrow, non-transferable NFT passes, gated resources, and check-in proof.",
         "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1600&q=80",
-        "2026-06-21T11:30:00.000Z",
-        "2026-06-21T14:30:00.000Z",
+        builderMeetupSchedule.startDateTime,
+        builderMeetupSchedule.endDateTime,
         "Asia/Jakarta",
         "hybrid",
         "Jakarta + livestream",
@@ -54,8 +64,8 @@ await withClient(async (client) => {
         "Free Web3 Builder Session",
         "A free community session for builders to discuss Stellar payments, Soroban contracts, and event access ideas.",
         "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=1600&q=80",
-        "2026-06-28T09:00:00.000Z",
-        "2026-06-28T10:30:00.000Z",
+        officeHoursSchedule.startDateTime,
+        officeHoursSchedule.endDateTime,
         "Asia/Jakarta",
         "virtual",
         "Livestream",

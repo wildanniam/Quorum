@@ -6,6 +6,12 @@ import {
   listCollaborators,
   listResources,
 } from "@/lib/events/repository";
+import {
+  EVENT_ENDED_CHECKOUT_MESSAGE,
+  EVENT_ENDED_PUBLISH_MESSAGE,
+  hasEventEnded,
+  isEventPassSalesOpen,
+} from "@/lib/events/lifecycle";
 import { getContractReadiness } from "@/lib/stellar/contracts";
 import {
   type CheckInContractArgs,
@@ -164,6 +170,10 @@ export async function prepareLiveContractAction({
       );
     }
 
+    if (hasEventEnded(event)) {
+      throw livePreparationError(EVENT_ENDED_PUBLISH_MESSAGE, 409);
+    }
+
     if (resources.length < 1) {
       throw livePreparationError(
         "Add at least one gated resource before preparing live publish.",
@@ -203,6 +213,10 @@ export async function prepareLiveContractAction({
       event.status,
       "Passes can only be prepared for published events.",
     );
+
+    if (!isEventPassSalesOpen(event)) {
+      throw livePreparationError(EVENT_ENDED_CHECKOUT_MESSAGE, 409);
+    }
 
     if (await getPassByEventAndOwner(event.id, signerWallet)) {
       throw livePreparationError(
