@@ -29,6 +29,7 @@ const requiredFiles = [
   "db/migrations/0005_anchor_cashout_proof.sql",
   "scripts/settlement-smoke.ts",
   "scripts/stellar-indexer-run.ts",
+  "scripts/indexer-security-smoke.ts",
   "scripts/mutation-origin-smoke.ts",
   "scripts/live-args-smoke.ts",
   "scripts/live-browser-flow-smoke.ts",
@@ -104,6 +105,7 @@ const requiredPackageScripts = [
   "readiness:audit",
   "settlement:smoke",
   "indexer:run",
+  "indexer:security:smoke",
   "wallet:auth:smoke",
 ];
 
@@ -119,6 +121,7 @@ const requiredEvidenceChecks = [
   "Demo smoke",
   "Live policy smoke",
   "Settlement smoke",
+  "Indexer security smoke",
   "Browser QA",
   "Deploy env smoke",
   "Deploy hosted preflight smoke",
@@ -229,12 +232,28 @@ const requiredSettlementCoverage = [
   "indexer-schema",
   "indexer-idempotent-ingest",
   "indexer-state-cursor",
+  "indexer-failure-preserves-state",
+  "indexer-latest-ledger-monotonic",
+  "indexer-concurrent-run-lock",
+  "indexer-rejects-unconfigured-contract",
   "global-event-evidence-read-model",
   "event-proof-filter",
   "stellar-explorer-links",
   "collaborator-credit-ledger",
   "collaborator-debit-ledger",
   "collaborator-withdrawable-balance",
+];
+
+const requiredIndexerSecurityCoverage = [
+  "reject-missing-indexer-cron-secret",
+  "reject-weak-indexer-cron-secret",
+  "reject-invalid-indexer-bearer",
+  "accept-valid-indexer-bearer",
+  "reject-indexer-cron-secret-line-breaks",
+  "validate-indexer-run-parameters",
+  "preserve-monotonic-indexer-checkpoint",
+  "indexer-route-fails-closed",
+  "indexer-route-rejects-invalid-query",
 ];
 
 const requiredLivePolicyCoverage = [
@@ -337,6 +356,7 @@ const requiredHostedPreflightCoverage = [
   "production-session-secret-present",
   "server-postgres-database-url-present",
   "database-migrations-current",
+  "hosted-indexer-cron-secret-ready",
   "runtime-env-matches-deployment-evidence",
   "operator-signing-env-absent",
   "browser-supabase-env-absent",
@@ -347,6 +367,8 @@ const requiredHostedPreflightCoverage = [
   "reject-contract-id-mismatch",
   "reject-operator-signing-env",
   "reject-invalid-production-session-secret",
+  "reject-missing-indexer-cron-secret",
+  "reject-weak-indexer-cron-secret",
   "reject-non-postgres-database-url",
   "reject-hosted-postgres-url-without-sslmode",
   "reject-browser-supabase-env",
@@ -599,6 +621,12 @@ function checkEvidence() {
   for (const coverage of requiredSettlementCoverage) {
     if (!evidence.includes(`"${coverage}"`)) {
       fail(`DEMO_EVIDENCE is missing settlement smoke coverage: ${coverage}`);
+    }
+  }
+
+  for (const coverage of requiredIndexerSecurityCoverage) {
+    if (!evidence.includes(`"${coverage}"`)) {
+      fail(`DEMO_EVIDENCE is missing indexer security coverage: ${coverage}`);
     }
   }
 

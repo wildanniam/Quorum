@@ -57,6 +57,7 @@ async function main() {
     cursor: stringArg("--cursor", "cursor"),
     limit: integerArg("--limit", "limit") ?? undefined,
     startLedger: integerArg("--start-ledger", "start_ledger"),
+    stateId: stringArg("--state-id", "state_id") ?? undefined,
   });
 
   console.log(JSON.stringify({ ok: true, ...result }, null, 2));

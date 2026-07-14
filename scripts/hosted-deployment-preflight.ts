@@ -15,6 +15,7 @@ import {
 } from "../src/lib/anchor/config";
 import { fetchMoneyGramSep1Info } from "../src/lib/anchor/moneygram/sep1";
 import { fetchMoneyGramSep24Info } from "../src/lib/anchor/moneygram/sep24";
+import { indexerCronSecretError } from "../src/lib/stellar/indexer-auth";
 import { inspectMigrationStatus } from "./db-migration-status.mjs";
 
 type EnvMap = Record<string, string | undefined>;
@@ -306,6 +307,12 @@ function assertHostedDatabaseEnv(env: EnvMap) {
   }
 }
 
+function assertHostedIndexerEnv(env: EnvMap) {
+  const error = indexerCronSecretError(env.CRON_SECRET);
+
+  assert.equal(error, null, error ?? "CRON_SECRET is invalid.");
+}
+
 async function assertHostedDatabaseMigrations(
   env: EnvMap,
   migrationStatusLoader: MigrationStatusLoader,
@@ -463,6 +470,7 @@ export async function runHostedDeploymentPreflight(
 
   assertHostedSessionSecret(options.env);
   assertHostedDatabaseEnv(options.env);
+  assertHostedIndexerEnv(options.env);
   assertHostedEnvMatchesEvidence(options.env, expected);
   assertOperatorOnlyEnvAbsent(options.env);
   assertNoBrowserSupabaseEnv(options.env);
@@ -496,6 +504,7 @@ export async function runHostedDeploymentPreflight(
       "production-session-secret-present",
       "server-postgres-database-url-present",
       "database-migrations-current",
+      "hosted-indexer-cron-secret-ready",
       "hosted-anchor-client-domain-matches-url",
       "hosted-stellar-toml-signing-key-matches-anchor-env",
       "moneygram-sep1-discovery-ready",
@@ -536,6 +545,7 @@ function fixtureEnv(overrides: EnvMap = {}) {
   return {
     QUORUM_HOSTED_APP_URL: "https://quorum.example.com",
     QUORUM_SESSION_SECRET: productionSecret,
+    CRON_SECRET: "fixture-indexer-cron-secret-32-characters",
     ANCHOR_PROVIDER: "moneygram",
     ANCHOR_CLIENT_DOMAIN: "quorum.example.com",
     ANCHOR_CLIENT_SIGNING_PUBLIC_KEY: fixtureAnchorKey.publicKey(),
@@ -709,6 +719,24 @@ async function runSmoke() {
   await assert.rejects(
     () =>
       runFixtureHostedDeploymentPreflight({
+        env: fixtureEnv({ CRON_SECRET: undefined }),
+        fetcher: preflightFetcher(),
+      }),
+    /CRON_SECRET is not configured/,
+  );
+
+  await assert.rejects(
+    () =>
+      runFixtureHostedDeploymentPreflight({
+        env: fixtureEnv({ CRON_SECRET: "short" }),
+        fetcher: preflightFetcher(),
+      }),
+    /CRON_SECRET must contain at least 32 characters/,
+  );
+
+  await assert.rejects(
+    () =>
+      runFixtureHostedDeploymentPreflight({
         env: fixtureEnv({ DATABASE_URL: "file:./data/quorum.db" }),
         fetcher: preflightFetcher(),
       }),
@@ -830,6 +858,8 @@ async function runSmoke() {
           "reject-contract-id-mismatch",
           "reject-operator-signing-env",
           "reject-invalid-production-session-secret",
+          "reject-missing-indexer-cron-secret",
+          "reject-weak-indexer-cron-secret",
           "reject-non-postgres-database-url",
           "reject-hosted-postgres-url-without-sslmode",
           "reject-browser-supabase-env",

@@ -331,6 +331,97 @@ async function main() {
   assert.equal(indexerState?.cursor, "cursor-after-103");
   assert.equal(indexerState?.latestLedger, 103);
 
+  await assert.rejects(
+    () =>
+      indexer.runStellarEventIndexer({
+        requester: async () => {
+          throw new Error("mock RPC unavailable");
+        },
+        stateId: "settlement-smoke",
+      }),
+    /mock RPC unavailable/,
+  );
+  const failedIndexerState = await indexer.getIndexerState("settlement-smoke");
+  assert.equal(failedIndexerState?.cursor, "cursor-after-103");
+  assert.equal(failedIndexerState?.latestLedger, 103);
+  assert.match(failedIndexerState?.lastError ?? "", /mock RPC unavailable/);
+
+  const regressedLedgerRun = await indexer.runStellarEventIndexer({
+    requester: async () => ({
+      cursor: "cursor-after-empty-102",
+      events: [],
+      latestLedger: 102,
+    }),
+    stateId: "settlement-smoke",
+  });
+  assert.equal(regressedLedgerRun.latestLedger, 103);
+  assert.equal(regressedLedgerRun.state.latestLedger, 103);
+  assert.equal(regressedLedgerRun.cursor, "cursor-after-103");
+  assert.equal(regressedLedgerRun.state.cursor, "cursor-after-103");
+
+  let releaseConcurrentRun: () => void = () => {};
+  let signalConcurrentRunStarted: () => void = () => {};
+  const concurrentRunStarted = new Promise<void>((resolve) => {
+    signalConcurrentRunStarted = resolve;
+  });
+  const concurrentRunRelease = new Promise<void>((resolve) => {
+    releaseConcurrentRun = resolve;
+  });
+  const firstConcurrentRun = indexer.runStellarEventIndexer({
+    requester: async () => {
+      signalConcurrentRunStarted();
+      await concurrentRunRelease;
+      return { cursor: "concurrent-cursor", events: [], latestLedger: 103 };
+    },
+    startLedger: 100,
+    stateId: "settlement-concurrent",
+  });
+
+  await concurrentRunStarted;
+  await assert.rejects(
+    () =>
+      indexer.runStellarEventIndexer({
+        requester: async () => ({ events: [], latestLedger: 103 }),
+        startLedger: 100,
+        stateId: "settlement-concurrent",
+      }),
+    /already active/,
+  );
+  releaseConcurrentRun();
+  await firstConcurrentRun;
+
+  const unexpectedContractId = StrKey.encodeContract(Buffer.alloc(32, 99));
+  await assert.rejects(
+    () =>
+      indexer.runStellarEventIndexer({
+        requester: async () => ({
+          events: [
+            mockRpcEvent({
+              contractId: unexpectedContractId,
+              coreEventId,
+              ledger: 104,
+              pagingToken: "104-unexpected",
+              topic: "unexpected",
+              txHash: txHash(8),
+            }),
+          ],
+          latestLedger: 104,
+        }),
+        startLedger: 104,
+        stateId: "settlement-unexpected-contract",
+      }),
+    /unconfigured contract/,
+  );
+  const rejectedContractState = await indexer.getIndexerState(
+    "settlement-unexpected-contract",
+  );
+  assert.equal(rejectedContractState?.cursor, null);
+  assert.equal(rejectedContractState?.latestLedger, null);
+  assert.match(
+    rejectedContractState?.lastError ?? "",
+    /unconfigured contract/,
+  );
+
   const eventEvidence = await evidence.listEvidence({ eventId: event.id });
   const evidenceKinds = new Set(eventEvidence.map((record) => record.kind));
 
@@ -403,6 +494,10 @@ async function main() {
           "indexer-schema",
           "indexer-idempotent-ingest",
           "indexer-state-cursor",
+          "indexer-failure-preserves-state",
+          "indexer-latest-ledger-monotonic",
+          "indexer-concurrent-run-lock",
+          "indexer-rejects-unconfigured-contract",
           "global-event-evidence-read-model",
           "event-proof-filter",
           "stellar-explorer-links",

@@ -1,25 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authorizeIndexerRequest } from "@/lib/stellar/indexer-auth";
 import { runStellarEventIndexer } from "@/lib/stellar/indexer";
 
 export const dynamic = "force-dynamic";
 
-function optionalEnv(value: string | undefined) {
-  return value && value.trim().length > 0 ? value.trim() : null;
-}
-
 function requireCronSecret(request: NextRequest) {
-  const secret =
-    optionalEnv(process.env.QUORUM_INDEXER_CRON_SECRET) ??
-    optionalEnv(process.env.CRON_SECRET);
+  const authorization = authorizeIndexerRequest({
+    authorization: request.headers.get("authorization"),
+    secret: process.env.CRON_SECRET,
+  });
 
-  if (!secret) return null;
-
-  const authorization = request.headers.get("authorization");
-
-  if (authorization !== `Bearer ${secret}`) {
+  if (!authorization.authorized) {
     return NextResponse.json(
-      { error: "Indexer cron secret is required." },
-      { status: 401 },
+      { error: authorization.error, ok: false },
+      { status: authorization.status },
     );
   }
 
@@ -28,7 +22,9 @@ function requireCronSecret(request: NextRequest) {
 
 function integerParam(value: string | null) {
   if (!value) return null;
-  if (!/^\d+$/.test(value)) return null;
+  if (!/^\d+$/.test(value)) {
+    throw new Error("Indexer integer query parameters must be non-negative integers.");
+  }
 
   return Number(value);
 }
@@ -38,14 +34,15 @@ export async function GET(request: NextRequest) {
 
   if (rejection) return rejection;
 
-  const limit = integerParam(request.nextUrl.searchParams.get("limit"));
-  const startLedger = integerParam(request.nextUrl.searchParams.get("startLedger"));
-  const cursor = request.nextUrl.searchParams.get("cursor");
-
   try {
+    const limit = integerParam(request.nextUrl.searchParams.get("limit"));
+    const startLedger = integerParam(
+      request.nextUrl.searchParams.get("startLedger"),
+    );
+    const cursor = request.nextUrl.searchParams.get("cursor")?.trim() || null;
     const result = await runStellarEventIndexer({
       ...(cursor ? { cursor } : {}),
-      ...(limit ? { limit } : {}),
+      ...(limit !== null ? { limit } : {}),
       ...(startLedger !== null ? { startLedger } : {}),
     });
 
@@ -62,7 +59,17 @@ export async function GET(request: NextRequest) {
             : "Could not run Stellar event indexer.",
         ok: false,
       },
-      { status: 500 },
+      {
+        status:
+          error instanceof Error &&
+          /query parameters|between 1 and 500|cannot be combined|indexer start ledger/i.test(
+            error.message,
+          )
+            ? 400
+            : error instanceof Error && /already active/i.test(error.message)
+              ? 409
+              : 500,
+      },
     );
   }
 }
