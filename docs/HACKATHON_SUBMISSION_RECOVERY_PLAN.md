@@ -9,6 +9,9 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Evidence readiness issue: [#74](https://github.com/wildanniam/Quorum/issues/74)
 - Indexer hardening issue: [#76](https://github.com/wildanniam/Quorum/issues/76)
 - Event lifecycle issue: [#78](https://github.com/wildanniam/Quorum/issues/78)
+- Capability messaging issue: [#80](https://github.com/wildanniam/Quorum/issues/80)
+- MoneyGram eligibility issue: [#82](https://github.com/wildanniam/Quorum/issues/82)
+- Submission package issue: [#84](https://github.com/wildanniam/Quorum/issues/84)
 - Starting commit: `379003f`
 - Hosted application: `https://quorum-sandy-eight.vercel.app`
 - Target network: Stellar testnet
@@ -33,12 +36,14 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 | --- | --- | --- |
 | 1 | Restore evidence schema readiness and add migration drift guards | Production migration requires explicit approval |
 | 2 | Harden indexer failure handling, cursor safety, and observability | Adding hosted cron secret requires explicit approval |
-| 3 | Produce fresh indexed testnet evidence | Fresh wallet signing requires explicit approval |
-| 4 | Repair event lifecycle, dates, capacity, and demo state | No external approval for local/code changes |
-| 5 | Align copy and status labels with capabilities that are actually verified | No external approval for local/code changes |
+| 3 | Repair event lifecycle, dates, capacity, and demo state | No external approval for local/code changes |
+| 4 | Align copy and status labels with capabilities that are actually verified | No external approval for local/code changes |
+| 5 | Enforce live-settlement eligibility for MoneyGram | High-risk merge requires explicit approval |
 | 6 | Rebuild submission docs, proof inventory, and judge runbook | No external approval for documentation |
-| 7 | Run lint, build, smoke suites, browser QA, and responsive screenshots | No external approval for read-only checks |
-| 8 | Deploy the approved release and complete final hosted verification | Production deploy and submission remain explicit checkpoints |
+| 7 | Run lint, build, smoke suites, browser QA, and responsive screenshots | Browser automation uses the approved browser workflow |
+| 8 | Apply production migration, configure cron secret, and deploy approved release | Production changes remain explicit checkpoints |
+| 9 | Produce fresh current-origin testnet and indexed evidence | Fresh wallet signing requires explicit approval |
+| 10 | Complete final hosted verification and submit | Submission remains an explicit checkpoint |
 
 ## Guardrails
 
@@ -78,6 +83,27 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - A strong hosted `CRON_SECRET` and a fresh signed testnet action remain explicit
   approval checkpoints.
 
+### Event lifecycle
+
+- Draft PR: [#79](https://github.com/wildanniam/Quorum/pull/79)
+- Discover, event, checkout, publish, and persistence paths now share the same
+  future-safe lifecycle rules.
+- The deployed contract still has no event end-time field; direct out-of-app
+  purchase after the UI closes remains a documented contract limitation.
+
+### Capability truth
+
+- Draft PR: [#81](https://github.com/wildanniam/Quorum/pull/81)
+- App references, indexed events, and explorer-valid Stellar transactions now
+  have distinct labels. Configured contracts and detected wallet network are no
+  longer presented as completed execution.
+
+### MoneyGram eligibility
+
+- Draft PR: [#83](https://github.com/wildanniam/Quorum/pull/83)
+- Both UI and server require an explorer-valid settlement before the MoneyGram
+  provider can be invoked. Mock mode remains explicitly local.
+
 ## Event Lifecycle Acceptance
 
 - Lifecycle is derived as draft, upcoming, live, or ended without a new database
@@ -99,3 +125,13 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   contract events indefinitely.
 - Hosted cron secret and schedule: needed before the indexer can run reliably in
   production.
+- Production migration `0005`: needed before evidence and anchor cash-out proof
+  can be treated as hosted-ready.
+
+## Submission Source Of Truth
+
+- Current readiness: `docs/MVP_READINESS.md`
+- Claim-to-proof map: `docs/HACKATHON_PROOF_INVENTORY.md`
+- Judge sequence: `docs/HACKATHON_DEMO_RUNBOOK.md`
+- Historical live app flow: `docs/LIVE_TESTNET_EVIDENCE.json`
+- Historical deployment evidence: `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`

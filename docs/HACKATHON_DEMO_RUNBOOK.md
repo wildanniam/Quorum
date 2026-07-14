@@ -1,229 +1,146 @@
 # Quorum Hackathon Demo Runbook
 
-This runbook is for presenting the Quorum MVP without hidden setup steps.
+Last reviewed: 2026-07-15.
 
-## Demo Positioning
+This runbook follows the product that exists now. It does not treat the landing
+page as the marketplace, does not require hidden local setup, and never presents
+historical or local proof as a fresh hosted transaction.
 
-Quorum is a Stellar-native collaborative event checkout layer for Web3 events.
-The demo proves:
+## One-Sentence Positioning
 
-- public paid/free event marketplace;
-- wallet-only session;
-- collaborator split transparency;
-- unique non-transferable pass proof;
-- gated resources;
-- organizer check-in;
-- collaborator withdrawal proof;
-- Soroban contracts built and tested for the live version.
+Quorum is a Stellar-native event checkout and settlement layer that lets an
+organizer define collaborator revenue shares before ticket sales, issue
+wallet-bound passes, and expose readable proof from checkout through settlement.
 
-## Local Setup
+## What To Emphasize
 
-```bash
-npm install
-npm run db:migrate
-npm run db:seed
-npm run dev
-```
+1. **The split is agreed before sales.** Ticket revenue is not a private manual
+   spreadsheet after the event.
+2. **Access and payment share one flow.** A successful purchase produces a
+   wallet-bound event pass used for resources and check-in.
+3. **Proof has levels.** Quorum visibly separates app records, indexed contract
+   events, and explorer-verifiable Stellar transactions.
+4. **Cash-out is downstream of settlement.** MoneyGram is an optional provider
+   integration, not the core proof of Quorum and not a completed claim while
+   provider approval is pending.
 
-Open `http://localhost:3000`.
+## Pre-Demo Gate
 
-The seed command creates:
+Do not start the judge demo until all mandatory rows are green:
 
-- `APAC Stellar Builder Meetup`, paid, `5 USDC`, split `70/20/10`;
-- `Stellar Open Office Hours`, free, split `100%` organizer.
+| Gate | Required result |
+| --- | --- |
+| Landing, discover, selected event, checkout, pass, proof, ledger | HTTP 200 |
+| `/api/contracts/status` | Expected contract IDs, testnet network, RPC reachable |
+| Production migration status | No missing repository migration |
+| Evidence page | Loads records or a legitimate empty state, not a data-service error |
+| Candidate quality suite | Lint, build, targeted smokes pass |
+| Browser QA | Desktop, tablet, mobile pass with no horizontal overflow |
+| Final evidence audit | `npm run readiness:final` passes on the release commit |
 
-## Demo Personas
+If the evidence data service is degraded, use the historical proof packet for a
+technical review but do not pretend the final hosted flow is ready.
 
-Use Freighter for the visual wallet demo. The seeded local proof data uses these
-public addresses for role matching:
+## Five-Minute Judge Flow
 
-| Role | Address |
-|---|---|
-| Organizer | `GDUZJCMDLTUAAPZULJ2CXV2BO7GZLBCJB4UQCUZXS5TYBGBDVGEJ7HZF` |
-| Speaker collaborator | `GC33PRL24QY6EUIHOJT6ITM34QHBJOIFXO4UBL3AS2RECIDIPFAF6YDH` |
-| Community partner | `GBUSN4MX7AE3RKAR4DEJEELBAQ4CZ3Q6PZ4QEU7RW3SQ7OX6ZFSIDGER` |
+### 1. Start With The Product, Not The Console
 
-For a live Freighter demo, connect whatever test wallet is available; the app
-uses the connected wallet as the attendee/organizer session.
+Open `/`.
 
-## Five Minute Flow
+- Explain the collaborative payment problem in one sentence.
+- Use **Start Splitting** or **Discover** to enter the application.
+- Avoid opening technical status pages first.
 
-1. Marketplace
-   - Open `/`.
-   - Show the paid APAC event and free office-hours event.
-   - Point out published-only marketplace and proof stats.
+### 2. Show A Real Event Decision
 
-2. Paid event
-   - Open `/events/apac-stellar-builder-meetup`.
-   - Show split transparency, capacity, resources, and single pass per wallet.
-   - Click checkout.
+Open `/discover`, then a published event.
 
-3. Checkout and pass
-   - Connect Freighter or use the local smoke flow for proof.
-   - Claim/buy pass.
-   - Show `/passes/[tokenId]`: unique pass, owner wallet, tx-like proof, checked-in status.
+- Show time, location, capacity, price, and lifecycle state.
+- Show the collaborator split before checkout.
+- Explain that ended events remain readable but sales close automatically.
 
-4. Gated resources
-   - Open `/events/apac-stellar-builder-meetup/resources`.
-   - Without a pass session it shows locked.
-   - With the pass owner session it shows unlocked resources.
+### 3. Show Checkout And The Pass Outcome
 
-5. Check-in
-   - Open `/check-in/evt_apac_stellar_builder_meetup`.
-   - Enter the token ID.
-   - Organizer check-in records a proof hash and updates the pass page.
+Open `/events/[slug]/checkout`.
 
-6. Dashboard transparency
-   - Open `/dashboard`.
-   - Show organizer events, routed USDC, collaborator balances, attendee passes,
-     and proof queue.
-   - Use the collaborator withdraw action to record a local withdrawal proof.
+- Point out the exact amount, network, and wallet-bound pass result.
+- If a fresh signing run was approved, connect Freighter and approve only the
+  transaction described in the signing runbook.
+- Otherwise, use an already recorded pass and do not simulate a wallet prompt.
 
-## Free Claim Flow
+Open `/passes/[tokenId]`.
 
-Open `/events/stellar-open-office-hours`.
+- Show owner wallet, event, source, and proof classification.
+- If an Explorer button exists, open it; if it does not, call the row app proof.
 
-The free event proves claim mode:
+### 4. Show Access And Settlement Transparency
 
-- CTA says `Claim pass`;
-- pass source is `free_claim`;
-- recorded amount is `0`;
-- duplicate claim is rejected for the same wallet.
+Open `/events/[slug]/resources` with the pass-owning wallet session, then open
+`/events/[slug]/proof`.
 
-## Verification Before Presenting
+- Show that resources depend on pass ownership.
+- Show that event proof contains only rows for this event.
+- Open technical details for one row and explain whether it is app, indexed, or
+  explorer-verifiable proof.
 
-```bash
-npm run db:migrate
-npm run db:seed
-npm run lint
-npm run build
-npm run wallet:auth:smoke
-npm run api:origin:smoke
-npm run demo:smoke
-npm run demo:live-policy
-npm run browser:qa
-npm run deploy:env:smoke
-npm run live:args:smoke
-npm run live:flow:smoke
-npm run live:persistence:smoke
-npm run live:preflight:smoke
-npm run live:signing:smoke
-npm run live:submission:smoke
-npm run live:xdr:smoke
-npm run live:evidence:template
-npm run live:browser-flow:smoke
-npm run live:ui-wiring:smoke
-npm run contracts:test
-npm run contracts:build
-npm run contracts:doctor
-npm run evidence:local
-npm run readiness:audit
-```
+Open `/dashboard/ledger` with a collaborator wallet.
 
-The generated evidence is stored in `docs/DEMO_EVIDENCE.md`.
-The latest local browser QA notes are stored in `docs/BROWSER_QA.md`.
-The DB smoke verifies Postgres CRUD/cascade behavior, partial unique live proof
-indexes, and the global live proof hash registry that keep event IDs and
-transaction hashes from being replayed.
-The wallet auth smoke verifies the real HTTP challenge, signature verification,
-session cookie, `/api/me`, and logout routes using a local test keypair without
-opening Freighter.
-The API origin smoke verifies cookie-backed POST/PATCH routes reject
-cross-origin mutation attempts while allowing same-origin and forwarded hosted
-requests.
-After an explicitly approved live testnet run, record public-only deployment
-and transaction evidence in `docs/LIVE_TESTNET_EVIDENCE.json` and run
-`npm run live:evidence:audit`. The committed
-`docs/LIVE_TESTNET_EVIDENCE.example.json` is the required shape for that packet.
-Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` during the approved browser
-signing session so each Freighter prompt is checked against the expected wallet
-role, contract method, amount, and evidence field before approval.
-Filled live evidence must use public HTTPS hosted URLs; the audit rejects
-localhost, private network, non-HTTPS URLs, reused transaction hashes,
-mismatched check-in token evidence, proof URLs outside the hosted app origin,
-and zero-value withdrawal evidence.
-The live policy smoke verifies fake configured contract IDs require live
-transaction submission, exposes non-signing live action prepare responses, and
-rejects invalid signed XDR before persistence without creating local proof
-records. It also verifies the preflight route rejects invalid requests before
-touching RPC.
-The live args smoke verifies deterministic contract arguments plus USDC
-decimal-to-atomic and atomic-to-decimal conversion for live proof storage.
-The live XDR smoke verifies pre-simulation unsigned Soroban transaction
-templates without signing or submission.
-The live flow smoke verifies mock full live publish, paid checkout, free claim,
-check-in, and withdraw chains from prepared DB action to preflight, mock
-Freighter signing, mock RPC finality, decoded return values, and post-success
-persistence through `live-result-persistence.ts` without submitting to testnet.
-The live persistence smoke verifies the post-RPC-success DB recording path for
-real transaction hashes, rejects local `stub:` hashes, rejects replayed live
-proof hashes across publish/pass/check-in/withdrawal records, and protects live
-withdrawal evidence from amounts above the collaborator's withdrawable balance.
-The live preflight smoke verifies signer sequence lookup and RPC
-prepare/simulation orchestration with a mock RPC server, without signing.
-The live signing smoke verifies the Freighter signing adapter with a mock
-signer, including prepared XDR source/contract/function/argument guards before
-wallet signing, without opening Freighter or requesting a real wallet signature.
-The live submission smoke verifies signed transaction submission and finality
-polling with a mock RPC server, including purchase token ID and withdraw amount
-return value decoding plus source wallet and contract/function/argument mismatch
-rejection before RPC, without submitting to testnet.
-The live browser flow smoke verifies the client-side preflight, Freighter
-signing, and signed-XDR submit sequence with mock fetch and signer boundaries,
-including encoded argument mismatch rejection before signing.
-The live UI wiring smoke verifies publish, checkout, check-in, and withdraw
-buttons call that helper when the server reports `live_required`.
-The contract tests verify Soroban proof events for event creation, pass
-purchase/claim/mint, balance credit, withdraw, and check-in.
+- Show earned, settled, and available balances.
+- Keep event-level proof separate from wallet-scoped credit/debit history.
 
-## Live Testnet Boundary
+### 5. Close With Stellar And The Boundary
 
-Live contract deployment and transaction signing are intentionally gated by a
-funded Stellar identity.
+Open `/api/contracts/status` only at the end.
 
-Before live deployment:
+- Show the deployed core, pass, and USDC contract IDs.
+- Explain that wallet transactions require explicit Freighter approval.
+- Describe MoneyGram as a testnet cash-out integration whose provider approval
+  is pending unless a real provider response is available that day.
 
-```bash
-export STELLAR_NETWORK=testnet
-export QUORUM_SESSION_SECRET=<hosted-session-secret-32-plus-chars>
-export STELLAR_ACCOUNT=<funded-identity-or-secret>
-export QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING
-export ADMIN_ADDRESS=<admin-public-key>
-export QUORUM_PLATFORM_FEE_BPS=0
-npm run contracts:doctor
-npm run contracts:deploy:testnet
-export NEXT_PUBLIC_QUORUM_PASS_CONTRACT_ID=<deployed-pass-contract-id>
-export NEXT_PUBLIC_QUORUM_CORE_CONTRACT_ID=<deployed-core-contract-id>
-export NEXT_PUBLIC_STELLAR_USDC_CONTRACT_ID=<confirmed-testnet-usdc-contract-id>
-npm run contracts:init:testnet
-```
+## Optional Fresh Testnet Flow
 
-Until those values are configured, the web app uses local proof records that
-mirror the contract flow.
-The hosted app must use a non-placeholder `QUORUM_SESSION_SECRET` of at least
-32 characters; `npm run deploy:env:smoke` verifies this guard without cloud
-credentials.
-The deploy/init scripts refuse to sign unless
-`QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING` is set after explicit
-approval.
-They also refuse non-testnet deployment networks; keep
-`STELLAR_NETWORK=testnet` for the approved hackathon deployment path.
-They refuse non-zero `QUORUM_PLATFORM_FEE_BPS` unless
-`QUORUM_NONZERO_PLATFORM_FEE_APPROVED=I_APPROVE_NONZERO_PLATFORM_FEE` is set
-after explicit product approval for a fee-policy change.
-The final live evidence packet must record the pass deploy, core deploy, pass
-init, core init, and pass `set_core` transaction hashes.
+This is not autonomous. It requires Wildan's explicit approval and manual
+Freighter confirmation for each transaction.
 
-## Submission Evidence Checklist
+1. Organizer creates a future event draft.
+2. Organizer publishes the event on testnet.
+3. Attendee wallet buys or claims a pass.
+4. Organizer checks in that exact token.
+5. Collaborator withdraws a non-zero balance.
+6. Indexer ingests the resulting contract events.
+7. Record the current Vercel event URL, proof URL, pass URL, unique transaction
+   hashes, token ID, and withdrawal amount.
 
-- `docs/DEMO_EVIDENCE.md`
-- `docs/BROWSER_QA.md`
-- `docs/MVP_READINESS.md`
-- contract WASM hashes from `npm run contracts:build`
-- `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for approved browser wallet signing
-- `docs/LIVE_SIGNING_HANDOFF.md` for the remaining live transaction handoff
-- `docs/LIVE_TESTNET_EVIDENCE.example.json` as the machine-readable checklist
-  for approved live deployment and Freighter-signed transaction evidence
-- screenshot or short clip of marketplace, checkout, pass page, resources,
-  check-in, dashboard, and withdrawal proof
-- deployed URL and contract IDs once funded deployment is approved
+Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the approval sequence and
+`docs/LIVE_TESTNET_EVIDENCE.example.json` for the evidence shape.
+
+## MoneyGram Rule
+
+- If approval is still pending: show the provider-dependent UI state and explain
+  the SEP-1/10/24 architecture. Do not promise pickup.
+- If approval arrives: start only from an explorer-verifiable settlement and
+  record the provider response separately from the Stellar settlement proof.
+- Never use a mock reference as evidence of MoneyGram execution.
+
+## Fallback Without Signing
+
+If a judge session cannot sign:
+
+1. show the current product flow through checkout review;
+2. use the recorded pass/proof pages from the approved evidence packet;
+3. open Stellar Explorer links from that packet;
+4. show contract tests and deterministic smoke output;
+5. state exactly which proof is historical and which deployment is current.
+
+## Final Capture List
+
+- landing page at desktop and mobile;
+- discover and selected event;
+- checkout review before wallet approval;
+- pass receipt with proof classification;
+- gated resource state;
+- event proof timeline;
+- collaborator ledger;
+- contract status response;
+- Stellar Explorer transaction pages for the fresh approved flow;
+- MoneyGram provider state only if it is genuine.

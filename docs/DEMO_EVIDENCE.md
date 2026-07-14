@@ -1,5 +1,10 @@
 # Quorum Demo Evidence
 
+> Historical verification snapshot from commit `72fc066`. It is not evidence
+> that the current Vercel deployment or current recovery branch is ready. Use
+> `docs/HACKATHON_PROOF_INVENTORY.md` and regenerate this file only against an
+> explicitly approved isolated database.
+
 Generated at: `2026-07-07T02:32:45.403Z`
 
 ## Source State
@@ -1083,4 +1088,3 @@ test test::set_core_emits_even
   "config": 
 ... [truncated]
 ```
-
