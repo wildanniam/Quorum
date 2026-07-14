@@ -1,4 +1,29 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
+const HOUR_MS = 60 * 60 * 1000;
+
+export function createPastEventWindow({
+  durationHours,
+  endedHoursAgo = 1,
+  referenceDate = new Date(),
+}) {
+  const reference = new Date(referenceDate);
+
+  if (Number.isNaN(reference.getTime())) {
+    throw new Error("Demo event schedule requires a valid reference date.");
+  }
+
+  if (durationHours <= 0 || endedHoursAgo <= 0) {
+    throw new Error("Past event windows require positive hour values.");
+  }
+
+  const end = new Date(reference.getTime() - endedHoursAgo * HOUR_MS);
+  const start = new Date(end.getTime() - durationHours * HOUR_MS);
+
+  return {
+    endDateTime: end.toISOString(),
+    startDateTime: start.toISOString(),
+  };
+}
 
 export function createFutureEventWindow({
   durationHours,
@@ -20,7 +45,7 @@ export function createFutureEventWindow({
     start.setTime(start.getTime() + DAY_MS);
   }
 
-  const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+  const end = new Date(start.getTime() + durationHours * HOUR_MS);
 
   return {
     endDateTime: end.toISOString(),

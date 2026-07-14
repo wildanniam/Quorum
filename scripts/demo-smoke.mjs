@@ -1,7 +1,10 @@
 import { spawn } from "node:child_process";
 import { createHmac, randomUUID } from "node:crypto";
 import { setTimeout as delay } from "node:timers/promises";
-import { createFutureEventWindow } from "./demo-event-schedule.mjs";
+import {
+  createFutureEventWindow,
+  createPastEventWindow,
+} from "./demo-event-schedule.mjs";
 import { Keypair } from "@stellar/stellar-sdk";
 import { withClient } from "./postgres-utils.mjs";
 
@@ -576,11 +579,21 @@ async function main() {
       "duplicate withdrawal should fail when balance is empty",
     );
 
+    const endedEventWindow = createPastEventWindow({ durationHours: 3 });
+
     await withClient(
       (client) =>
         client.query(
-          `UPDATE "${databaseSchema}".events SET end_date_time = $1 WHERE id = $2`,
-          ["2026-01-01T12:00:00.000Z", eventId],
+          `
+          UPDATE "${databaseSchema}".events
+          SET start_date_time = $1, end_date_time = $2
+          WHERE id = $3
+          `,
+          [
+            endedEventWindow.startDateTime,
+            endedEventWindow.endDateTime,
+            eventId,
+          ],
         ),
       { migration: true },
     );

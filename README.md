@@ -101,6 +101,7 @@ npm run settlement:smoke
 npm run indexer:security:smoke
 npm run anchor:config:smoke
 npm run anchor:eligibility:smoke
+npm run anchor:sep10:smoke
 npm run browser:qa
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
@@ -118,6 +119,9 @@ npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
 npm run readiness:final
+npm run submission:hosted:probe
+npm run submission:gate
+npm run submission:db:gate:smoke
 npm run submission:package:smoke
 cargo test
 stellar contract build
@@ -128,6 +132,28 @@ npm run contracts:doctor
 clearly labeled historical QA snapshots. `npm run readiness:final` is the final
 submission gate: it rejects those historical snapshots and requires freshly
 generated command and browser evidence from the release candidate.
+
+`npm run submission:gate` runs the complete non-destructive autonomous suite.
+It intentionally excludes database-writing integration tests, browser
+automation, hosted cron calls, wallet signing, provider execution, deployment,
+and submission. `npm run submission:hosted:probe` performs public GET requests
+only and cannot mutate the hosted application.
+
+The database-backed release suite is available separately and refuses every
+non-local database host:
+
+```bash
+QUORUM_RELEASE_DATABASE_URL='postgresql://user:password@127.0.0.1:5432/quorum_release' \
+  npm run submission:db:gate
+```
+
+It migrates and seeds that disposable local database, then runs database,
+demo, wallet auth, live-policy, settlement/indexer, live-flow, and persistence
+smokes sequentially. Never substitute a Supabase or production URL.
+
+`npm run anchor:sep10:smoke` is hermetic and uses generated fixture keys.
+`npm run anchor:sep10:live` is intentionally outside the autonomous gate because
+it requires the real client-domain secret and a live MoneyGram response.
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary Postgres schema, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 
