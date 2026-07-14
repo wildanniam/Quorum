@@ -101,6 +101,7 @@ npm run settlement:smoke
 npm run indexer:security:smoke
 npm run anchor:config:smoke
 npm run anchor:eligibility:smoke
+npm run anchor:sep10:smoke
 npm run browser:qa
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
@@ -136,6 +137,10 @@ It intentionally excludes database-writing integration tests, browser
 automation, hosted cron calls, wallet signing, provider execution, deployment,
 and submission. `npm run submission:hosted:probe` performs public GET requests
 only and cannot mutate the hosted application.
+
+`npm run anchor:sep10:smoke` is hermetic and uses generated fixture keys.
+`npm run anchor:sep10:live` is intentionally outside the autonomous gate because
+it requires the real client-domain secret and a live MoneyGram response.
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary Postgres schema, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 

@@ -97,6 +97,8 @@ const requiredPackageScripts = [
   "product:messaging:smoke",
   "anchor:config:smoke",
   "anchor:eligibility:smoke",
+  "anchor:sep10:smoke",
+  "anchor:sep10:live",
   "deploy:env:smoke",
   "deploy:hosted:preflight",
   "deploy:hosted:preflight:smoke",

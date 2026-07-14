@@ -24,6 +24,7 @@
     "anchor:eligibility:smoke": "tsx scripts/anchor-payout-eligibility-smoke.ts",
     "anchor:sep1:smoke": "tsx scripts/anchor-sep1-smoke.ts",
     "anchor:sep10:smoke": "tsx scripts/anchor-sep10-smoke.ts",
+    "anchor:sep10:live": "tsx scripts/anchor-sep10-smoke.ts --live",
     "anchor:sep24:smoke": "tsx scripts/anchor-sep24-smoke.ts",
     "anchor:status:smoke": "tsx scripts/anchor-status-sync-smoke.ts",
     "demo:live-policy": "node scripts/live-policy-smoke.mjs",

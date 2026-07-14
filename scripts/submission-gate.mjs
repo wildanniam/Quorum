@@ -255,7 +255,8 @@ const report = {
     },
     {
       id: "moneygram-provider",
-      reason: "MoneyGram allowlist approval and provider execution are external.",
+      reason:
+        "MoneyGram allowlist approval, live SEP-10 auth, and provider execution are external.",
     },
     {
       id: "deploy-and-submit",
