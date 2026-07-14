@@ -135,3 +135,13 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Judge sequence: `docs/HACKATHON_DEMO_RUNBOOK.md`
 - Historical live app flow: `docs/LIVE_TESTNET_EVIDENCE.json`
 - Historical deployment evidence: `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`
+
+## Autonomous Release Gate
+
+- `npm run submission:gate` is the non-destructive source gate.
+- `npm run submission:hosted:probe` checks only public GET routes and contract
+  status; it never calls mutation, cron, signing, or provider endpoints.
+- DB-backed integration smokes require an explicitly isolated writable Postgres
+  URL and are excluded from the default gate.
+- Browser QA, production migration, hosted cron, fresh Freighter evidence,
+  deployment, and final submission remain explicit checkpoints.

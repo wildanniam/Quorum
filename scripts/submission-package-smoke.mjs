@@ -45,6 +45,14 @@ assert.equal(
 );
 assert.match(readme, /readiness:final/);
 assert.match(runbook, /readiness:final/);
+assert.equal(
+  packageJson.scripts?.["submission:hosted:probe"],
+  "node scripts/hosted-readiness-probe.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["submission:gate"],
+  "node scripts/submission-gate.mjs",
+);
 
 assert.doesNotMatch(readme, /Vercel project\/env configuration;/);
 assert.doesNotMatch(readme, /public live evidence page/);

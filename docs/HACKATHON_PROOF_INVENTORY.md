@@ -60,6 +60,10 @@ not yet the final submission candidate.
 6. Keep MoneyGram as an integration preview unless provider approval arrives
    and an actual provider response is recorded.
 
+Run `npm run submission:gate` for the complete non-destructive source suite and
+`npm run submission:hosted:probe` for the read-only Vercel snapshot. Neither
+command replaces the explicit production, browser, signing, or provider gates.
+
 ## Judge-Safe Links
 
 - Product: `https://quorum-sandy-eight.vercel.app`

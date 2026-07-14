@@ -118,6 +118,8 @@ npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
 npm run readiness:final
+npm run submission:hosted:probe
+npm run submission:gate
 npm run submission:package:smoke
 cargo test
 stellar contract build
@@ -128,6 +130,12 @@ npm run contracts:doctor
 clearly labeled historical QA snapshots. `npm run readiness:final` is the final
 submission gate: it rejects those historical snapshots and requires freshly
 generated command and browser evidence from the release candidate.
+
+`npm run submission:gate` runs the complete non-destructive autonomous suite.
+It intentionally excludes database-writing integration tests, browser
+automation, hosted cron calls, wallet signing, provider execution, deployment,
+and submission. `npm run submission:hosted:probe` performs public GET requests
+only and cannot mutate the hosted application.
 
 `npm run demo:smoke` starts an isolated local Next.js dev server, seeds a temporary Postgres schema, and verifies marketplace, paid checkout, free claim, duplicate pass guard, gated resources, organizer check-in, collaborator withdraw, pass detail, and dashboard proof surfaces.
 

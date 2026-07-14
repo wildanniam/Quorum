@@ -51,6 +51,8 @@
     "evidence:local": "node scripts/collect-evidence.mjs",
     "readiness:audit": "node scripts/readiness-audit.mjs",
     "readiness:final": "node scripts/readiness-audit.mjs --require-fresh-evidence",
+    "submission:hosted:probe": "node scripts/hosted-readiness-probe.mjs",
+    "submission:gate": "node scripts/submission-gate.mjs",
     "submission:package:smoke": "node scripts/submission-package-smoke.mjs",
     "contracts:test": "cargo test",
     "contracts:build": "stellar contract build",
