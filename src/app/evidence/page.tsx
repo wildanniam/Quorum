@@ -45,15 +45,15 @@ export default async function EvidencePage() {
               </QuorumButton>
             </>
           }
-          description="A readable record of what happened in Quorum. Stellar transactions, indexed contract events, and app proof remain clearly labeled."
-          eyebrow="Live evidence"
+          description="A readable record of what happened in Quorum. Explorer-verifiable transactions, indexed contract events, and app proof remain clearly labeled."
+          eyebrow="Evidence ledger"
           icon={ShieldCheck}
-          title="Trace Quorum settlement from checkout to payout."
+          title="Trace Quorum activity from checkout to cash-out."
         />
 
         {evidenceUnavailable ? (
           <Alert title="Evidence data is temporarily unavailable." tone="warning">
-            Verified activity could not be loaded right now. No proof data has been
+            Recorded activity could not be loaded right now. No proof data has been
             replaced or hidden; try again after the data service recovers.
           </Alert>
         ) : null}

@@ -17,6 +17,7 @@ import {
 import { AppShell } from "@/components/app-shell";
 import { AnchorPayoutButton } from "@/components/anchor/anchor-payout-button";
 import { AnchorPayoutSyncButton } from "@/components/anchor/anchor-payout-sync-button";
+import { Alert } from "@/components/ui/feedback-primitives";
 import {
   EmptyState,
   ProductPage,
@@ -39,6 +40,12 @@ import {
   listCollaboratorLedger,
 } from "@/lib/ledger/repository";
 import { stellarExpertTransactionUrl } from "@/lib/stellar/explorer";
+import { getAnchorProviderName } from "@/lib/anchor/config";
+import {
+  canStartAnchorPayout,
+  getAnchorProviderPresentation,
+  hasLiveStellarProof,
+} from "@/lib/capability-presentation";
 
 export const dynamic = "force-dynamic";
 
@@ -76,21 +83,30 @@ function cashOutStatus(
   payout: AnchorPayoutWithEvent,
   moneyGramStatus: string | null,
 ) {
+  const provider = getAnchorProviderPresentation(payout.provider);
+
   if (payout.status === "completed") {
     return {
-      description: "MoneyGram marked this cash-out complete.",
+      description: `${provider.providerLabel} marked this cash-out complete.`,
       icon: CircleCheck,
-      label: "Cash-out complete",
+      label:
+        payout.provider === "moneygram" ? "Cash-out complete" : "Demo complete",
       tone: "success" as const,
     };
   }
 
   if (payout.status === "ready_for_pickup") {
     return {
-      description: "The pickup reference is ready in MoneyGram.",
+      description:
+        payout.provider === "moneygram"
+          ? "The pickup reference is ready in MoneyGram."
+          : "The mock provider issued a demo reference. No external cash pickup was created.",
       icon: Landmark,
-      label: "Ready for pickup",
-      tone: "ready" as const,
+      label:
+        payout.provider === "moneygram"
+          ? "Ready for pickup"
+          : "Demo reference ready",
+      tone: payout.provider === "moneygram" ? ("ready" as const) : ("cyan" as const),
     };
   }
 
@@ -98,14 +114,17 @@ function cashOutStatus(
     return {
       description:
         payout.failureReason ??
-        "MoneyGram could not continue this cash-out. Review the details before retrying.",
+        `${provider.providerLabel} could not continue this cash-out. Review the details before retrying.`,
       icon: CircleAlert,
       label: payout.status === "failed" ? "Cash-out failed" : "Cash-out cancelled",
       tone: "danger" as const,
     };
   }
 
-  if (moneyGramStatus === "pending_user_transfer_start") {
+  if (
+    payout.provider === "moneygram" &&
+    moneyGramStatus === "pending_user_transfer_start"
+  ) {
     return {
       description: "MoneyGram is ready for the exact wallet transfer shown below.",
       icon: Send,
@@ -116,15 +135,21 @@ function cashOutStatus(
 
   if (payout.status === "requested") {
     return {
-      description: "Complete the MoneyGram identity and pickup details to continue.",
+      description:
+        payout.provider === "moneygram"
+          ? "Complete the MoneyGram identity and pickup details to continue."
+          : "The mock provider request is recorded for product-flow testing.",
       icon: Clock3,
-      label: "Details required",
+      label:
+        payout.provider === "moneygram"
+          ? "Details required"
+          : "Demo request recorded",
       tone: "pending" as const,
     };
   }
 
   return {
-    description: "MoneyGram is processing the latest cash-out state.",
+    description: `${provider.providerLabel} is processing the latest cash-out state.`,
     icon: Clock3,
     label: "Processing",
     tone: "pending" as const,
@@ -166,6 +191,8 @@ function TransactionProofRow({
 }
 
 export default async function CollaboratorLedgerPage() {
+  const anchorProvider = getAnchorProviderName();
+  const anchorPresentation = getAnchorProviderPresentation(anchorProvider);
   const cookieStore = await cookies();
   const session = readSessionToken(cookieStore.get(SESSION_COOKIE)?.value);
   const entries = session
@@ -220,16 +247,24 @@ export default async function CollaboratorLedgerPage() {
         ) : null}
 
         {session ? (
-          <section className="mt-12" aria-label="MoneyGram cash-out">
+          <section className="mt-12" aria-label="Anchor cash-out">
             <SectionHeader
-              description="Quorum only starts MoneyGram after USDC has left the event contract and reached this wallet. Each confirmed settlement can back one cash-out."
+              description={anchorPresentation.description}
               eyebrow={
                 <span className="inline-flex items-center gap-2">
-                  <RadioTower size={14} /> MoneyGram cash-out
+                  <RadioTower size={14} /> {anchorPresentation.eyebrow}
                 </span>
               }
-              title="Move settled wallet funds toward cash pickup."
+              title={anchorPresentation.title}
             />
+
+            <Alert
+              className="mt-5"
+              title={anchorPresentation.accessTitle}
+              tone={anchorProvider === "moneygram" ? "warning" : "info"}
+            >
+              {anchorPresentation.accessDescription}
+            </Alert>
 
             <ol
               aria-label="Cash-out path"
@@ -242,14 +277,26 @@ export default async function CollaboratorLedgerPage() {
                   label: "Settle to wallet",
                 },
                 {
-                  detail: "The same wallet sends exact testnet USDC with memo.",
+                  detail:
+                    anchorProvider === "moneygram"
+                      ? "After provider access, the same wallet sends exact testnet USDC with memo."
+                      : "The mock provider records the intended transfer step without moving funds.",
                   icon: Send,
-                  label: "Transfer to MoneyGram",
+                  label:
+                    anchorProvider === "moneygram"
+                      ? "Transfer to MoneyGram"
+                      : "Simulate provider transfer",
                 },
                 {
-                  detail: "MoneyGram returns the reference for cash pickup.",
+                  detail:
+                    anchorProvider === "moneygram"
+                      ? "When accepted, MoneyGram returns the reference for cash pickup."
+                      : "Quorum returns a clearly labeled mock reference for the demo.",
                   icon: Landmark,
-                  label: "Collect with reference",
+                  label:
+                    anchorProvider === "moneygram"
+                      ? "Collect with reference"
+                      : "Inspect demo reference",
                 },
               ].map((step, index) => {
                 const Icon = step.icon;
@@ -277,53 +324,80 @@ export default async function CollaboratorLedgerPage() {
 
             <div className="mt-7 grid gap-3">
               {anchorOpportunities.length > 0 ? (
-                anchorOpportunities.map((item) => (
-                  <article
-                    className="grid gap-5 rounded-[8px] border border-white/10 bg-quorum-grey-700/72 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
-                    key={item.withdrawalId}
-                  >
-                    <div className="min-w-0">
-                      <StatusPill icon={CircleCheck} tone="success">
-                        Wallet settlement confirmed
-                      </StatusPill>
-                      <h3 className="mt-4 font-product text-xl font-medium">
-                        {item.eventTitle}
-                      </h3>
-                      <p className="mt-2 font-mono text-2xl text-quorum-cyan-soft">
-                        {item.settlementAmountUsdc} USDC
-                      </p>
-                      <div className="mt-4 divide-y divide-white/10 border-y border-white/10">
-                        <TransactionProofRow
-                          emptyLabel="Settlement proof pending"
-                          hash={item.settlementTxHash}
-                          label="Contract to wallet"
-                        />
-                        <div className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
-                          <p className="text-xs text-muted">Settled</p>
-                          <p className="text-xs text-foreground">
-                            {formatDate(item.settledAt)} UTC
-                          </p>
+                anchorOpportunities.map((item) => {
+                  const liveSettlement = hasLiveStellarProof({
+                    ledger: null,
+                    txHash: item.settlementTxHash,
+                  });
+                  const canStart = canStartAnchorPayout({
+                    provider: anchorProvider,
+                    settlementTxHash: item.settlementTxHash,
+                  });
+
+                  return (
+                    <article
+                      className="grid gap-5 rounded-[8px] border border-white/10 bg-quorum-grey-700/72 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                      key={item.withdrawalId}
+                    >
+                      <div className="min-w-0">
+                        <StatusPill
+                          icon={liveSettlement ? CircleCheck : CircleAlert}
+                          tone={liveSettlement ? "success" : "local"}
+                        >
+                          {liveSettlement
+                            ? "Explorer-verified settlement"
+                            : "Quorum settlement record"}
+                        </StatusPill>
+                        <h3 className="mt-4 font-product text-xl font-medium">
+                          {item.eventTitle}
+                        </h3>
+                        <p className="mt-2 font-mono text-2xl text-quorum-cyan-soft">
+                          {item.settlementAmountUsdc} USDC
+                        </p>
+                        <div className="mt-4 divide-y divide-white/10 border-y border-white/10">
+                          <TransactionProofRow
+                            emptyLabel="Settlement proof pending"
+                            hash={item.settlementTxHash}
+                            label="Contract to wallet"
+                          />
+                          <div className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
+                            <p className="text-xs text-muted">Settled</p>
+                            <p className="text-xs text-foreground">
+                              {formatDate(item.settledAt)} UTC
+                            </p>
+                          </div>
                         </div>
+                        <Link
+                          className="mt-4 inline-flex items-center gap-1 text-sm text-muted transition hover:text-quorum-cyan-soft"
+                          href={`/events/${item.eventSlug}/proof`}
+                        >
+                          Event proof <ArrowUpRight size={13} />
+                        </Link>
                       </div>
-                      <Link
-                        className="mt-4 inline-flex items-center gap-1 text-sm text-muted transition hover:text-quorum-cyan-soft"
-                        href={`/events/${item.eventSlug}/proof`}
-                      >
-                        Event proof <ArrowUpRight size={13} />
-                      </Link>
-                    </div>
-                    <div className="md:w-52">
-                      <AnchorPayoutButton
-                        amountUsdc={item.settlementAmountUsdc}
-                        eventId={item.eventId}
-                        withdrawalId={item.withdrawalId}
-                      />
-                    </div>
-                  </article>
-                ))
+                      <div className="md:w-64">
+                        {canStart ? (
+                          <AnchorPayoutButton
+                            actionLabel={
+                              anchorProvider === "moneygram"
+                                ? "Start MoneyGram flow"
+                                : "Start cash-out demo"
+                            }
+                            amountUsdc={item.settlementAmountUsdc}
+                            eventId={item.eventId}
+                            withdrawalId={item.withdrawalId}
+                          />
+                        ) : (
+                          <Alert title="Live settlement required" tone="warning">
+                            MoneyGram cannot start from a local proof record.
+                          </Alert>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })
               ) : (
                 <EmptyState
-                  description="Withdraw a collaborator balance from an event first. The confirmed wallet settlement will appear here automatically."
+                  description="Withdraw a collaborator balance from an event first. The resulting settlement record will appear here automatically."
                   icon={WalletCards}
                   title="No settled funds ready"
                 />
@@ -333,9 +407,9 @@ export default async function CollaboratorLedgerPage() {
             {anchorPayouts.length > 0 ? (
               <div className="mt-12">
                 <SectionHeader
-                  description="Contract settlement proof and MoneyGram transfer proof stay separate, so every step can be checked independently."
-                  eyebrow="Cash-out history"
-                  title="Follow each request from wallet to pickup."
+                  description={anchorPresentation.historyDescription}
+                  eyebrow="Provider request history"
+                  title="Follow each request without mixing proof sources."
                 />
                 <div className="mt-6 grid items-start gap-4 lg:grid-cols-2">
                   {anchorPayouts.map((payout) => {
@@ -355,7 +429,7 @@ export default async function CollaboratorLedgerPage() {
                             {status.label}
                           </StatusPill>
                           <span className="font-mono text-xs uppercase text-muted">
-                            {payout.provider}
+                            {getAnchorProviderPresentation(payout.provider).providerLabel}
                           </span>
                         </div>
                         <h3 className="mt-4 font-product text-xl font-medium">
@@ -377,7 +451,11 @@ export default async function CollaboratorLedgerPage() {
                           <TransactionProofRow
                             emptyLabel="Waiting for wallet transfer"
                             hash={payout.stellarTransactionId}
-                            label="Wallet to MoneyGram"
+                            label={
+                              payout.provider === "moneygram"
+                                ? "Wallet to MoneyGram"
+                                : "Mock provider transfer"
+                            }
                           />
                           <div className="grid gap-1 py-3 sm:grid-cols-[9rem_minmax(0,1fr)] sm:items-center">
                             <p className="text-xs text-muted">Pickup reference</p>

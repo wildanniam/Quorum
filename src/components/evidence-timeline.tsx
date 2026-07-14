@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import type { EvidenceKind, EvidenceRecord } from "@/lib/db/models";
+import { getEvidenceProofPresentation } from "@/lib/capability-presentation";
 import { cn } from "@/lib/ui";
 import { ProofSurface } from "@/components/ui/proof-surface";
 import { StatusPill } from "@/components/ui/status-pill";
@@ -73,30 +74,6 @@ const KIND_META: Record<
   },
 };
 
-function proofMode(record: EvidenceRecord) {
-  if (record.txHash) {
-    return {
-      helper: "Verified through a Stellar transaction hash.",
-      label: "Stellar tx",
-      tone: "live" as const,
-    };
-  }
-
-  if (record.ledger !== null) {
-    return {
-      helper: "Observed from indexed Stellar contract events.",
-      label: "Indexed ledger",
-      tone: "cyan" as const,
-    };
-  }
-
-  return {
-    helper: "Stored as Quorum app proof without an external transaction hash.",
-    label: "App proof",
-    tone: "local" as const,
-  };
-}
-
 function shorten(value: string | null) {
   if (!value) return "system";
   if (value.length <= 18) return value;
@@ -121,7 +98,7 @@ function amountLabel(record: EvidenceRecord) {
 export function EvidenceTimeline({
   className,
   description,
-  emptyDescription = "Live publish, checkout, check-in, anchor payout, withdrawal, or indexed contract events will appear here after they are persisted.",
+  emptyDescription = "Recorded publish, checkout, check-in, anchor payout, withdrawal, or indexed contract events will appear here after they are persisted.",
   emptyTitle = "No evidence recorded yet",
   records,
   showEventLink = true,
@@ -164,7 +141,7 @@ export function EvidenceTimeline({
         const meta = KIND_META[record.kind];
         const Icon = meta.Icon;
         const amount = amountLabel(record);
-        const mode = proofMode(record);
+        const mode = getEvidenceProofPresentation(record);
 
         return (
           <article

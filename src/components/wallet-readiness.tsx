@@ -16,7 +16,7 @@ export function WalletReadiness() {
     {
       icon: ShieldCheck,
       label: "Session",
-      value: sessionWalletAddress ? "Signed" : "Unsigned",
+      value: sessionWalletAddress ? "Authenticated" : "Not authenticated",
       active: Boolean(sessionWalletAddress),
     },
     {
@@ -28,7 +28,7 @@ export function WalletReadiness() {
     {
       icon: BadgeCheck,
       label: "Testnet",
-      value: isTestnet ? "Ready" : "Pending",
+      value: isTestnet ? "Detected" : "Not detected",
       active: Boolean(isTestnet),
     },
   ];
@@ -41,7 +41,7 @@ export function WalletReadiness() {
             Wallet
           </StatusPill>
           <p className="mt-4 font-product text-xl font-medium">
-            {status === "checking" ? "Checking wallet" : "Freighter status"}
+            {status === "checking" ? "Checking wallet" : "Freighter session"}
           </p>
         </div>
         {error ? (
