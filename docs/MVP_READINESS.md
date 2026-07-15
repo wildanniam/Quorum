@@ -28,7 +28,7 @@ approval, not a new product concept or another infrastructure migration.
 | Contract runtime configuration | Current hosted, configured | `/api/contracts/status` reports expected testnet IDs and RPC reachability. |
 | Live publish/checkout/claim/check-in/withdraw | Historically live | Real July 4 hashes exist in `docs/LIVE_TESTNET_EVIDENCE.json`; the origin is historical ngrok. |
 | Current evidence feed | Current hosted and healthy | Production includes `0005_anchor_cashout_proof.sql`; `/evidence` responds without the degraded state. Fresh current-origin rows are still pending. |
-| Soroban indexer | Current hosted, awaiting fresh events | Sensitive `CRON_SECRET`, HTTP 401 fail-closed behavior, two successful runs, and monotonic cursor/ledger progress are recorded. Historical events were outside RPC retention. |
+| Soroban indexer | Current hosted, awaiting fresh events | Sensitive `CRON_SECRET`, HTTP 401 fail-closed behavior, three successful runs including Vercel Cron, and monotonic cursor/ledger progress are recorded. Historical events were outside RPC retention. |
 | Event lifecycle | Verified in code | Upcoming/live/ended behavior and ended-sales guards are covered by `event:lifecycle:smoke`. Contract-level end-time enforcement is not implemented. |
 | Proof classification | Verified in code | Only explorer-valid hashes are labeled Stellar transactions; app and indexed proof remain distinct. |
 | Collaborator ledger | Current hosted, data-dependent | Wallet-scoped credits/debits and event proof links exist; a fresh signed flow is needed for final judge evidence. |

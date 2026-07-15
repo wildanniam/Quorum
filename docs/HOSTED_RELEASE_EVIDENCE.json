@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "capturedAt": "2026-07-14T22:32:58.495Z",
+  "capturedAt": "2026-07-15T03:43:23.444Z",
   "network": "TESTNET",
   "release": {
     "gitCommit": "a35b3dee401920eb240c6ce180e359150667f4b4",
@@ -74,6 +74,17 @@
         "fetchedCount": 0,
         "insertedCount": 0,
         "lastError": null
+      },
+      {
+        "startedAt": "2026-07-15T03:43:21.834Z",
+        "finishedAt": "2026-07-15T03:43:23.444Z",
+        "cursor": "0015135902837768191-4294967295",
+        "latestLedger": 3614066,
+        "fetchedCount": 0,
+        "insertedCount": 0,
+        "lastError": null,
+        "trigger": "Vercel Cron",
+        "observation": "Read-only production database verification found zero total stellar_events rows at capture time."
       }
     ],
     "cursorAdvanced": true,

@@ -133,7 +133,7 @@ assert.deepEqual(hostedIndexer.cronSecretConfiguredFor, ["Preview", "Production"
 assert.equal(hostedIndexer.cronSecretStoredAsSensitive, true);
 assert.equal(hostedIndexer.cronSecretValueRecorded, false);
 assert.equal(hostedIndexer.missingAuthorizationHttpStatus, 401);
-assert.equal(hostedIndexer.runs.length, 2);
+assert.ok(hostedIndexer.runs.length >= 2);
 
 for (const run of hostedIndexer.runs) {
   assert.match(run.cursor, /^\d+-\d+$/);
@@ -144,10 +144,20 @@ for (const run of hostedIndexer.runs) {
   assert.ok(Date.parse(run.finishedAt) >= Date.parse(run.startedAt));
 }
 
-const [firstRun, secondRun] = hostedIndexer.runs;
 const cursorLedger = (cursor) => BigInt(cursor.split("-")[0]);
-assert.ok(cursorLedger(secondRun.cursor) > cursorLedger(firstRun.cursor));
-assert.ok(secondRun.latestLedger > firstRun.latestLedger);
+
+for (let index = 1; index < hostedIndexer.runs.length; index += 1) {
+  const previousRun = hostedIndexer.runs[index - 1];
+  const currentRun = hostedIndexer.runs[index];
+
+  assert.ok(cursorLedger(currentRun.cursor) > cursorLedger(previousRun.cursor));
+  assert.ok(currentRun.latestLedger > previousRun.latestLedger);
+}
+
+const latestHostedRun = hostedIndexer.runs.at(-1);
+assert.equal(latestHostedRun.cursor, "0015135902837768191-4294967295");
+assert.equal(latestHostedRun.latestLedger, 3614066);
+assert.equal(latestHostedRun.trigger, "Vercel Cron");
 assert.equal(hostedIndexer.cursorAdvanced, true);
 assert.equal(hostedIndexer.latestLedgerAdvanced, true);
 assert.equal(hostedIndexer.freshQuorumEventsIndexed, false);

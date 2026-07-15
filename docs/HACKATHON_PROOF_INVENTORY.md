@@ -63,9 +63,10 @@ The release checkpoint in `docs/HOSTED_RELEASE_EVIDENCE.json` records:
 - `CRON_SECRET` is stored as a sensitive Preview and Production variable, while
   its value is deliberately absent from the repository;
 - an unauthenticated indexer request fails closed with HTTP 401;
-- two authenticated hosted runs completed without an error;
+- three authenticated hosted runs completed without an error, including the
+  scheduled Vercel Cron run on 15 July 2026;
 - the cursor and latest-ledger checkpoint advanced monotonically;
-- both runs fetched zero Quorum events, which is an honest retention boundary,
+- all three runs fetched zero Quorum events, which is an honest retention boundary,
   not a successful fresh-event claim.
 
 ## Release-Critical Gaps
