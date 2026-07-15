@@ -58,6 +58,8 @@ assert.match(runbook, /Open `\/discover`/);
 assert.match(runbook, /Do not promise pickup/i);
 assert.match(recovery, /Production migration status is ready/i);
 assert.match(recovery, /Three authenticated runs completed without error/i);
+assert.match(recovery, /complete non-destructive source check list/i);
+assert.doesNotMatch(recovery, /all \d+ non-destructive source checks/i);
 assert.match(readme, /Three successful hosted indexer runs/i);
 assert.match(
   productionHandoff,
