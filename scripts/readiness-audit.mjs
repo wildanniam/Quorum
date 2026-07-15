@@ -2,6 +2,11 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+import {
+  listOnlyGeneratedFiles,
+  resolveEvidenceSourceCandidates,
+} from "./evidence-lineage.mjs";
+
 const projectRoot = process.cwd();
 const allowDirtyEvidence = process.argv.includes("--allow-dirty-evidence");
 const requireFreshEvidence = process.argv.includes("--require-fresh-evidence");
@@ -40,6 +45,8 @@ const requiredFiles = [
   "scripts/submission-db-gate.mjs",
   "scripts/submission-db-gate-smoke.mjs",
   "scripts/browser-qa-safety-smoke.mjs",
+  "scripts/evidence-lineage.mjs",
+  "scripts/evidence-lineage-smoke.mjs",
   "scripts/submission-gate.mjs",
   "scripts/stellar-indexer-run.ts",
   "scripts/indexer-security-smoke.ts",
@@ -109,6 +116,7 @@ const requiredPackageScripts = [
   "browser:qa",
   "browser:qa:safety:smoke",
   "evidence:local",
+  "evidence:lineage:smoke",
   "lint",
   "live:args:smoke",
   "live:browser-flow:smoke",
@@ -155,6 +163,7 @@ const requiredEvidenceChecks = [
   "Settlement smoke",
   "Indexer security smoke",
   "Browser QA",
+  "Evidence lineage smoke",
   "Deploy env smoke",
   "Deploy hosted preflight smoke",
   "Live args smoke",
@@ -497,29 +506,36 @@ function listOnlyEvidenceFile(output) {
     .map((line) => line.trim())
     .filter(Boolean);
 
-  return (
-    entries.length > 0 &&
-    entries.every((entry) =>
-      generatedDocs.some((generatedDoc) => entry.endsWith(generatedDoc)),
-    )
-  );
+  return listOnlyGeneratedFiles(entries, generatedDocs);
 }
 
 function expectedEvidenceCommits() {
   const head = git(["rev-parse", "--short", "HEAD"]);
-  const headFiles = git([
-    "diff-tree",
-    "--no-commit-id",
-    "--name-only",
-    "-r",
-    "HEAD",
-  ]);
 
-  if (listOnlyEvidenceFile(headFiles)) {
-    return [git(["rev-parse", "--short", "HEAD^"]), head];
-  }
-
-  return [head];
+  return resolveEvidenceSourceCandidates({
+    head,
+    generatedDocs,
+    parentsOf(commit) {
+      const parts = git(["rev-list", "--parents", "-n", "1", commit]).split(
+        /\s+/,
+      );
+      return parts
+        .slice(1)
+        .map((parent) => git(["rev-parse", "--short", parent]));
+    },
+    changedFilesOf(commit) {
+      return git([
+        "diff-tree",
+        "--no-commit-id",
+        "--name-only",
+        "-r",
+        commit,
+      ])
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+    },
+  });
 }
 
 function checkWorkingTree() {
@@ -741,7 +757,8 @@ function checkLiveBoundaries() {
     "current-origin evidence",
     "provider allowlist approval",
     "Contract-level end-time enforcement is not implemented",
-    "hosted release operational; fresh transaction evidence and final QA pending",
+    "hosted release operational and final browser QA complete",
+    "fresh transaction/indexer evidence",
     "Quorum is not mainnet production software",
   ]) {
     if (!readiness.includes(term)) {

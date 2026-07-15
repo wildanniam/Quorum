@@ -34,7 +34,7 @@ testnet execution, deterministic local verification, and external blockers.
 | Local proof cannot masquerade as MoneyGram settlement | `npm run anchor:eligibility:smoke` | Verified in code | It does not call MoneyGram or move USDC. |
 | Event lifecycle closes ended sales | `npm run event:lifecycle:smoke` | Verified in code and server UI policy | The deployed Soroban contract does not encode event end time; direct out-of-app invocation is a known limitation. |
 | UI labels distinguish app proof, indexed proof, and explorer proof | `npm run product:messaging:smoke` | Current hosted and verified in code | It does not turn an app reference into a Stellar transaction. |
-| Responsive product routes render without basic overflow/errors | `docs/BROWSER_QA.md` | Historical local browser QA | It predates the submission-recovery branch and must be regenerated before final submission. |
+| Responsive product routes render without basic overflow/errors | `docs/BROWSER_QA.md` | Final candidate local QA, complete | The 39-state isolated run does not prove hosted wallet signing, production persistence, indexer execution, or MoneyGram pickup. |
 
 ## Current Hosted Snapshot
 
@@ -52,9 +52,9 @@ Read-only checks on 2026-07-15 confirmed:
 
 The public Vercel release is schema-ready and operational. The immutable
 checkpoint records the exact deployment that was probed; a later evidence-only
-docs deployment may supersede the alias without changing app runtime code. The
-submission is not ready because fresh current-origin transaction evidence and
-final browser QA are still pending.
+docs deployment may supersede the alias without changing app runtime code.
+Final local browser QA is complete. The submission is not ready because fresh
+current-origin transaction and follow-up indexer evidence are still pending.
 
 ## Hosted Indexer Snapshot
 
@@ -74,11 +74,10 @@ The release checkpoint in `docs/HOSTED_RELEASE_EVIDENCE.json` records:
    transaction hashes, pass token, and proof rows share the same release origin.
 2. Run the authenticated hosted indexer after that flow and verify that fresh
    Quorum rows appear without cursor regression or duplicate ingestion.
-3. Regenerate browser QA and capture final desktop/tablet/mobile screenshots.
-4. Run `npm run readiness:final` on the final release commit.
-5. Keep MoneyGram as an integration preview unless provider approval arrives
+3. Run `npm run readiness:final` after recording the fresh evidence.
+4. Keep MoneyGram as an integration preview unless provider approval arrives
    and an actual provider response is recorded.
-6. Submit only after Wildan explicitly approves the final package.
+5. Submit only after Wildan explicitly approves the final package.
 
 Run `npm run submission:gate` for the complete non-destructive source suite and
 `npm run submission:hosted:probe` for the read-only Vercel snapshot. Neither

@@ -3,9 +3,10 @@
 Last reviewed: 2026-07-15.
 
 Quorum has a strong implemented product core, genuine Stellar testnet history,
-and a schema-ready hosted release. The remaining work is fresh current-origin
-transaction evidence, final browser QA, and submission packaging, not a new
-product concept or another infrastructure migration.
+and a schema-ready hosted release. Final local browser QA and the autonomous
+submission gates are green. The remaining work is fresh current-origin
+transaction/indexer evidence, the final demo package, and explicit submission
+approval, not a new product concept or another infrastructure migration.
 
 ## Readiness Legend
 
@@ -20,9 +21,9 @@ product concept or another infrastructure migration.
 | Area | Status | Evidence / next gate |
 | --- | --- | --- |
 | Public product deployment | Current hosted | `https://quorum-sandy-eight.vercel.app` responds successfully. |
-| Recovery release candidate | Current hosted | PRs #75-#87 are merged into `main`; release commit and Vercel deployment are recorded in `docs/HOSTED_RELEASE_EVIDENCE.json`. |
+| Recovery release candidate | Current hosted | Recovery PRs #75 through #91 are merged into `main`; the immutable hosted checkpoint is recorded in `docs/HOSTED_RELEASE_EVIDENCE.json`, and final browser evidence is recorded in `docs/BROWSER_QA.md`. |
 | Landing and product navigation | Current hosted | Landing routes to Discover, Studio, Passes, and Evidence. |
-| Event discovery, detail, checkout review | Current hosted | Routes respond; final responsive browser QA is still required. |
+| Event discovery, detail, checkout review | Current hosted and final-QA checked | Hosted routes respond; the final isolated browser run covers the primary product routes at desktop, tablet, and mobile sizes. |
 | Core and pass contracts | Historically live | IDs and deployment/init hashes are in `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. |
 | Contract runtime configuration | Current hosted, configured | `/api/contracts/status` reports expected testnet IDs and RPC reachability. |
 | Live publish/checkout/claim/check-in/withdraw | Historically live | Real July 4 hashes exist in `docs/LIVE_TESTNET_EVIDENCE.json`; the origin is historical ngrok. |
@@ -33,8 +34,8 @@ product concept or another infrastructure migration.
 | Collaborator ledger | Current hosted, data-dependent | Wallet-scoped credits/debits and event proof links exist; a fresh signed flow is needed for final judge evidence. |
 | MoneyGram integration | Verified in code, provider blocked | SEP-1/10/24 paths exist; provider allowlist approval and a successful pickup are not proven. |
 | MoneyGram safety invariant | Verified in code | Server and UI require explorer-valid settlement for MoneyGram; mock mode remains explicitly local. |
-| Responsive/browser QA | Historical local | `docs/BROWSER_QA.md` must be regenerated on the final candidate. |
-| Submission package | Hosted checkpoint ready | Source/DB gates and hosted release evidence are current; fresh transaction evidence, screenshots, video, and final submission remain. |
+| Responsive/browser QA | Final candidate local, complete | `docs/BROWSER_QA.md` records 13 routes across 3 viewports (39 states), with no console errors, horizontal overflow, or missing required copy. It does not claim hosted wallet execution. |
+| Submission package | Hosted checkpoint and local QA ready | Source/DB gates, hosted release evidence, final local screenshots, and browser QA are current; fresh transaction/indexer evidence, video, and final submission remain. |
 
 ## What Is Already Strong
 
@@ -55,9 +56,8 @@ product concept or another infrastructure migration.
 2. Trigger the authenticated hosted indexer and confirm fresh rows for that flow.
 3. Confirm evidence, event proof, pass, and ledger pages agree on the same hashes,
    token, wallets, and event.
-4. Regenerate browser QA and final screenshots.
-5. Run `npm run readiness:final` on the release commit and record its output.
-6. Capture the demo video and submit only after explicit final approval.
+4. Run `npm run readiness:final` after recording the fresh evidence.
+5. Capture the demo video and submit only after explicit final approval.
 
 ## Explicit Non-Claims
 
@@ -72,9 +72,11 @@ product concept or another infrastructure migration.
 
 ## Go / No-Go Rule
 
-The final submission is **GO** only when current-origin evidence, final browser
-QA, and release checks are all green. Until then, the honest status is
-**hosted release operational; fresh transaction evidence and final QA pending**.
+The final submission is **GO** only when current-origin evidence and final
+release checks are green. Browser QA is complete; until the signed flow and
+follow-up indexer proof exist, the honest status is **hosted release
+operational and final browser QA complete; fresh transaction/indexer evidence
+pending**.
 
 See `docs/HACKATHON_PROOF_INVENTORY.md` for artifact-level proof and
 `docs/HACKATHON_DEMO_RUNBOOK.md` for the judge sequence.
