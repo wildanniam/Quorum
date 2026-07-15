@@ -143,6 +143,11 @@ const checks = [
     args: ["run", "browser:qa:safety:smoke"],
   },
   {
+    id: "evidence-lineage",
+    command: "npm",
+    args: ["run", "evidence:lineage:smoke"],
+  },
+  {
     id: "submission-package",
     command: "npm",
     args: ["run", "submission:package:smoke"],
@@ -252,7 +257,7 @@ const report = {
     {
       id: "browser-qa",
       reason:
-        "Fresh desktop/tablet/mobile evidence needs the user-approved browser workflow and an isolated database.",
+        "Browser QA runs separately against an isolated database; current final desktop/tablet/mobile evidence is recorded in docs/BROWSER_QA.md.",
     },
     {
       id: "fresh-hosted-indexing",

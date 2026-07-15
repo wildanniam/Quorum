@@ -110,7 +110,7 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   [#87](https://github.com/wildanniam/Quorum/pull/87)
 - The claim-to-proof inventory, judge runbook, readiness matrix, and historical
   evidence boundaries now agree.
-- `npm run submission:gate` passes all 37 non-destructive source checks,
+- `npm run submission:gate` passes all 38 non-destructive source checks,
   including the browser-QA localhost database guard.
 - The isolated localhost PostgreSQL gate passes migration, seed, database,
   wallet-auth, lifecycle, settlement, flow, and persistence checks.
@@ -149,8 +149,8 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   but not a completed cash-out.
 - Fresh testnet transaction: needed because RPC event retention cannot recover old
   contract events indefinitely.
-- Final browser QA: requires the user-approved browser workflow on the final
-  release candidate.
+- Final browser QA: complete on the final candidate with 13 routes across three
+  viewports; this remains local isolated QA, not hosted signing evidence.
 - Final submission: remains an explicit Wildan approval checkpoint.
 
 ## Submission Source Of Truth
@@ -173,5 +173,5 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - DB-backed integration remains separate from the default source gate because
   it migrates and seeds its explicitly isolated writable database.
 - Production migration, hosted cron auth, and release deployment are complete.
-- Browser QA, fresh Freighter evidence, MoneyGram provider execution, and final
-  submission remain explicit checkpoints.
+- Browser QA is complete. Fresh Freighter/indexer evidence, MoneyGram provider
+  execution, and final submission remain explicit checkpoints.

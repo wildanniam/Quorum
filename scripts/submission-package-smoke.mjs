@@ -9,6 +9,7 @@ const requiredDocs = [
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
   "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/MVP_READINESS.md",
+  "docs/BROWSER_QA.md",
   "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_TESTNET_EVIDENCE.json",
 ];
@@ -23,6 +24,7 @@ const runbook = read("docs/HACKATHON_DEMO_RUNBOOK.md");
 const inventory = read("docs/HACKATHON_PROOF_INVENTORY.md");
 const readiness = read("docs/MVP_READINESS.md");
 const recovery = read("docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md");
+const browserQa = read("docs/BROWSER_QA.md");
 const packageJson = JSON.parse(read("package.json"));
 const liveEvidence = JSON.parse(read("docs/LIVE_TESTNET_EVIDENCE.json"));
 const hostedReleaseEvidence = JSON.parse(
@@ -39,8 +41,15 @@ assert.match(inventory, /CRON_SECRET/);
 assert.match(inventory, /provider approval/i);
 assert.match(
   readiness,
-  /hosted release operational; fresh transaction evidence and final QA pending/i,
+  /hosted release[\s*]+operational and final browser QA complete; fresh transaction\/indexer evidence[\s*]+pending/i,
 );
+assert.match(browserQa, /Pages checked per viewport: `13`/);
+assert.match(browserQa, /Viewports checked: `1440 x 900, 1024 x 768, 390 x 844`/);
+assert.match(browserQa, /Console errors: none observed/);
+assert.match(browserQa, /Horizontal overflow: none observed/);
+assert.match(browserQa, /Missing required text: none observed/);
+assert.doesNotMatch(readiness, /final browser QA (?:is still|required|and final QA) pending/i);
+assert.doesNotMatch(inventory, /browser QA.*must be regenerated/i);
 assert.match(readiness, /not mainnet production software/i);
 assert.match(runbook, /Open `\/`\./);
 assert.match(runbook, /Open `\/discover`/);
@@ -178,6 +187,7 @@ console.log(
         "indexer-monotonic-progress",
         "moneygram-provider-disclosure",
         "judge-runbook-route-wiring",
+        "final-browser-qa-current",
         "reject-stale-deployment-claims",
       ],
     },
