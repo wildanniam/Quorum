@@ -3,8 +3,9 @@
 Last reviewed: 2026-07-15.
 
 Quorum has a strong implemented product core, genuine Stellar testnet history,
-and a schema-ready hosted release. Final local browser QA and the autonomous
-submission gates are green. The remaining work is fresh current-origin
+and a schema-ready hosted release. Final local browser QA is complete on the
+merged release; the current verifier-only evidence PR waits only for regenerated
+source provenance. The remaining work is fresh current-origin
 transaction/indexer evidence, the final demo package, and explicit submission
 approval, not a new product concept or another infrastructure migration.
 
@@ -21,21 +22,21 @@ approval, not a new product concept or another infrastructure migration.
 | Area | Status | Evidence / next gate |
 | --- | --- | --- |
 | Public product deployment | Current hosted | `https://quorum-sandy-eight.vercel.app` responds successfully. |
-| Recovery release candidate | Current hosted | Recovery PRs #75 through #91 are merged into `main`; the immutable hosted checkpoint is recorded in `docs/HOSTED_RELEASE_EVIDENCE.json`, and final browser evidence is recorded in `docs/BROWSER_QA.md`. |
+| Recovery release candidate | Current hosted | Recovery PRs #75 through #94 are merged into `main`; the immutable hosted checkpoint is recorded in `docs/HOSTED_RELEASE_EVIDENCE.json`, and final browser evidence is recorded in `docs/BROWSER_QA.md`. |
 | Landing and product navigation | Current hosted | Landing routes to Discover, Studio, Passes, and Evidence. |
 | Event discovery, detail, checkout review | Current hosted and final-QA checked | Hosted routes respond; the final isolated browser run covers the primary product routes at desktop, tablet, and mobile sizes. |
 | Core and pass contracts | Historically live | IDs and deployment/init hashes are in `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. |
 | Contract runtime configuration | Current hosted, configured | `/api/contracts/status` reports expected testnet IDs and RPC reachability. |
 | Live publish/checkout/claim/check-in/withdraw | Historically live | Real July 4 hashes exist in `docs/LIVE_TESTNET_EVIDENCE.json`; the origin is historical ngrok. |
 | Current evidence feed | Current hosted and healthy | Production includes `0005_anchor_cashout_proof.sql`; `/evidence` responds without the degraded state. Fresh current-origin rows are still pending. |
-| Soroban indexer | Current hosted, awaiting fresh events | Sensitive `CRON_SECRET`, HTTP 401 fail-closed behavior, two successful runs, and monotonic cursor/ledger progress are recorded. Historical events were outside RPC retention. |
+| Soroban indexer | Current hosted, awaiting fresh events | Sensitive `CRON_SECRET`, HTTP 401 fail-closed behavior, three successful runs including Vercel Cron, and monotonic cursor/ledger progress are recorded. Historical events were outside RPC retention. |
 | Event lifecycle | Verified in code | Upcoming/live/ended behavior and ended-sales guards are covered by `event:lifecycle:smoke`. Contract-level end-time enforcement is not implemented. |
 | Proof classification | Verified in code | Only explorer-valid hashes are labeled Stellar transactions; app and indexed proof remain distinct. |
 | Collaborator ledger | Current hosted, data-dependent | Wallet-scoped credits/debits and event proof links exist; a fresh signed flow is needed for final judge evidence. |
 | MoneyGram integration | Verified in code, provider blocked | SEP-1/10/24 paths exist; provider allowlist approval and a successful pickup are not proven. |
 | MoneyGram safety invariant | Verified in code | Server and UI require explorer-valid settlement for MoneyGram; mock mode remains explicitly local. |
 | Responsive/browser QA | Final candidate local, complete | `docs/BROWSER_QA.md` records 13 routes across 3 viewports (39 states), with no console errors, horizontal overflow, or missing required copy. It does not claim hosted wallet execution. |
-| Submission package | Hosted checkpoint and local QA ready | Source/DB gates, hosted release evidence, final local screenshots, and browser QA are current; fresh transaction/indexer evidence, video, and final submission remain. |
+| Submission package | Hosted checkpoint and local QA ready | Merged source/DB gates, hosted release evidence, final local screenshots, and browser QA are complete. The current verifier-only PR still needs regenerated source provenance; fresh transaction/indexer evidence, video, and final submission remain. |
 
 ## What Is Already Strong
 
@@ -56,8 +57,10 @@ approval, not a new product concept or another infrastructure migration.
 2. Trigger the authenticated hosted indexer and confirm fresh rows for that flow.
 3. Confirm evidence, event proof, pass, and ledger pages agree on the same hashes,
    token, wallets, and event.
-4. Run `npm run readiness:final` after recording the fresh evidence.
-5. Capture the demo video and submit only after explicit final approval.
+4. Run `npm run live:evidence:audit:current` and
+   `npm run live:evidence:network` after recording the fresh evidence.
+5. Run `npm run readiness:final` on the clean release commit.
+6. Capture the demo video and submit only after explicit final approval.
 
 ## Explicit Non-Claims
 

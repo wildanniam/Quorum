@@ -28,20 +28,26 @@
   "liveFlows": {
     "publishPaidEvent": {
       "txHash": "<64 hex transaction hash>",
-      "eventUrl": "<public HTTPS hosted paid event URL>"
+      "eventUrl": "<public HTTPS hosted paid event URL>",
+      "priceUsdc": "1",
+      "splitTotalBps": 10000
     },
     "paidCheckout": {
       "txHash": "<64 hex transaction hash>",
       "tokenId": "<minted paid pass token ID>",
-      "paymentAsset": "USDC"
+      "paymentAsset": "USDC",
+      "amountUsdc": "1"
     },
     "publishFreeEvent": {
       "txHash": "<64 hex transaction hash>",
-      "eventUrl": "<public HTTPS hosted free event URL>"
+      "eventUrl": "<public HTTPS hosted free event URL>",
+      "priceUsdc": "0",
+      "splitTotalBps": 10000
     },
     "freeClaim": {
       "txHash": "<64 hex transaction hash>",
-      "tokenId": "<minted free pass token ID>"
+      "tokenId": "<minted free pass token ID>",
+      "amountUsdc": "0"
     },
     "checkIn": {
       "txHash": "<64 hex transaction hash>",
@@ -58,6 +64,25 @@
     "contractStatusActionsLive": "<true after all policies are live>",
     "paidResourceUnlockedUrl": "<public HTTPS hosted resource URL unlocked by paid attendee>",
     "browserQaDeployed": "<deployed browser QA notes or artifact URL>"
+  },
+  "indexerProof": {
+    "stateId": "quorum-testnet-contracts",
+    "lastRunStatus": "success",
+    "baselineCursor": "<cursor recorded before the fresh flow>",
+    "finalCursor": "<cursor recorded after the fresh flow>",
+    "baselineLatestLedger": 0,
+    "finalLatestLedger": 0,
+    "lastSuccessAt": "<ISO timestamp of the successful hosted indexer run>",
+    "indexedEventCount": 0,
+    "indexedTransactionHashes": [
+      "<publish paid hash>",
+      "<paid checkout hash>",
+      "<publish free hash>",
+      "<free claim hash>",
+      "<check-in hash>",
+      "<withdraw hash>"
+    ],
+    "evidenceUrl": "<public HTTPS hosted /evidence URL>"
   },
   "verification": {
     "commands": {

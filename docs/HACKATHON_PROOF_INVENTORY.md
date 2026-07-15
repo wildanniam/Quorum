@@ -63,9 +63,10 @@ The release checkpoint in `docs/HOSTED_RELEASE_EVIDENCE.json` records:
 - `CRON_SECRET` is stored as a sensitive Preview and Production variable, while
   its value is deliberately absent from the repository;
 - an unauthenticated indexer request fails closed with HTTP 401;
-- two authenticated hosted runs completed without an error;
+- three authenticated hosted runs completed without an error, including the
+  scheduled Vercel Cron run on 15 July 2026;
 - the cursor and latest-ledger checkpoint advanced monotonically;
-- both runs fetched zero Quorum events, which is an honest retention boundary,
+- all three runs fetched zero Quorum events, which is an honest retention boundary,
   not a successful fresh-event claim.
 
 ## Release-Critical Gaps
@@ -74,10 +75,13 @@ The release checkpoint in `docs/HOSTED_RELEASE_EVIDENCE.json` records:
    transaction hashes, pass token, and proof rows share the same release origin.
 2. Run the authenticated hosted indexer after that flow and verify that fresh
    Quorum rows appear without cursor regression or duplicate ingestion.
-3. Run `npm run readiness:final` after recording the fresh evidence.
-4. Keep MoneyGram as an integration preview unless provider approval arrives
+3. Run `npm run live:evidence:audit:current` and
+   `npm run live:evidence:network` to validate packet provenance and on-chain
+   transaction truth.
+4. Run `npm run readiness:final` on the clean release commit.
+5. Keep MoneyGram as an integration preview unless provider approval arrives
    and an actual provider response is recorded.
-5. Submit only after Wildan explicitly approves the final package.
+6. Submit only after Wildan explicitly approves the final package.
 
 Run `npm run submission:gate` for the complete non-destructive source suite and
 `npm run submission:hosted:probe` for the read-only Vercel snapshot. Neither

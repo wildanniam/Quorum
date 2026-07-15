@@ -14,7 +14,7 @@ const hex64 = (fill) => fill.toString(16).padStart(2, "0").repeat(32);
 
 function buildEvidence(overrides = {}) {
   return {
-    generatedAt: "2026-06-08T00:00:00.000Z",
+    generatedAt: new Date().toISOString(),
     network: "TESTNET",
     rpcUrl: "https://soroban-testnet.stellar.org",
     hostedAppUrl: "https://quorum.example.com",
@@ -46,19 +46,25 @@ function buildEvidence(overrides = {}) {
       publishPaidEvent: {
         txHash: hex64(6),
         eventUrl: "https://quorum.example.com/events/paid",
+        priceUsdc: "1",
+        splitTotalBps: 10000,
       },
       paidCheckout: {
         txHash: hex64(7),
         tokenId: "1",
         paymentAsset: "USDC",
+        amountUsdc: "1",
       },
       publishFreeEvent: {
         txHash: hex64(8),
         eventUrl: "https://quorum.example.com/events/free",
+        priceUsdc: "0",
+        splitTotalBps: 10000,
       },
       freeClaim: {
         txHash: hex64(9),
         tokenId: "2",
+        amountUsdc: "0",
       },
       checkIn: {
         txHash: hex64(10),
@@ -75,6 +81,18 @@ function buildEvidence(overrides = {}) {
       contractStatusActionsLive: true,
       paidResourceUnlockedUrl: "https://quorum.example.com/events/paid/resources",
       browserQaDeployed: "Deployed browser QA passed.",
+    },
+    indexerProof: {
+      stateId: "quorum-testnet-contracts",
+      lastRunStatus: "success",
+      baselineCursor: "100-1",
+      finalCursor: "200-2",
+      baselineLatestLedger: 100,
+      finalLatestLedger: 200,
+      lastSuccessAt: new Date(Date.now() - 1_000).toISOString(),
+      indexedEventCount: 8,
+      indexedTransactionHashes: [6, 7, 8, 9, 10, 11].map(hex64),
+      evidenceUrl: "https://quorum.example.com/evidence",
     },
     verification: {
       commands: {
@@ -120,13 +138,18 @@ function buildEvidence(overrides = {}) {
   };
 }
 
-function runAudit(filename, evidence) {
+function runAudit(filename, evidence, extraArgs = []) {
   const evidencePath = path.join(tmpDir, filename);
   fs.writeFileSync(evidencePath, JSON.stringify(evidence, null, 2));
 
   return spawnSync(
     "node",
-    ["scripts/live-evidence-audit.mjs", evidencePath, "--require-filled"],
+    [
+      "scripts/live-evidence-audit.mjs",
+      evidencePath,
+      "--require-filled",
+      ...extraArgs,
+    ],
     {
       cwd: projectRoot,
       encoding: "utf8",
@@ -136,6 +159,20 @@ function runAudit(filename, evidence) {
 
 const validResult = runAudit("valid.json", buildEvidence());
 assert.equal(validResult.status, 0, validResult.stderr || validResult.stdout);
+
+const validCurrentOriginResult = runAudit(
+  "valid-current-origin.json",
+  buildEvidence(),
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.equal(
+  validCurrentOriginResult.status,
+  0,
+  validCurrentOriginResult.stderr || validCurrentOriginResult.stdout,
+);
 
 const placeholderResult = runAudit(
   "placeholder.json",
@@ -217,6 +254,85 @@ assert.match(
   /positive decimal string/,
 );
 
+const wrongCurrentOriginResult = runAudit(
+  "wrong-current-origin.json",
+  buildEvidence(),
+  [
+    "--require-current-origin",
+    "--expected-origin=https://current-quorum.example.com",
+  ],
+);
+assert.notEqual(wrongCurrentOriginResult.status, 0);
+assert.match(
+  `${wrongCurrentOriginResult.stdout}${wrongCurrentOriginResult.stderr}`,
+  /must use the current release origin/,
+);
+
+const staleCurrentEvidence = buildEvidence({
+  generatedAt: "2026-06-08T00:00:00.000Z",
+});
+const staleCurrentEvidenceResult = runAudit(
+  "stale-current-origin.json",
+  staleCurrentEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(staleCurrentEvidenceResult.status, 0);
+assert.match(
+  `${staleCurrentEvidenceResult.stdout}${staleCurrentEvidenceResult.stderr}`,
+  /must be no more than 168 hours old/,
+);
+
+const wrongPaidPriceEvidence = buildEvidence();
+wrongPaidPriceEvidence.liveFlows.publishPaidEvent.priceUsdc = "5";
+const wrongPaidPriceResult = runAudit(
+  "wrong-paid-price.json",
+  wrongPaidPriceEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(wrongPaidPriceResult.status, 0);
+assert.match(
+  `${wrongPaidPriceResult.stdout}${wrongPaidPriceResult.stderr}`,
+  /publishPaidEvent\.priceUsdc must be/,
+);
+
+const regressedIndexerEvidence = buildEvidence();
+regressedIndexerEvidence.indexerProof.finalCursor = "99-9";
+const regressedIndexerResult = runAudit(
+  "regressed-indexer.json",
+  regressedIndexerEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(regressedIndexerResult.status, 0);
+assert.match(
+  `${regressedIndexerResult.stdout}${regressedIndexerResult.stderr}`,
+  /finalCursor must advance/,
+);
+
+const missingIndexedHashEvidence = buildEvidence();
+missingIndexedHashEvidence.indexerProof.indexedTransactionHashes.pop();
+const missingIndexedHashResult = runAudit(
+  "missing-indexed-hash.json",
+  missingIndexedHashEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(missingIndexedHashResult.status, 0);
+assert.match(
+  `${missingIndexedHashResult.stdout}${missingIndexedHashResult.stderr}`,
+  /indexedTransactionHashes must contain each unique app-flow transaction hash/,
+);
+
 fs.rmSync(tmpDir, { recursive: true, force: true });
 
 console.log(
@@ -232,6 +348,12 @@ console.log(
         "reject-filled-live-evidence-origin-mismatch",
         "reject-filled-live-evidence-duplicate-publish-url",
         "reject-filled-live-evidence-zero-withdraw",
+        "accept-current-origin-live-evidence",
+        "reject-wrong-current-origin",
+        "reject-stale-current-origin-evidence",
+        "reject-wrong-final-paid-price",
+        "reject-regressed-indexer-cursor",
+        "reject-missing-indexed-transaction",
       ],
     },
     null,

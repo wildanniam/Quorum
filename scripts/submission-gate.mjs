@@ -103,6 +103,11 @@ const checks = [
     args: ["run", "live:evidence:audit:smoke"],
   },
   {
+    id: "live-evidence-network-unit",
+    command: "npm",
+    args: ["run", "live:evidence:network:smoke"],
+  },
+  {
     id: "historical-live-evidence-shape",
     command: "npm",
     args: ["run", "live:evidence:audit"],
@@ -141,6 +146,16 @@ const checks = [
     id: "browser-qa-database-guard",
     command: "npm",
     args: ["run", "browser:qa:safety:smoke"],
+  },
+  {
+    id: "browser-qa-provenance",
+    command: "npm",
+    args: ["run", "browser:qa:provenance"],
+  },
+  {
+    id: "browser-qa-provenance-smoke",
+    command: "npm",
+    args: ["run", "browser:qa:provenance:smoke"],
   },
   {
     id: "evidence-lineage",

@@ -4,6 +4,15 @@ import path from "node:path";
 const projectRoot = process.cwd();
 const args = process.argv.slice(2);
 const requireFilled = args.includes("--require-filled");
+const requireCurrentOrigin = args.includes("--require-current-origin");
+const expectedOriginArg = args.find((arg) =>
+  arg.startsWith("--expected-origin="),
+);
+const expectedOriginValue = expectedOriginArg?.slice(
+  "--expected-origin=".length,
+);
+const currentEvidenceMaxAgeHours = 7 * 24;
+const currentIndexerMaxAgeHours = 24;
 const evidenceArg =
   args.find((arg) => !arg.startsWith("--")) ??
   "docs/LIVE_TESTNET_EVIDENCE.example.json";
@@ -104,6 +113,15 @@ const contractIdFields = [
   "contracts.coreContractId",
   "contracts.passContractId",
   "contracts.usdcContractId",
+];
+
+const currentOriginFields = [
+  ["liveFlows.publishPaidEvent.priceUsdc", "1"],
+  ["liveFlows.publishPaidEvent.splitTotalBps", 10000],
+  ["liveFlows.paidCheckout.amountUsdc", "1"],
+  ["liveFlows.publishFreeEvent.priceUsdc", "0"],
+  ["liveFlows.publishFreeEvent.splitTotalBps", 10000],
+  ["liveFlows.freeClaim.amountUsdc", "0"],
 ];
 
 const failures = [];
@@ -209,6 +227,39 @@ function originFor(value) {
   }
 }
 
+function normalizeExpectedOrigin(value) {
+  if (!hasText(value)) return null;
+
+  try {
+    const parsed = new URL(value);
+
+    if (parsed.protocol !== "https:" || !parsed.hostname) return null;
+
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
+function indexerCursorParts(value) {
+  if (typeof value !== "string" || !/^\d+-\d+$/.test(value)) return null;
+
+  return value.split("-").map((part) => BigInt(part));
+}
+
+function compareIndexerCursors(left, right) {
+  const leftParts = indexerCursorParts(left);
+  const rightParts = indexerCursorParts(right);
+
+  if (!leftParts || !rightParts) return null;
+  if (leftParts[0] !== rightParts[0]) {
+    return leftParts[0] > rightParts[0] ? 1 : -1;
+  }
+  if (leftParts[1] === rightParts[1]) return 0;
+
+  return leftParts[1] > rightParts[1] ? 1 : -1;
+}
+
 function assertUniqueValues(source, fieldPaths, label) {
   const seen = new Map();
 
@@ -261,6 +312,142 @@ function validateFilledEvidenceConsistency(source) {
         fail(`${fieldPath} must use the same origin as hostedAppUrl.`);
       }
     }
+  }
+}
+
+function validateCurrentOriginEvidence(source) {
+  const expectedOrigin = normalizeExpectedOrigin(expectedOriginValue);
+  const hostedOrigin = originFor(getPath(source, "hostedAppUrl"));
+
+  if (!expectedOrigin) {
+    fail(
+      "--require-current-origin needs a public HTTPS --expected-origin=<origin> value.",
+    );
+  } else if (hostedOrigin !== expectedOrigin) {
+    fail(
+      `hostedAppUrl must use the current release origin ${expectedOrigin}.`,
+    );
+  }
+
+  for (const [fieldPath, expected] of currentOriginFields) {
+    const actual = getPath(source, fieldPath);
+
+    if (actual !== expected) {
+      fail(`${fieldPath} must be ${JSON.stringify(expected)} for the final evidence run.`);
+    }
+  }
+
+  const generatedAt = Date.parse(getPath(source, "generatedAt"));
+  const approvedAt = Date.parse(getPath(source, "approval.approvedAt"));
+  const evidenceAgeMs = Date.now() - generatedAt;
+  const maxAgeMs = currentEvidenceMaxAgeHours * 60 * 60 * 1000;
+
+  if (!Number.isFinite(generatedAt) || evidenceAgeMs < -5 * 60 * 1000) {
+    fail("generatedAt must be a valid timestamp that is not in the future.");
+  } else if (evidenceAgeMs > maxAgeMs) {
+    fail(
+      `generatedAt must be no more than ${currentEvidenceMaxAgeHours} hours old for current-origin evidence.`,
+    );
+  }
+
+  if (
+    Number.isFinite(generatedAt) &&
+    Number.isFinite(approvedAt) &&
+    approvedAt > generatedAt
+  ) {
+    fail("approval.approvedAt must not be later than generatedAt.");
+  }
+
+  const stateId = getPath(source, "indexerProof.stateId");
+  const lastRunStatus = getPath(source, "indexerProof.lastRunStatus");
+  const baselineCursor = getPath(source, "indexerProof.baselineCursor");
+  const finalCursor = getPath(source, "indexerProof.finalCursor");
+  const baselineLatestLedger = getPath(
+    source,
+    "indexerProof.baselineLatestLedger",
+  );
+  const finalLatestLedger = getPath(source, "indexerProof.finalLatestLedger");
+  const lastSuccessAt = Date.parse(getPath(source, "indexerProof.lastSuccessAt"));
+  const indexedEventCount = getPath(source, "indexerProof.indexedEventCount");
+  const indexedTransactionHashes = getPath(
+    source,
+    "indexerProof.indexedTransactionHashes",
+  );
+  const evidenceUrl = getPath(source, "indexerProof.evidenceUrl");
+
+  if (stateId !== "quorum-testnet-contracts") {
+    fail('indexerProof.stateId must be "quorum-testnet-contracts".');
+  }
+  if (lastRunStatus !== "success") {
+    fail('indexerProof.lastRunStatus must be "success".');
+  }
+  if (compareIndexerCursors(finalCursor, baselineCursor) !== 1) {
+    fail("indexerProof.finalCursor must advance beyond baselineCursor.");
+  }
+  if (
+    !Number.isInteger(baselineLatestLedger) ||
+    !Number.isInteger(finalLatestLedger) ||
+    baselineLatestLedger < 0 ||
+    finalLatestLedger <= baselineLatestLedger
+  ) {
+    fail("indexerProof.finalLatestLedger must advance beyond baselineLatestLedger.");
+  }
+
+  const indexerAgeMs = generatedAt - lastSuccessAt;
+  const maxIndexerAgeMs = currentIndexerMaxAgeHours * 60 * 60 * 1000;
+
+  if (!Number.isFinite(lastSuccessAt) || indexerAgeMs < -5 * 60 * 1000) {
+    fail("indexerProof.lastSuccessAt must be valid and not later than generatedAt.");
+  } else if (indexerAgeMs > maxIndexerAgeMs) {
+    fail(
+      `indexerProof.lastSuccessAt must be no more than ${currentIndexerMaxAgeHours} hours before generatedAt.`,
+    );
+  }
+
+  const liveTransactionHashes = transactionHashFields
+    .filter((fieldPath) => fieldPath.startsWith("liveFlows."))
+    .map((fieldPath) => getPath(source, fieldPath));
+  const normalizedIndexedHashes = Array.isArray(indexedTransactionHashes)
+    ? indexedTransactionHashes.map((value) =>
+        typeof value === "string" ? value.toLowerCase() : value,
+      )
+    : [];
+  const normalizedLiveHashes = liveTransactionHashes.map((value) =>
+    typeof value === "string" ? value.toLowerCase() : value,
+  );
+
+  if (
+    !Array.isArray(indexedTransactionHashes) ||
+    indexedTransactionHashes.length !== liveTransactionHashes.length ||
+    new Set(normalizedIndexedHashes).size !== indexedTransactionHashes.length ||
+    indexedTransactionHashes.some((value) => !/^[0-9a-f]{64}$/i.test(value)) ||
+    normalizedLiveHashes.some((value) => !normalizedIndexedHashes.includes(value))
+  ) {
+    fail(
+      "indexerProof.indexedTransactionHashes must contain each unique app-flow transaction hash.",
+    );
+  }
+  if (
+    !Number.isInteger(indexedEventCount) ||
+    indexedEventCount < liveTransactionHashes.length
+  ) {
+    fail("indexerProof.indexedEventCount must cover every app-flow transaction.");
+  }
+
+  let parsedEvidenceUrl = null;
+
+  try {
+    parsedEvidenceUrl = new URL(evidenceUrl);
+  } catch {
+    // One stable validation error is emitted below.
+  }
+
+  if (
+    !parsedEvidenceUrl ||
+    parsedEvidenceUrl.origin !== expectedOrigin ||
+    parsedEvidenceUrl.pathname !== "/evidence"
+  ) {
+    fail(`indexerProof.evidenceUrl must be ${expectedOrigin}/evidence.`);
   }
 }
 
@@ -379,6 +566,10 @@ if (evidence) {
   if (requireFilled) {
     validateFilledEvidenceConsistency(evidence);
   }
+
+  if (requireCurrentOrigin) {
+    validateCurrentOriginEvidence(evidence);
+  }
 }
 
 const report = {
@@ -386,6 +577,8 @@ const report = {
   mode: requireFilled ? "filled-live-evidence" : "template",
   evidencePath,
   requireFilled,
+  requireCurrentOrigin,
+  expectedOrigin: normalizeExpectedOrigin(expectedOriginValue),
   liveEvidenceComplete: requireFilled && failures.length === 0,
   checkedFields: requiredFields.length,
   failures,

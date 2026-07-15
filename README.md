@@ -248,9 +248,10 @@ database writes. Live testnet actions always require explicit approval and a
 Freighter confirmation.
 
 See [`docs/MVP_READINESS.md`](docs/MVP_READINESS.md) for the full verification
-matrix and release gates. The strict final release gate is
-`npm run readiness:final`; it requires fresh live evidence before readiness can
-be claimed.
+matrix and release gates. Fresh hosted evidence is validated with
+`npm run live:evidence:audit:current` and `npm run live:evidence:network` before
+running the strict final gate, `npm run readiness:final`. Readiness is claimed
+only when all three pass on the release commit.
 
 ## Technology
 

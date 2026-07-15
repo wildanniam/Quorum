@@ -10,6 +10,7 @@ const requiredDocs = [
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
   "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/MVP_READINESS.md",
+  "docs/PRODUCTION_ENV_HANDOFF.md",
   "docs/BROWSER_QA.md",
   "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_TESTNET_EVIDENCE.json",
@@ -26,6 +27,7 @@ const inventory = read("docs/HACKATHON_PROOF_INVENTORY.md");
 const submissionDraft = read("docs/HACKATHON_SUBMISSION_DRAFT.md");
 const readiness = read("docs/MVP_READINESS.md");
 const recovery = read("docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md");
+const productionHandoff = read("docs/PRODUCTION_ENV_HANDOFF.md");
 const browserQa = read("docs/BROWSER_QA.md");
 const packageJson = JSON.parse(read("package.json"));
 const liveEvidence = JSON.parse(read("docs/LIVE_TESTNET_EVIDENCE.json"));
@@ -108,13 +110,40 @@ assert.match(runbook, /Open `\/`\./);
 assert.match(runbook, /Open `\/discover`/);
 assert.match(runbook, /Do not promise pickup/i);
 assert.match(recovery, /Production migration status is ready/i);
-assert.match(recovery, /Two authenticated runs completed without error/i);
+assert.match(recovery, /Three authenticated runs completed without error/i);
+assert.match(recovery, /complete non-destructive source check list/i);
+assert.doesNotMatch(recovery, /all \d+ non-destructive source checks/i);
+assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/91/);
+assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/94/);
+assert.match(recovery, /39 checked states/i);
+assert.match(readiness, /Recovery PRs #75 through #94 are merged/i);
+assert.match(
+  productionHandoff,
+  /https:\/\/quorum-sandy-eight\.vercel\.app/,
+);
+assert.match(productionHandoff, /migrations `0001` through `0005`/i);
+assert.match(productionHandoff, /Three successful cursor-advancing runs/i);
+assert.doesNotMatch(productionHandoff, /External setup still required/i);
 assert.equal(
   packageJson.scripts?.["readiness:final"],
-  "node scripts/readiness-audit.mjs --require-fresh-evidence",
+  "node scripts/readiness-audit.mjs --require-fresh-evidence --require-current-origin-evidence",
+);
+assert.equal(
+  packageJson.scripts?.["live:evidence:audit:current"],
+  "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled --require-current-origin --expected-origin=https://quorum-sandy-eight.vercel.app",
+);
+assert.equal(
+  packageJson.scripts?.["live:evidence:network"],
+  "node scripts/live-evidence-network-validate.mjs docs/LIVE_TESTNET_EVIDENCE.json",
 );
 assert.match(readme, /readiness:final/);
+assert.match(readme, /live:evidence:audit:current/);
+assert.match(readme, /live:evidence:network/);
 assert.match(runbook, /readiness:final/);
+assert.match(runbook, /live:evidence:audit:current/);
+assert.match(runbook, /live:evidence:network/);
+assert.match(inventory, /live:evidence:network/);
+assert.match(readiness, /live:evidence:network/);
 assert.equal(
   packageJson.scripts?.["submission:hosted:probe"],
   "node scripts/hosted-readiness-probe.mjs",
@@ -122,6 +151,18 @@ assert.equal(
 assert.equal(
   packageJson.scripts?.["submission:gate"],
   "node scripts/submission-gate.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["browser:qa:provenance"],
+  "node scripts/browser-qa-provenance.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["browser:qa:provenance:smoke"],
+  "node scripts/browser-qa-provenance-smoke.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["evidence:local:reuse-browser"],
+  "node scripts/collect-evidence.mjs --reuse-browser-qa",
 );
 
 assert.equal(hostedReleaseEvidence.schemaVersion, 1);
@@ -172,7 +213,7 @@ assert.deepEqual(hostedIndexer.cronSecretConfiguredFor, ["Preview", "Production"
 assert.equal(hostedIndexer.cronSecretStoredAsSensitive, true);
 assert.equal(hostedIndexer.cronSecretValueRecorded, false);
 assert.equal(hostedIndexer.missingAuthorizationHttpStatus, 401);
-assert.equal(hostedIndexer.runs.length, 2);
+assert.ok(hostedIndexer.runs.length >= 2);
 
 for (const run of hostedIndexer.runs) {
   assert.match(run.cursor, /^\d+-\d+$/);
@@ -183,10 +224,20 @@ for (const run of hostedIndexer.runs) {
   assert.ok(Date.parse(run.finishedAt) >= Date.parse(run.startedAt));
 }
 
-const [firstRun, secondRun] = hostedIndexer.runs;
 const cursorLedger = (cursor) => BigInt(cursor.split("-")[0]);
-assert.ok(cursorLedger(secondRun.cursor) > cursorLedger(firstRun.cursor));
-assert.ok(secondRun.latestLedger > firstRun.latestLedger);
+
+for (let index = 1; index < hostedIndexer.runs.length; index += 1) {
+  const previousRun = hostedIndexer.runs[index - 1];
+  const currentRun = hostedIndexer.runs[index];
+
+  assert.ok(cursorLedger(currentRun.cursor) > cursorLedger(previousRun.cursor));
+  assert.ok(currentRun.latestLedger > previousRun.latestLedger);
+}
+
+const latestHostedRun = hostedIndexer.runs.at(-1);
+assert.equal(latestHostedRun.cursor, "0015135902837768191-4294967295");
+assert.equal(latestHostedRun.latestLedger, 3614066);
+assert.equal(latestHostedRun.trigger, "Vercel Cron");
 assert.equal(hostedIndexer.cursorAdvanced, true);
 assert.equal(hostedIndexer.latestLedgerAdvanced, true);
 assert.equal(hostedIndexer.freshQuorumEventsIndexed, false);

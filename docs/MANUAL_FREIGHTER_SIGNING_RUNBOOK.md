@@ -1,6 +1,6 @@
 # Manual Freighter Signing Runbook
 
-Last updated: 2026-06-09.
+Last updated: 2026-07-15.
 
 This runbook is the human-operated path for the first hosted live Stellar
 testnet transaction run. It explains exactly what the operator signs in
@@ -98,17 +98,30 @@ Fill `docs/LIVE_TESTNET_EVIDENCE.json` with public data only:
   `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`;
 - app-flow transaction hashes from the Freighter-signed run;
 - token IDs, resource URL, contract status URL, and verification results.
+- the previous immutable hosted indexer cursor/ledger, the final successful
+  cursor/ledger, last-success time, indexed event count, all six transaction
+  hashes found in indexed rows, and the current `/evidence` URL.
 
 After the file is filled, run:
 
 ```bash
 npm run live:evidence:audit
+npm run live:evidence:audit:current
+npm run live:evidence:network
 ```
 
-The audit intentionally rejects localhost URLs, private network URLs, non-HTTPS
-URLs, reused transaction hashes, duplicate contract IDs, mismatched check-in
-token evidence, proof URLs outside the hosted app origin, and zero-value
-withdrawal evidence.
+The historical audit preserves prior valid testnet proof. The current-origin
+audit is the release gate and additionally requires the production Vercel
+origin, evidence no more than seven days old, a paid 1 USDC flow, a free 0 USDC
+flow, and 10,000 total split basis points for both published events. Both audits
+reject localhost URLs, private network URLs, non-HTTPS URLs, reused transaction
+hashes, duplicate contract IDs, mismatched check-in token evidence, proof URLs
+outside the hosted app origin, and zero-value withdrawal evidence.
+
+The network validator then checks every app-flow hash against Stellar testnet
+Horizon. It verifies transaction success, the configured core contract, expected
+function and signer, paid/free amounts, event linkage, check-in token, USDC debit
+and credit effects, and the recorded non-zero collaborator payout.
 
 ## Manual Signing Sequence
 
@@ -400,8 +413,13 @@ The signing session is complete only when:
   and collaborator withdraw each have real transaction hashes where expected;
 - the paid checkout token ID matches the check-in token ID;
 - the paid resource unlock URL belongs to the hosted app origin;
+- the hosted indexer cursor and latest ledger advance beyond the recorded
+  baseline, and indexed rows cover all six app-flow transaction hashes;
 - `docs/LIVE_TESTNET_EVIDENCE.json` is filled with public evidence;
-- `npm run live:evidence:audit` passes.
+- `npm run live:evidence:audit` passes;
+- `npm run live:evidence:audit:current` passes for the current Vercel release.
+- `npm run live:evidence:network` verifies all six app-flow transactions on
+  Stellar testnet.
 
 Until those conditions are true, describe Quorum as local-demo ready,
 live-contract deployed, and app-live-signing ready, not complete live app

@@ -1,6 +1,6 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-07-15T01:46:03.238Z`
+Generated at: `2026-07-15T06:29:02.573Z`
 
 > Command-level verification snapshot for the source state below. It does not
 > prove current hosted database health, indexer execution, wallet signing, or
@@ -8,13 +8,21 @@ Generated at: `2026-07-15T01:46:03.238Z`
 
 ## Source State
 
-- Branch: `codex/93-refresh-browser-qa-status`
-- Commit: `fb0c68e`
+- Branch: `codex/92-current-origin-evidence`
+- Commit: `2011bdd`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
 (clean)
 ```
+
+## Browser QA Provenance
+
+- Mode: `reused-unchanged-inputs`
+- Browser evidence commit: `f935e000da12b913648758ac99b61f82e46f2fa5`
+- Browser source commit: `fb0c68e3624156f6b1bb9eda0f74b72c11117f65`
+- Current input fingerprint: `9b2318ced0e6353d70895506b157275d769a0b6b24b5addfa2ab3bd897471faf`
+- Changed browser input files: `0`
 
 ## Local Verification Summary
 
@@ -36,7 +44,8 @@ Generated at: `2026-07-15T01:46:03.238Z`
 | Live policy smoke | `npm run demo:live-policy` | PASS | 0 |
 | Settlement smoke | `npm run settlement:smoke` | PASS | 0 |
 | Indexer security smoke | `npm run indexer:security:smoke` | PASS | 0 |
-| Browser QA | `npm run browser:qa` | PASS | 0 |
+| Browser QA | `npm run browser:qa:provenance` | PASS | 0 |
+| Browser QA provenance smoke | `npm run browser:qa:provenance:smoke` | PASS | 0 |
 | Evidence lineage smoke | `npm run evidence:lineage:smoke` | PASS | 0 |
 | Deploy env smoke | `npm run deploy:env:smoke` | PASS | 0 |
 | Deploy hosted preflight smoke | `npm run deploy:hosted:preflight:smoke` | PASS | 0 |
@@ -50,6 +59,7 @@ Generated at: `2026-07-15T01:46:03.238Z`
 | Live XDR smoke | `npm run live:xdr:smoke` | PASS | 0 |
 | Live evidence template | `npm run live:evidence:template` | PASS | 0 |
 | Live evidence audit smoke | `npm run live:evidence:audit:smoke` | PASS | 0 |
+| Live evidence network smoke | `npm run live:evidence:network:smoke` | PASS | 0 |
 | Live deployment validation | `npm run live:deployment:validate` | PASS | 0 |
 | Live browser flow smoke | `npm run live:browser-flow:smoke` | PASS | 0 |
 | Live UI wiring smoke | `npm run live:ui-wiring:smoke` | PASS | 0 |
@@ -65,7 +75,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-cf0ece`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-e06897`
 
 Covered checks:
 
@@ -150,7 +160,7 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 > quorum@0.1.0 db:migrate
 > node scripts/db-migrate.mjs
 {
-  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum",
+  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum_evidence",
   "schema": "public",
   "applied": [
     "0001_initial_schema.sql",
@@ -190,8 +200,8 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_2e7f4776-dcc5-403d-9104-a5d681e9d6fd",
-    "slug": "smoke-2e7f4776",
+    "id": "evt_8f020e35-a04b-43fb-9928-d7d514c44aa9",
+    "slug": "smoke-8f020e35",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -234,15 +244,15 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 ▲ Next.js 16.2.7 (Turbopack)
 - Environments: .env.local
   Creating an optimized production build ...
-✓ Compiled successfully in 3.7s
+✓ Compiled successfully in 2.8s
   Running TypeScript ...
-  Finished TypeScript in 3.9s ...
+  Finished TypeScript in 3.4s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/15) ...
   Generating static pages using 7 workers (3/15)
   Generating static pages using 7 workers (7/15)
   Generating static pages using 7 workers (11/15)
-✓ Generating static pages using 7 workers (15/15) in 222ms
+✓ Generating static pages using 7 workers (15/15) in 194ms
   Finalizing page optimization ...
 Route (app)
 ┌ ○ /
@@ -300,7 +310,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3042",
-  "walletAddress": "GD7Q7OBRKOKEBTS2NKHSJMPSNYWKI2E67I7JZACJCGBDUMBICTBPQLFZ",
+  "walletAddress": "GBKWWEBYPMY3RAOZT6WUH55KO5FICGRWLADE5BOTSESDQ6EWT33Q722Y",
   "checks": [
     "reject-invalid-wallet-challenge-request",
     "issue-wallet-bound-challenge-cookie",
@@ -348,9 +358,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databaseSchema": "quorum_demo_smoke_212c5b22_9545_41da_8b36_e69a6947e254",
+  "databaseSchema": "quorum_demo_smoke_15c353e7_f919_4f4d_8988_511042c8ff3a",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-cf0ece",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-e06897",
   "checks": [
     "marketplace",
     "event-detail",
@@ -581,21 +591,48 @@ Event lifecycle smoke passed.
 
 ### Browser QA
 
-- Command: `npm run browser:qa`
+- Command: `npm run browser:qa:provenance`
 - Exit code: `0`
 - Status: **PASS**
 
 ```text
-> quorum@0.1.0 browser:qa
-> node scripts/browser-qa.mjs
+> quorum@0.1.0 browser:qa:provenance
+> node scripts/browser-qa-provenance.mjs
 {
   "ok": true,
-  "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-07-15T01:47:44.874Z",
-  "baseUrl": "http://127.0.0.1:3040",
-  "checkedPages": 39,
-  "failures": [],
-  "screenshots": []
+  "mode": "reuse-browser-proof",
+  "browserEvidenceCommit": "f935e000da12b913648758ac99b61f82e46f2fa5",
+  "browserSourceCommit": "fb0c68e3624156f6b1bb9eda0f74b72c11117f65",
+  "currentCommit": "2011bdd0511ac7d423a807fd194567960a61d98d",
+  "trackedInputCount": 153,
+  "sourceInputFingerprint": "9b2318ced0e6353d70895506b157275d769a0b6b24b5addfa2ab3bd897471faf",
+  "currentInputFingerprint": "9b2318ced0e6353d70895506b157275d769a0b6b24b5addfa2ab3bd897471faf",
+  "changedInputFiles": [],
+  "browserDocumentMatches": true,
+  "browserDocumentSha256": "c72094bc09226a1fb616c37cbb2ffc3be341ba99fd5d585861cbeb081a246bc4",
+  "boundary": "This proves the recorded local browser result still applies to an identical UI/QA input tree. It does not rerun a browser or prove hosted wallet, indexer, or provider behavior."
+}
+```
+
+### Browser QA provenance smoke
+
+- Command: `npm run browser:qa:provenance:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 browser:qa:provenance:smoke
+> node scripts/browser-qa-provenance-smoke.mjs
+{
+  "ok": true,
+  "scenarios": [
+    "unchanged inputs with script-only package metadata",
+    "dirty browser input rejection",
+    "committed browser input rejection",
+    "runtime dependency rejection",
+    "browser document mutation rejection",
+    "mixed source and evidence commit rejection"
+  ]
 }
 ```
 
@@ -760,8 +797,8 @@ Event lifecycle smoke passed.
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databaseSchema": "quorum_live_flow_smoke_13ef2d9b_5c37_4c65_9194_1a034e4271fb",
-  "persistedEventId": "evt_8b3f2f80-79a6-46f5-8674-0bd7584bbb59",
+  "databaseSchema": "quorum_live_flow_smoke_51d34c91_786d_48c8_8341_a3ba925a1374",
+  "persistedEventId": "evt_e0a9fa2e-9567-4682-a73f-3eea1249b253",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -786,7 +823,7 @@ Event lifecycle smoke passed.
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databaseSchema": "quorum_live_persistence_smoke_b228f1dd_feaf_48c8_b9ca_9584b58223af",
+  "databaseSchema": "quorum_live_persistence_smoke_a78d4a44_ed85_40c3_88ed_ba4479d42a5a",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -975,6 +1012,8 @@ Event lifecycle smoke passed.
   "mode": "template",
   "evidencePath": "/Users/wildanniam/Development/project/Quorum/docs/LIVE_TESTNET_EVIDENCE.example.json",
   "requireFilled": false,
+  "requireCurrentOrigin": false,
+  "expectedOrigin": null,
   "liveEvidenceComplete": false,
   "checkedFields": 60,
   "failures": []
@@ -1000,7 +1039,35 @@ Event lifecycle smoke passed.
     "reject-filled-live-evidence-token-mismatch",
     "reject-filled-live-evidence-origin-mismatch",
     "reject-filled-live-evidence-duplicate-publish-url",
-    "reject-filled-live-evidence-zero-withdraw"
+    "reject-filled-live-evidence-zero-withdraw",
+    "accept-current-origin-live-evidence",
+    "reject-wrong-current-origin",
+    "reject-stale-current-origin-evidence",
+    "reject-wrong-final-paid-price",
+    "reject-regressed-indexer-cursor",
+    "reject-missing-indexed-transaction"
+  ]
+}
+```
+
+### Live evidence network smoke
+
+- Command: `npm run live:evidence:network:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 live:evidence:network:smoke
+> node scripts/live-evidence-network-smoke.mjs
+{
+  "ok": true,
+  "checks": [
+    "accept-valid-horizon-final-flow",
+    "reject-wrong-contract-function",
+    "reject-wrong-paid-amount",
+    "reject-missing-withdraw-effects",
+    "reject-wrong-signer",
+    "reject-stale-transaction"
   ]
 }
 ```
@@ -1097,25 +1164,25 @@ Event lifecycle smoke passed.
 > cargo test
 running 19 tests
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::organizer_can_check_in_pass ... ok
-test test::duplicate_check_in_is_idempotent ... ok
-test test::admin_can_withdraw_platform_fee ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
-test test::collaborator_can_withdraw_balance ... ok
+test test::organizer_can_check_in_pass ... ok
 test test::emits_core_and_pass_proof_events ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::duplicate_check_in_is_idempotent ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
-test test::rejects_check_in_for_unknown_token - should panic ... ok
+test test::admin_can_withdraw_platform_fee ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_check_in_from_non_organizer - should panic ... ok
+test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::rejects_check_in_from_non_organizer - should panic ... ok
 test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.48s
 running 7 tests
 test test::set_core_emits_even
 ... [truncated]
@@ -1151,7 +1218,7 @@ test test::set_core_emits_even
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.06s
+    Finished `release` profile [optimized] target(s) in 0.07s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5467 bytes)
     Wasm Hash: e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec
