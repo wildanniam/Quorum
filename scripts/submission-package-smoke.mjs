@@ -60,6 +60,10 @@ assert.match(recovery, /Production migration status is ready/i);
 assert.match(recovery, /Three authenticated runs completed without error/i);
 assert.match(recovery, /complete non-destructive source check list/i);
 assert.doesNotMatch(recovery, /all \d+ non-destructive source checks/i);
+assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/91/);
+assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/94/);
+assert.match(recovery, /39 checked states/i);
+assert.match(readiness, /Recovery PRs #75 through #94 are merged/i);
 assert.match(readme, /Three successful hosted indexer runs/i);
 assert.match(
   productionHandoff,

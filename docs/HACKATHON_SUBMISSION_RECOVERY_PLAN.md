@@ -13,6 +13,9 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - MoneyGram eligibility issue: [#82](https://github.com/wildanniam/Quorum/issues/82)
 - Submission package issue: [#84](https://github.com/wildanniam/Quorum/issues/84)
 - Hosted release evidence issue: [#88](https://github.com/wildanniam/Quorum/issues/88)
+- Final browser QA issue: [#90](https://github.com/wildanniam/Quorum/issues/90)
+- Browser evidence lineage issue: [#93](https://github.com/wildanniam/Quorum/issues/93)
+- Current-origin evidence issue: [#92](https://github.com/wildanniam/Quorum/issues/92)
 - Starting commit: `379003f`
 - Hosted application: `https://quorum-sandy-eight.vercel.app`
 - Target network: Stellar testnet
@@ -115,10 +118,12 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   only source-readiness waits for regenerated evidence provenance.
 - The isolated localhost PostgreSQL gate passes migration, seed, database,
   wallet-auth, lifecycle, settlement, flow, and persistence checks.
-- The release stack from #75 through #87 is merged into `main` with green GitHub
+- The initial release stack from #75 through #87 is merged into `main` with green GitHub
   and Vercel checks.
 
 ### Hosted release checkpoint
+
+- Merged PR: [#89](https://github.com/wildanniam/Quorum/pull/89)
 
 - Production migration status is ready with all five migrations applied.
 - The captured operational release is `READY` on Vercel and `/evidence` is
@@ -130,6 +135,17 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   latest-ledger state, including the scheduled Vercel Cron run.
 - The canonical machine-readable record is
   `docs/HOSTED_RELEASE_EVIDENCE.json`.
+
+### Final browser QA and evidence lineage
+
+- Merged PRs: [#91](https://github.com/wildanniam/Quorum/pull/91) and
+  [#94](https://github.com/wildanniam/Quorum/pull/94)
+- The isolated browser suite covers 13 routes across desktop, tablet, and mobile
+  viewports, for 39 checked states without horizontal overflow or console errors.
+- Evidence lineage accepts the generated-evidence parent and normal merge path
+  while rejecting stale source snapshots.
+- The current verifier-only evidence PR must regenerate provenance before its
+  source-readiness gate can pass; this does not reopen the completed visual QA.
 
 ## Event Lifecycle Acceptance
 
@@ -151,7 +167,9 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
 - Fresh testnet transaction: needed because RPC event retention cannot recover old
   contract events indefinitely.
 - Final browser QA: complete on the final candidate with 13 routes across three
-  viewports; this remains local isolated QA, not hosted signing evidence.
+  viewports; this remains local isolated QA, not hosted signing evidence. The
+  current verifier-only PR still needs a provenance refresh after its final
+  source commit is locked.
 - Final submission: remains an explicit Wildan approval checkpoint.
 
 ## Submission Source Of Truth

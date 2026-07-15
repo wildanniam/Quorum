@@ -63,7 +63,8 @@ Release checkpoints still open:
 
 - current-Vercel Freighter-signed evidence after explicit approval, followed by
   one hosted indexer run that captures those fresh events;
-- final responsive browser QA and screenshot packet;
+- evidence provenance refresh after the verifier-only changes; the final
+  39-state responsive browser QA itself is already complete;
 - MoneyGram provider approval, if it arrives before submission.
 - final hackathon submission approval.
 
