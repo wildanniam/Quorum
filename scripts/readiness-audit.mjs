@@ -740,6 +740,7 @@ function checkLiveBoundaries() {
   const manualRunbook = readFile("docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md");
   const productionHandoff = readFile("docs/PRODUCTION_ENV_HANDOFF.md");
   const readiness = readFile("docs/MVP_READINESS.md");
+  const normalizedReadiness = readiness.replaceAll("**", "").replace(/\s+/g, " ");
   const templateAudit = runJson("node", ["scripts/live-evidence-audit.mjs"]);
   const submissionPackage = runJson("node", ["scripts/submission-package-smoke.mjs"]);
 
@@ -757,13 +758,22 @@ function checkLiveBoundaries() {
     "current-origin evidence",
     "provider allowlist approval",
     "Contract-level end-time enforcement is not implemented",
-    "hosted release operational and final browser QA complete",
     "fresh transaction/indexer evidence",
     "Quorum is not mainnet production software",
   ]) {
     if (!readiness.includes(term)) {
       fail(`MVP_READINESS is missing current release boundary: ${term}`);
     }
+  }
+
+  if (
+    !normalizedReadiness.includes(
+      "hosted release operational and final browser QA complete",
+    )
+  ) {
+    fail(
+      "MVP_READINESS is missing current release boundary: hosted release operational and final browser QA complete",
+    );
   }
 
   for (const term of [
