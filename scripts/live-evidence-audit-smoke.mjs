@@ -82,6 +82,18 @@ function buildEvidence(overrides = {}) {
       paidResourceUnlockedUrl: "https://quorum.example.com/events/paid/resources",
       browserQaDeployed: "Deployed browser QA passed.",
     },
+    indexerProof: {
+      stateId: "quorum-testnet-contracts",
+      lastRunStatus: "success",
+      baselineCursor: "100-1",
+      finalCursor: "200-2",
+      baselineLatestLedger: 100,
+      finalLatestLedger: 200,
+      lastSuccessAt: new Date(Date.now() - 1_000).toISOString(),
+      indexedEventCount: 8,
+      indexedTransactionHashes: [6, 7, 8, 9, 10, 11].map(hex64),
+      evidenceUrl: "https://quorum.example.com/evidence",
+    },
     verification: {
       commands: {
         contractsDoctor: {
@@ -289,6 +301,38 @@ assert.match(
   /publishPaidEvent\.priceUsdc must be/,
 );
 
+const regressedIndexerEvidence = buildEvidence();
+regressedIndexerEvidence.indexerProof.finalCursor = "99-9";
+const regressedIndexerResult = runAudit(
+  "regressed-indexer.json",
+  regressedIndexerEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(regressedIndexerResult.status, 0);
+assert.match(
+  `${regressedIndexerResult.stdout}${regressedIndexerResult.stderr}`,
+  /finalCursor must advance/,
+);
+
+const missingIndexedHashEvidence = buildEvidence();
+missingIndexedHashEvidence.indexerProof.indexedTransactionHashes.pop();
+const missingIndexedHashResult = runAudit(
+  "missing-indexed-hash.json",
+  missingIndexedHashEvidence,
+  [
+    "--require-current-origin",
+    "--expected-origin=https://quorum.example.com",
+  ],
+);
+assert.notEqual(missingIndexedHashResult.status, 0);
+assert.match(
+  `${missingIndexedHashResult.stdout}${missingIndexedHashResult.stderr}`,
+  /indexedTransactionHashes must contain each unique app-flow transaction hash/,
+);
+
 fs.rmSync(tmpDir, { recursive: true, force: true });
 
 console.log(
@@ -308,6 +352,8 @@ console.log(
         "reject-wrong-current-origin",
         "reject-stale-current-origin-evidence",
         "reject-wrong-final-paid-price",
+        "reject-regressed-indexer-cursor",
+        "reject-missing-indexed-transaction",
       ],
     },
     null,

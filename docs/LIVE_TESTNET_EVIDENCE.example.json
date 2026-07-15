@@ -65,6 +65,25 @@
     "paidResourceUnlockedUrl": "<public HTTPS hosted resource URL unlocked by paid attendee>",
     "browserQaDeployed": "<deployed browser QA notes or artifact URL>"
   },
+  "indexerProof": {
+    "stateId": "quorum-testnet-contracts",
+    "lastRunStatus": "success",
+    "baselineCursor": "<cursor recorded before the fresh flow>",
+    "finalCursor": "<cursor recorded after the fresh flow>",
+    "baselineLatestLedger": 0,
+    "finalLatestLedger": 0,
+    "lastSuccessAt": "<ISO timestamp of the successful hosted indexer run>",
+    "indexedEventCount": 0,
+    "indexedTransactionHashes": [
+      "<publish paid hash>",
+      "<paid checkout hash>",
+      "<publish free hash>",
+      "<free claim hash>",
+      "<check-in hash>",
+      "<withdraw hash>"
+    ],
+    "evidenceUrl": "<public HTTPS hosted /evidence URL>"
+  },
   "verification": {
     "commands": {
       "contractsDoctor": {

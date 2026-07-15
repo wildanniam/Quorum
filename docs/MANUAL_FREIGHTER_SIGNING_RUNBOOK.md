@@ -98,6 +98,9 @@ Fill `docs/LIVE_TESTNET_EVIDENCE.json` with public data only:
   `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`;
 - app-flow transaction hashes from the Freighter-signed run;
 - token IDs, resource URL, contract status URL, and verification results.
+- the previous immutable hosted indexer cursor/ledger, the final successful
+  cursor/ledger, last-success time, indexed event count, all six transaction
+  hashes found in indexed rows, and the current `/evidence` URL.
 
 After the file is filled, run:
 
@@ -410,6 +413,8 @@ The signing session is complete only when:
   and collaborator withdraw each have real transaction hashes where expected;
 - the paid checkout token ID matches the check-in token ID;
 - the paid resource unlock URL belongs to the hosted app origin;
+- the hosted indexer cursor and latest ledger advance beyond the recorded
+  baseline, and indexed rows cover all six app-flow transaction hashes;
 - `docs/LIVE_TESTNET_EVIDENCE.json` is filled with public evidence;
 - `npm run live:evidence:audit` passes;
 - `npm run live:evidence:audit:current` passes for the current Vercel release.

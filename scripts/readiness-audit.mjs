@@ -850,6 +850,34 @@ function checkLiveBoundaries() {
     fail(`Current-origin Stellar transactions are not verified: ${details}`);
   }
 
+  if (requireCurrentOriginEvidence) {
+    try {
+      const liveEvidence = JSON.parse(
+        readFile("docs/LIVE_TESTNET_EVIDENCE.json"),
+      );
+      const hostedReleaseEvidence = JSON.parse(
+        readFile("docs/HOSTED_RELEASE_EVIDENCE.json"),
+      );
+      const hostedRuns = hostedReleaseEvidence.hostedIndexer?.runs;
+      const baselineRun = Array.isArray(hostedRuns)
+        ? hostedRuns.at(-1)
+        : null;
+
+      if (
+        !baselineRun ||
+        liveEvidence.indexerProof?.baselineCursor !== baselineRun.cursor ||
+        liveEvidence.indexerProof?.baselineLatestLedger !==
+          baselineRun.latestLedger
+      ) {
+        fail(
+          "Current indexer proof baseline must match the latest immutable hosted release checkpoint.",
+        );
+      }
+    } catch (error) {
+      fail(`Could not compare the current indexer proof baseline: ${error.message}`);
+    }
+  }
+
   if (!submissionPackage.ok) {
     fail("Hackathon submission package smoke does not pass.");
   }
