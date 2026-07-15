@@ -1,6 +1,6 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-07-15T00:04:43.810Z`
+Generated at: `2026-07-15T00:34:55.007Z`
 
 > Command-level verification snapshot for the source state below. It does not
 > prove current hosted database health, indexer execution, wallet signing, or
@@ -9,7 +9,7 @@ Generated at: `2026-07-15T00:04:43.810Z`
 ## Source State
 
 - Branch: `codex/90-final-browser-qa`
-- Commit: `489c455`
+- Commit: `d633c68`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -64,7 +64,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-066141`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-ee4515`
 
 Covered checks:
 
@@ -149,7 +149,7 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 > quorum@0.1.0 db:migrate
 > node scripts/db-migrate.mjs
 {
-  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum_release_evidence",
+  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum_final_proof",
   "schema": "public",
   "applied": [
     "0001_initial_schema.sql",
@@ -161,6 +161,7 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
   "totalMigrations": 5
 }
 ```
+
 ### DB seed
 
 - Command: `npm run db:seed`
@@ -188,8 +189,8 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_3c4cc381-296b-4e63-995f-e7f1423f336f",
-    "slug": "smoke-3c4cc381",
+    "id": "evt_e9a70a42-d0c2-4d73-a4da-632e8758494d",
+    "slug": "smoke-e9a70a42",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -232,15 +233,15 @@ Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 ▲ Next.js 16.2.7 (Turbopack)
 - Environments: .env.local
   Creating an optimized production build ...
-✓ Compiled successfully in 4.2s
+✓ Compiled successfully in 3.2s
   Running TypeScript ...
-  Finished TypeScript in 4.9s ...
+  Finished TypeScript in 3.5s ...
   Collecting page data using 7 workers ...
   Generating static pages using 7 workers (0/15) ...
   Generating static pages using 7 workers (3/15)
   Generating static pages using 7 workers (7/15)
   Generating static pages using 7 workers (11/15)
-✓ Generating static pages using 7 workers (15/15) in 217ms
+✓ Generating static pages using 7 workers (15/15) in 172ms
   Finalizing page optimization ...
 Route (app)
 ┌ ○ /
@@ -298,7 +299,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3042",
-  "walletAddress": "GCXPNKSHT26Q7ORVSE7WX6I5C73Q2VHEZ5RS55K5MMFG5IXIPFWLO3TV",
+  "walletAddress": "GDTLQYLI4HDRVZZCF3VXJRCTVUFERPIQKUFFGM7RYBYKFE4EU2AC57KG",
   "checks": [
     "reject-invalid-wallet-challenge-request",
     "issue-wallet-bound-challenge-cookie",
@@ -346,9 +347,9 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databaseSchema": "quorum_demo_smoke_2923e301_5e29_4d0f_8b26_5dc80fb5fc3c",
+  "databaseSchema": "quorum_demo_smoke_25384c5f_2687_4be2_b4ac_b1d9dbc194da",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-066141",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-ee4515",
   "checks": [
     "marketplace",
     "event-detail",
@@ -589,7 +590,7 @@ Event lifecycle smoke passed.
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-07-15T00:06:30.387Z",
+  "generatedAt": "2026-07-15T00:36:30.166Z",
   "baseUrl": "http://127.0.0.1:3040",
   "checkedPages": 39,
   "failures": [],
@@ -752,8 +753,8 @@ Event lifecycle smoke passed.
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databaseSchema": "quorum_live_flow_smoke_ea49e4cd_8b8c_43e4_bf3d_d093bac03845",
-  "persistedEventId": "evt_9dcb32c7-97c4-443c-8c23-4697f1bc8344",
+  "databaseSchema": "quorum_live_flow_smoke_5267b824_864f_4af8_9d07_ed5d26542f3d",
+  "persistedEventId": "evt_0ac4c7d3-2fa7-44e1-bf83-6b25a2dcd5ce",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -778,7 +779,7 @@ Event lifecycle smoke passed.
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databaseSchema": "quorum_live_persistence_smoke_c35cb5cd_a49e_483e_a474_ed00c199bc55",
+  "databaseSchema": "quorum_live_persistence_smoke_cbd9b3d0_b1c2_41e0_ba2e_d5a0171c76b2",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -1088,26 +1089,26 @@ Event lifecycle smoke passed.
 > quorum@0.1.0 contracts:test
 > cargo test
 running 19 tests
-test test::organizer_can_check_in_pass ... ok
-test test::collaborator_can_withdraw_balance ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
 test test::purchase_mints_pass_and_splits_balance ... ok
-test test::free_event_claim_mints_pass_without_balances ... ok
+test test::organizer_can_check_in_pass ... ok
 test test::duplicate_check_in_is_idempotent ... ok
 test test::admin_can_withdraw_platform_fee ... ok
+test test::collaborator_can_withdraw_balance ... ok
+test test::free_event_claim_mints_pass_without_balances ... ok
 test test::emits_core_and_pass_proof_events ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
 test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
-test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_duplicate_purchase - should panic ... ok
-test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::rejects_duplicate_free_claim - should panic ... ok
 test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_check_in_for_token_from_another_event - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.50s
 running 7 tests
 test test::set_core_emits_even
 ... [truncated]
@@ -1123,7 +1124,7 @@ test test::set_core_emits_even
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.26s
+    Finished `release` profile [optimized] target(s) in 0.11s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (14247 bytes)
     Wasm Hash: 73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0
@@ -1143,7 +1144,7 @@ test test::set_core_emits_even
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.15s
+    Finished `release` profile [optimized] target(s) in 0.06s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5467 bytes)
     Wasm Hash: e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec
