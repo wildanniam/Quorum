@@ -1,6 +1,6 @@
 # Quorum Demo Evidence
 
-Generated at: `2026-07-15T06:29:02.573Z`
+Generated at: `2026-07-15T16:48:18.000Z`
 
 > Command-level verification snapshot for the source state below. It does not
 > prove current hosted database health, indexer execution, wallet signing, or
@@ -8,8 +8,8 @@ Generated at: `2026-07-15T06:29:02.573Z`
 
 ## Source State
 
-- Branch: `codex/92-current-origin-evidence`
-- Commit: `2011bdd`
+- Branch: `main`
+- Commit: `7cfe0be`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -603,7 +603,7 @@ Event lifecycle smoke passed.
   "mode": "reuse-browser-proof",
   "browserEvidenceCommit": "f935e000da12b913648758ac99b61f82e46f2fa5",
   "browserSourceCommit": "fb0c68e3624156f6b1bb9eda0f74b72c11117f65",
-  "currentCommit": "2011bdd0511ac7d423a807fd194567960a61d98d",
+  "currentCommit": "7cfe0be242b697607d467236381dc53aa04ae130",
   "trackedInputCount": 153,
   "sourceInputFingerprint": "9b2318ced0e6353d70895506b157275d769a0b6b24b5addfa2ab3bd897471faf",
   "currentInputFingerprint": "9b2318ced0e6353d70895506b157275d769a0b6b24b5addfa2ab3bd897471faf",
