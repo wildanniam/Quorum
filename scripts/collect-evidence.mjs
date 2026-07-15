@@ -240,7 +240,7 @@ ${detailSections}
 `;
 
 fs.mkdirSync(path.dirname(evidencePath), { recursive: true });
-fs.writeFileSync(evidencePath, evidence);
+fs.writeFileSync(evidencePath, `${evidence.trimEnd()}\n`);
 
 console.log(
   JSON.stringify(
