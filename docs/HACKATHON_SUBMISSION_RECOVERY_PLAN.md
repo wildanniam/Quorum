@@ -110,7 +110,8 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   [#87](https://github.com/wildanniam/Quorum/pull/87)
 - The claim-to-proof inventory, judge runbook, readiness matrix, and historical
   evidence boundaries now agree.
-- `npm run submission:gate` passes all 36 non-destructive source checks.
+- `npm run submission:gate` passes all 37 non-destructive source checks,
+  including the browser-QA localhost database guard.
 - The isolated localhost PostgreSQL gate passes migration, seed, database,
   wallet-auth, lifecycle, settlement, flow, and persistence checks.
 - The release stack from #75 through #87 is merged into `main` with green GitHub

@@ -39,6 +39,7 @@ const requiredFiles = [
   "scripts/hosted-readiness-probe.mjs",
   "scripts/submission-db-gate.mjs",
   "scripts/submission-db-gate-smoke.mjs",
+  "scripts/browser-qa-safety-smoke.mjs",
   "scripts/submission-gate.mjs",
   "scripts/stellar-indexer-run.ts",
   "scripts/indexer-security-smoke.ts",
@@ -106,6 +107,7 @@ const requiredPackageScripts = [
   "deploy:hosted:preflight",
   "deploy:hosted:preflight:smoke",
   "browser:qa",
+  "browser:qa:safety:smoke",
   "evidence:local",
   "lint",
   "live:args:smoke",
@@ -597,15 +599,18 @@ function checkEvidence() {
     fail("BROWSER_QA does not identify the browser QA generator.");
   }
 
-  if (!requireFreshEvidence) {
-    if (!evidence.includes("Historical verification snapshot")) {
-      fail("DEMO_EVIDENCE must clearly identify a historical snapshot by default.");
-    }
+  const historicalCommandEvidence = evidence.includes(
+    "Historical verification snapshot",
+  );
+  const historicalBrowserEvidence = browserQa.includes(
+    "Historical local browser snapshot",
+  );
 
-    if (!browserQa.includes("Historical local browser snapshot")) {
-      fail("BROWSER_QA must clearly identify a historical snapshot by default.");
-    }
-
+  if (
+    !requireFreshEvidence &&
+    historicalCommandEvidence &&
+    historicalBrowserEvidence
+  ) {
     warn(
       "Historical command and browser evidence were validated as historical only. " +
         "Use --require-fresh-evidence after approved isolated browser/database QA.",
@@ -613,11 +618,16 @@ function checkEvidence() {
     return;
   }
 
-  if (
-    evidence.includes("Historical verification snapshot") ||
-    browserQa.includes("Historical local browser snapshot")
-  ) {
+  if (historicalCommandEvidence !== historicalBrowserEvidence) {
+    fail(
+      "DEMO_EVIDENCE and BROWSER_QA must both be historical or both be fresh.",
+    );
+    return;
+  }
+
+  if (historicalCommandEvidence || historicalBrowserEvidence) {
     fail("Fresh evidence mode rejects historical command or browser snapshots.");
+    return;
   }
 
   const validSourceCommits = expectedEvidenceCommits();

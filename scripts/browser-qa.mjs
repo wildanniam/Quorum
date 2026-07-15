@@ -5,7 +5,7 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { Keypair } from "@stellar/stellar-sdk";
 import { chromium } from "playwright";
-import { withClient } from "./postgres-utils.mjs";
+import { databaseUrl, withClient } from "./postgres-utils.mjs";
 
 const projectRoot = process.cwd();
 const browserQaPath = path.join(projectRoot, "docs", "BROWSER_QA.md");
@@ -16,6 +16,7 @@ const databaseSchema =
   process.env.BROWSER_QA_DB_SCHEMA ??
   `quorum_browser_qa_${randomUUID().replaceAll("-", "_")}`;
 process.env.QUORUM_DB_SCHEMA = databaseSchema;
+const validateDatabaseOnly = process.argv.includes("--validate-database-only");
 const browserSessionSecret = "quorum-local-dev-session-secret";
 const eventId = "evt_apac_stellar_builder_meetup";
 const eventSlug = "apac-stellar-builder-meetup";
@@ -40,6 +41,57 @@ const screenshotPages = new Set([
   "Collaborator ledger",
   "Evidence hub",
 ]);
+
+function validateLocalDatabaseUrl(rawUrl, label) {
+  let parsed;
+
+  try {
+    parsed = new URL(rawUrl);
+  } catch {
+    throw new Error(`${label} must be a valid Postgres URL.`);
+  }
+
+  if (parsed.protocol !== "postgres:" && parsed.protocol !== "postgresql:") {
+    throw new Error(`${label} must use postgres:// or postgresql://.`);
+  }
+
+  const allowedHosts = new Set(["127.0.0.1", "localhost", "[::1]"]);
+
+  if (!allowedHosts.has(parsed.hostname)) {
+    throw new Error(
+      "Browser QA only accepts localhost Postgres. Hosted and production databases are rejected.",
+    );
+  }
+
+  const databaseName = decodeURIComponent(parsed.pathname.replace(/^\//, ""));
+
+  if (!databaseName) {
+    throw new Error(`${label} must include a database name.`);
+  }
+
+  return {
+    databaseName,
+    host: parsed.hostname,
+    port: parsed.port || "5432",
+  };
+}
+
+let databaseTargets;
+
+try {
+  databaseTargets = {
+    application: validateLocalDatabaseUrl(databaseUrl(), "DATABASE_URL"),
+    migration: validateLocalDatabaseUrl(
+      databaseUrl({ migration: true }),
+      "DIRECT_DATABASE_URL or DATABASE_URL",
+    ),
+  };
+} catch (error) {
+  console.error(
+    `[browser-qa] ${error instanceof Error ? error.message : String(error)}`,
+  );
+  process.exit(1);
+}
 
 function encodeBase64Url(value) {
   return Buffer.from(value)
@@ -176,7 +228,7 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       path: "/dashboard/ledger",
       requiredText: [
         "Earnings, settlement, and cash-out",
-        "Move settled wallet funds",
+        "Move settled testnet funds into the cash-out flow.",
         "Wallet transfer required",
         "0.4 USDC",
         "Event revenue and contract settlements",
@@ -186,7 +238,7 @@ function buildPages({ attendeeCookie, collaboratorCookie, organizerCookie, token
       label: "Evidence hub",
       path: "/evidence",
       requiredText: [
-        "Trace Quorum settlement from checkout to payout.",
+        "Trace Quorum activity from checkout to cash-out.",
         "Proof timeline",
         "App proof",
       ],
@@ -407,13 +459,36 @@ async function inspectPage(browser, viewport, pageSpec) {
       };
     });
     let screenshotPath = null;
+    let viewportScreenshotPath = null;
 
     if (screenshotDir && screenshotPages.has(pageSpec.label)) {
       fs.mkdirSync(screenshotDir, { recursive: true });
+      const pageSlug = pageSpec.label.toLowerCase().replaceAll(" ", "-");
+      const viewportSlug = viewport.label.toLowerCase().replaceAll(" ", "-");
+      const screenshotStem = `${pageSlug}-${viewportSlug}`;
       screenshotPath = path.join(
         screenshotDir,
-        `${pageSpec.label.toLowerCase().replaceAll(" ", "-")}-${viewport.label.toLowerCase().replaceAll(" ", "-")}.png`,
+        `${screenshotStem}.png`,
       );
+
+      if (viewport.label === "Mobile") {
+        viewportScreenshotPath = path.join(
+          screenshotDir,
+          `${screenshotStem}-viewport.png`,
+        );
+        await page.screenshot({ path: viewportScreenshotPath });
+
+        const mobileNavigation = page.locator(
+          'nav[aria-label="Mobile navigation"]',
+        );
+
+        if ((await mobileNavigation.count()) > 0) {
+          await mobileNavigation.evaluate((element) => {
+            element.style.visibility = "hidden";
+          });
+        }
+      }
+
       await page.screenshot({ fullPage: true, path: screenshotPath });
     }
 
@@ -425,6 +500,7 @@ async function inspectPage(browser, viewport, pageSpec) {
       path: pageSpec.path,
       status: response.status(),
       screenshotPath,
+      viewportScreenshotPath,
       overflow,
       viewport,
     };
@@ -491,6 +567,9 @@ indexer execution.
 - Console errors: ${totalErrors === 0 ? "none observed" : totalErrors}
 - Horizontal overflow: ${overflowCount === 0 ? "none observed" : overflowCount}
 - Missing required text: ${missingTextCount === 0 ? "none observed" : missingTextCount}
+- Mobile capture policy: each selected page keeps a real viewport capture with
+  the fixed dock, plus a full-page capture with the dock hidden so long-form
+  layout can be inspected without screenshot-only occlusion.
 
 ${viewportSections}
 
@@ -632,7 +711,10 @@ async function main() {
             checkedPages: results.length,
             failures,
             screenshots: results
-              .map((result) => result.screenshotPath)
+              .flatMap((result) => [
+                result.screenshotPath,
+                result.viewportScreenshotPath,
+              ])
               .filter(Boolean),
           },
           null,
@@ -671,4 +753,19 @@ async function main() {
   }
 }
 
-main();
+if (validateDatabaseOnly) {
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        mode: "validate-database-only",
+        databasePolicy: "localhost-only",
+        targets: databaseTargets,
+      },
+      null,
+      2,
+    ),
+  );
+} else {
+  main();
+}

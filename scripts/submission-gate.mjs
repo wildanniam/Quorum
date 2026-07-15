@@ -138,6 +138,11 @@ const checks = [
     args: ["run", "submission:db:gate:smoke"],
   },
   {
+    id: "browser-qa-database-guard",
+    command: "npm",
+    args: ["run", "browser:qa:safety:smoke"],
+  },
+  {
     id: "submission-package",
     command: "npm",
     args: ["run", "submission:package:smoke"],
@@ -171,12 +176,15 @@ const forbiddenScriptNames = [
   "wallet:auth:smoke",
 ];
 
-const commandLines = checks.map((check) =>
-  [check.command, ...check.args].join(" "),
-);
-
 for (const forbidden of forbiddenScriptNames) {
-  if (commandLines.some((commandLine) => commandLine.includes(`run ${forbidden}`))) {
+  const includesForbiddenScript = checks.some(
+    (check) =>
+      check.command === "npm" &&
+      check.args[0] === "run" &&
+      check.args[1] === forbidden,
+  );
+
+  if (includesForbiddenScript) {
     throw new Error(`Submission gate includes forbidden command: ${forbidden}`);
   }
 }
