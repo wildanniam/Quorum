@@ -28,20 +28,26 @@
   "liveFlows": {
     "publishPaidEvent": {
       "txHash": "<64 hex transaction hash>",
-      "eventUrl": "<public HTTPS hosted paid event URL>"
+      "eventUrl": "<public HTTPS hosted paid event URL>",
+      "priceUsdc": "1",
+      "splitTotalBps": 10000
     },
     "paidCheckout": {
       "txHash": "<64 hex transaction hash>",
       "tokenId": "<minted paid pass token ID>",
-      "paymentAsset": "USDC"
+      "paymentAsset": "USDC",
+      "amountUsdc": "1"
     },
     "publishFreeEvent": {
       "txHash": "<64 hex transaction hash>",
-      "eventUrl": "<public HTTPS hosted free event URL>"
+      "eventUrl": "<public HTTPS hosted free event URL>",
+      "priceUsdc": "0",
+      "splitTotalBps": 10000
     },
     "freeClaim": {
       "txHash": "<64 hex transaction hash>",
-      "tokenId": "<minted free pass token ID>"
+      "tokenId": "<minted free pass token ID>",
+      "amountUsdc": "0"
     },
     "checkIn": {
       "txHash": "<64 hex transaction hash>",

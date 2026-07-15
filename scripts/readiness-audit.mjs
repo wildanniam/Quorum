@@ -10,6 +10,10 @@ import {
 const projectRoot = process.cwd();
 const allowDirtyEvidence = process.argv.includes("--allow-dirty-evidence");
 const requireFreshEvidence = process.argv.includes("--require-fresh-evidence");
+const requireCurrentOriginEvidence = process.argv.includes(
+  "--require-current-origin-evidence",
+);
+const CURRENT_HOSTED_ORIGIN = "https://quorum-sandy-eight.vercel.app";
 const generatedDocs = ["docs/BROWSER_QA.md", "docs/DEMO_EVIDENCE.md"];
 
 const requiredFiles = [
@@ -121,6 +125,7 @@ const requiredPackageScripts = [
   "live:args:smoke",
   "live:browser-flow:smoke",
   "live:evidence:audit",
+  "live:evidence:audit:current",
   "live:evidence:audit:smoke",
   "live:evidence:template",
   "live:deployment:validate",
@@ -742,6 +747,15 @@ function checkLiveBoundaries() {
   const readiness = readFile("docs/MVP_READINESS.md");
   const normalizedReadiness = readiness.replaceAll("**", "").replace(/\s+/g, " ");
   const templateAudit = runJson("node", ["scripts/live-evidence-audit.mjs"]);
+  const currentOriginAudit = requireCurrentOriginEvidence
+    ? runJson("node", [
+        "scripts/live-evidence-audit.mjs",
+        "docs/LIVE_TESTNET_EVIDENCE.json",
+        "--require-filled",
+        "--require-current-origin",
+        `--expected-origin=${CURRENT_HOSTED_ORIGIN}`,
+      ])
+    : null;
   const submissionPackage = runJson("node", ["scripts/submission-package-smoke.mjs"]);
 
   for (const term of requiredLiveHandoffTerms) {
@@ -814,6 +828,13 @@ function checkLiveBoundaries() {
     fail("Live testnet evidence template must not claim complete live evidence.");
   }
 
+  if (currentOriginAudit && !currentOriginAudit.ok) {
+    const details = Array.isArray(currentOriginAudit.failures)
+      ? currentOriginAudit.failures.join(" ")
+      : "Current-origin live evidence audit failed.";
+    fail(`Current-origin live evidence is not ready: ${details}`);
+  }
+
   if (!submissionPackage.ok) {
     fail("Hackathon submission package smoke does not pass.");
   }
@@ -868,7 +889,9 @@ const report = {
   scope: requireFreshEvidence ? "final-evidence" : "source-readiness",
   allowDirtyEvidence,
   requireFreshEvidence,
-  releaseCandidateReady: requireFreshEvidence && failures.length === 0,
+  requireCurrentOriginEvidence,
+  releaseCandidateReady:
+    requireFreshEvidence && requireCurrentOriginEvidence && failures.length === 0,
   doctorReadyToDeploy: doctor.readyToDeploy,
   doctorBlockers: doctor.blockers ?? [],
   warnings,

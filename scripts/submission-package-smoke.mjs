@@ -58,10 +58,16 @@ assert.match(recovery, /Production migration status is ready/i);
 assert.match(recovery, /Two authenticated runs completed without error/i);
 assert.equal(
   packageJson.scripts?.["readiness:final"],
-  "node scripts/readiness-audit.mjs --require-fresh-evidence",
+  "node scripts/readiness-audit.mjs --require-fresh-evidence --require-current-origin-evidence",
+);
+assert.equal(
+  packageJson.scripts?.["live:evidence:audit:current"],
+  "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled --require-current-origin --expected-origin=https://quorum-sandy-eight.vercel.app",
 );
 assert.match(readme, /readiness:final/);
+assert.match(readme, /live:evidence:audit:current/);
 assert.match(runbook, /readiness:final/);
+assert.match(runbook, /live:evidence:audit:current/);
 assert.equal(
   packageJson.scripts?.["submission:hosted:probe"],
   "node scripts/hosted-readiness-probe.mjs",

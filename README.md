@@ -117,6 +117,7 @@ npm run live:xdr:smoke
 npm run live:browser-flow:smoke
 npm run live:ui-wiring:smoke
 npm run live:deployment:validate
+npm run live:evidence:audit:current
 npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
@@ -133,7 +134,8 @@ npm run contracts:doctor
 `npm run readiness:audit` verifies source readiness while accepting the two
 clearly labeled historical QA snapshots. `npm run readiness:final` is the final
 submission gate: it rejects those historical snapshots and requires freshly
-generated command and browser evidence from the release candidate.
+generated command and browser evidence plus a current Vercel-origin live
+transaction packet from the release candidate.
 
 `npm run submission:gate` runs the complete non-destructive autonomous suite.
 It intentionally excludes database-writing integration tests, browser
@@ -259,9 +261,10 @@ Read-only deployment evidence is recorded in
 `docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json`. The current
 `docs/LIVE_TESTNET_EVIDENCE.json` is a historical July 4 ngrok run. After an
 approved Vercel signing session, refresh that packet with current-origin URLs
-and unique app-flow transaction hashes, then run `npm run live:evidence:audit`.
-Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the manual browser wallet
-signing sequence.
+and unique app-flow transaction hashes, then run
+`npm run live:evidence:audit:current`. Use
+`docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the manual browser wallet signing
+sequence.
 
 ## Planning Docs
 

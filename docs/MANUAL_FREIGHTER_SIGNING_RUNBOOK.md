@@ -1,6 +1,6 @@
 # Manual Freighter Signing Runbook
 
-Last updated: 2026-06-09.
+Last updated: 2026-07-15.
 
 This runbook is the human-operated path for the first hosted live Stellar
 testnet transaction run. It explains exactly what the operator signs in
@@ -103,12 +103,16 @@ After the file is filled, run:
 
 ```bash
 npm run live:evidence:audit
+npm run live:evidence:audit:current
 ```
 
-The audit intentionally rejects localhost URLs, private network URLs, non-HTTPS
-URLs, reused transaction hashes, duplicate contract IDs, mismatched check-in
-token evidence, proof URLs outside the hosted app origin, and zero-value
-withdrawal evidence.
+The historical audit preserves prior valid testnet proof. The current-origin
+audit is the release gate and additionally requires the production Vercel
+origin, evidence no more than seven days old, a paid 1 USDC flow, a free 0 USDC
+flow, and 10,000 total split basis points for both published events. Both audits
+reject localhost URLs, private network URLs, non-HTTPS URLs, reused transaction
+hashes, duplicate contract IDs, mismatched check-in token evidence, proof URLs
+outside the hosted app origin, and zero-value withdrawal evidence.
 
 ## Manual Signing Sequence
 
@@ -401,7 +405,8 @@ The signing session is complete only when:
 - the paid checkout token ID matches the check-in token ID;
 - the paid resource unlock URL belongs to the hosted app origin;
 - `docs/LIVE_TESTNET_EVIDENCE.json` is filled with public evidence;
-- `npm run live:evidence:audit` passes.
+- `npm run live:evidence:audit` passes;
+- `npm run live:evidence:audit:current` passes for the current Vercel release.
 
 Until those conditions are true, describe Quorum as local-demo ready,
 live-contract deployed, and app-live-signing ready, not complete live app

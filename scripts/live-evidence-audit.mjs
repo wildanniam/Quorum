@@ -4,6 +4,14 @@ import path from "node:path";
 const projectRoot = process.cwd();
 const args = process.argv.slice(2);
 const requireFilled = args.includes("--require-filled");
+const requireCurrentOrigin = args.includes("--require-current-origin");
+const expectedOriginArg = args.find((arg) =>
+  arg.startsWith("--expected-origin="),
+);
+const expectedOriginValue = expectedOriginArg?.slice(
+  "--expected-origin=".length,
+);
+const currentEvidenceMaxAgeHours = 7 * 24;
 const evidenceArg =
   args.find((arg) => !arg.startsWith("--")) ??
   "docs/LIVE_TESTNET_EVIDENCE.example.json";
@@ -104,6 +112,15 @@ const contractIdFields = [
   "contracts.coreContractId",
   "contracts.passContractId",
   "contracts.usdcContractId",
+];
+
+const currentOriginFields = [
+  ["liveFlows.publishPaidEvent.priceUsdc", "1"],
+  ["liveFlows.publishPaidEvent.splitTotalBps", 10000],
+  ["liveFlows.paidCheckout.amountUsdc", "1"],
+  ["liveFlows.publishFreeEvent.priceUsdc", "0"],
+  ["liveFlows.publishFreeEvent.splitTotalBps", 10000],
+  ["liveFlows.freeClaim.amountUsdc", "0"],
 ];
 
 const failures = [];
@@ -209,6 +226,20 @@ function originFor(value) {
   }
 }
 
+function normalizeExpectedOrigin(value) {
+  if (!hasText(value)) return null;
+
+  try {
+    const parsed = new URL(value);
+
+    if (parsed.protocol !== "https:" || !parsed.hostname) return null;
+
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
 function assertUniqueValues(source, fieldPaths, label) {
   const seen = new Map();
 
@@ -261,6 +292,50 @@ function validateFilledEvidenceConsistency(source) {
         fail(`${fieldPath} must use the same origin as hostedAppUrl.`);
       }
     }
+  }
+}
+
+function validateCurrentOriginEvidence(source) {
+  const expectedOrigin = normalizeExpectedOrigin(expectedOriginValue);
+  const hostedOrigin = originFor(getPath(source, "hostedAppUrl"));
+
+  if (!expectedOrigin) {
+    fail(
+      "--require-current-origin needs a public HTTPS --expected-origin=<origin> value.",
+    );
+  } else if (hostedOrigin !== expectedOrigin) {
+    fail(
+      `hostedAppUrl must use the current release origin ${expectedOrigin}.`,
+    );
+  }
+
+  for (const [fieldPath, expected] of currentOriginFields) {
+    const actual = getPath(source, fieldPath);
+
+    if (actual !== expected) {
+      fail(`${fieldPath} must be ${JSON.stringify(expected)} for the final evidence run.`);
+    }
+  }
+
+  const generatedAt = Date.parse(getPath(source, "generatedAt"));
+  const approvedAt = Date.parse(getPath(source, "approval.approvedAt"));
+  const evidenceAgeMs = Date.now() - generatedAt;
+  const maxAgeMs = currentEvidenceMaxAgeHours * 60 * 60 * 1000;
+
+  if (!Number.isFinite(generatedAt) || evidenceAgeMs < -5 * 60 * 1000) {
+    fail("generatedAt must be a valid timestamp that is not in the future.");
+  } else if (evidenceAgeMs > maxAgeMs) {
+    fail(
+      `generatedAt must be no more than ${currentEvidenceMaxAgeHours} hours old for current-origin evidence.`,
+    );
+  }
+
+  if (
+    Number.isFinite(generatedAt) &&
+    Number.isFinite(approvedAt) &&
+    approvedAt > generatedAt
+  ) {
+    fail("approval.approvedAt must not be later than generatedAt.");
   }
 }
 
@@ -379,6 +454,10 @@ if (evidence) {
   if (requireFilled) {
     validateFilledEvidenceConsistency(evidence);
   }
+
+  if (requireCurrentOrigin) {
+    validateCurrentOriginEvidence(evidence);
+  }
 }
 
 const report = {
@@ -386,6 +465,8 @@ const report = {
   mode: requireFilled ? "filled-live-evidence" : "template",
   evidencePath,
   requireFilled,
+  requireCurrentOrigin,
+  expectedOrigin: normalizeExpectedOrigin(expectedOriginValue),
   liveEvidenceComplete: requireFilled && failures.length === 0,
   checkedFields: requiredFields.length,
   failures,
