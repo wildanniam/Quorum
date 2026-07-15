@@ -9,6 +9,7 @@ const requiredDocs = [
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
   "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/MVP_READINESS.md",
+  "docs/PRODUCTION_ENV_HANDOFF.md",
   "docs/BROWSER_QA.md",
   "docs/LIVE_TESTNET_DEPLOYMENT_EVIDENCE.json",
   "docs/LIVE_TESTNET_EVIDENCE.json",
@@ -24,6 +25,7 @@ const runbook = read("docs/HACKATHON_DEMO_RUNBOOK.md");
 const inventory = read("docs/HACKATHON_PROOF_INVENTORY.md");
 const readiness = read("docs/MVP_READINESS.md");
 const recovery = read("docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md");
+const productionHandoff = read("docs/PRODUCTION_ENV_HANDOFF.md");
 const browserQa = read("docs/BROWSER_QA.md");
 const packageJson = JSON.parse(read("package.json"));
 const liveEvidence = JSON.parse(read("docs/LIVE_TESTNET_EVIDENCE.json"));
@@ -55,7 +57,15 @@ assert.match(runbook, /Open `\/`\./);
 assert.match(runbook, /Open `\/discover`/);
 assert.match(runbook, /Do not promise pickup/i);
 assert.match(recovery, /Production migration status is ready/i);
-assert.match(recovery, /Two authenticated runs completed without error/i);
+assert.match(recovery, /Three authenticated runs completed without error/i);
+assert.match(readme, /Three successful hosted indexer runs/i);
+assert.match(
+  productionHandoff,
+  /https:\/\/quorum-sandy-eight\.vercel\.app/,
+);
+assert.match(productionHandoff, /migrations `0001` through `0005`/i);
+assert.match(productionHandoff, /Three successful cursor-advancing runs/i);
+assert.doesNotMatch(productionHandoff, /External setup still required/i);
 assert.equal(
   packageJson.scripts?.["readiness:final"],
   "node scripts/readiness-audit.mjs --require-fresh-evidence --require-current-origin-evidence",

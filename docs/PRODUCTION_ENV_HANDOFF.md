@@ -2,9 +2,9 @@
 
 Last updated: 2026-07-15.
 
-This handoff records the Supabase Postgres and Vercel environment required
-before Quorum is exposed as a hosted live app. It does not create cloud
-resources, run Freighter, sign transactions, or store secrets in the repo.
+This handoff records the active Supabase Postgres and Vercel environment, plus
+the recovery procedure needed to reproduce it. It does not run Freighter, sign
+transactions, rotate hosted secrets, or store secret values in the repository.
 
 ## Current Deployment Boundary
 
@@ -13,9 +13,12 @@ and hosted deployments use the same migration path, with `QUORUM_DB_SCHEMA`
 available for isolated schemas. The intended hosted storage target is Supabase
 used only as a Postgres database behind Next.js server routes.
 
-The hosted app is not complete until a real Supabase project, Vercel project,
-hosted migrations, hosted preflight, and Freighter-signed testnet evidence are
-completed.
+The public app is deployed at `https://quorum-sandy-eight.vercel.app`.
+Production Supabase has migrations `0001` through `0005`, hosted routes and
+contract status pass the read-only probe, and Vercel Cron has completed a
+successful scheduled indexer run. Fresh Freighter-signed evidence from the
+current origin remains the release-critical checkpoint; provider approval and
+MoneyGram pickup remain external non-claims.
 
 ## Runtime Variables
 
@@ -62,7 +65,11 @@ uses Freighter in the browser.
 | `QUORUM_PLATFORM_FEE_BPS` | Demo is `0`. Non-zero values require explicit fee approval. |
 | `QUORUM_NONZERO_PLATFORM_FEE_APPROVED` | Required only when product owner approves a non-zero fee. |
 
-## Supabase Setup
+## Supabase Recovery Setup
+
+The production project already exists. Use this procedure only when rebuilding
+or recovering the environment; do not create a second project for the current
+release.
 
 1. Create a Supabase project.
 2. Save the database password in a password manager.
@@ -80,7 +87,7 @@ DATABASE_URL="<pooled-url>" DIRECT_DATABASE_URL="<direct-url>" npm run db:migrat
 
 Use `QUORUM_DB_SCHEMA` only when you intentionally want a non-`public` schema.
 
-## Vercel Setup Pattern
+## Vercel Recovery Pattern
 
 Add the server-only secrets as sensitive Vercel env vars and the public Stellar
 values as normal env vars for the deployment environments you use.
@@ -160,7 +167,7 @@ npm run build
 For MoneyGram-specific verification and troubleshooting, see
 `docs/MONEYGRAM_ANCHOR_RUNBOOK.md`.
 
-After deployment, verify the hosted app:
+When rebuilding or validating a deployment, verify the hosted app:
 
 1. Open the hosted app over public HTTPS.
 2. Run migrations against Supabase.
@@ -187,7 +194,8 @@ After deployment, verify the hosted app:
 | Postgres persistence adapter | Implemented for app, migrations, seed, and smoke scripts. |
 | MoneyGram anchor env/preflight | Implemented for hosted `stellar.toml`, SEP-1, SEP-10, and SEP-24 readiness. |
 | Production session secret guard | Verified locally. |
-| Hosted app URL | Not configured in repo. |
-| Supabase project | External setup still required. |
-| Vercel project | External setup still required. |
-| Real Freighter-signed live flows | Not run in this phase. Requires explicit user approval and manual wallet interaction. |
+| Hosted app URL | Current at `https://quorum-sandy-eight.vercel.app`. |
+| Supabase project | Current production project connected server-side; migrations `0001` through `0005` are applied. |
+| Vercel project | Current production deployment, runtime variables, sensitive `CRON_SECRET`, and scheduled indexer are configured. |
+| Hosted indexer | Three successful cursor-advancing runs are recorded, including Vercel Cron; fresh Quorum rows still require the approved flow. |
+| Real Freighter-signed live flows | Historical testnet proof exists; fresh current-origin execution requires explicit approval for each wallet transaction. |

@@ -1,6 +1,11 @@
-# Quorum Vercel + Supabase Handoff
+# Historical Quorum Vercel + Supabase Setup Reference
 
-Last updated: 2026-07-03.
+Last updated: 2026-07-15.
+
+> Historical reference only. The branch named below has already landed, and the
+> production app, Supabase migrations, Vercel environment, and scheduled
+> indexer are configured. Use `docs/PRODUCTION_ENV_HANDOFF.md` for the current
+> release state and recovery procedure. Do not redeploy the historical branch.
 
 This is the short handoff for wiring the hosted app. The code that needs these
 env vars lives on branch:
@@ -13,22 +18,11 @@ Use `docs/VERCEL_ENV_VALUES.example.env` for a project-specific copy-paste env
 template with the Supabase project ref already filled in. Replace only the
 secret placeholders before adding values to Vercel.
 
-## What To Deploy
+## Current Deployment
 
-Deploy this branch or merge it to the branch Vercel auto-deploys from:
-
-```bash
-git switch codex/supabase-live-evidence
-git push origin codex/supabase-live-evidence
-```
-
-If Vercel deploys only from `main`, merge this branch first:
-
-```bash
-git switch main
-git merge codex/supabase-live-evidence
-git push origin main
-```
+Vercel deploys `main` to `https://quorum-sandy-eight.vercel.app`. The historical
+`codex/supabase-live-evidence` branch is not the release source and should not be
+merged or deployed again.
 
 ## Supabase Values Needed
 

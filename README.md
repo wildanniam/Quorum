@@ -14,10 +14,11 @@ claim, check-in, and withdrawal hashes.
 
 The current release is deployed from `main`, production Postgres has all five
 repository migrations, the evidence page is healthy, and the hosted indexer is
-protected by a sensitive `CRON_SECRET`. Two authenticated indexer runs advanced
-the cursor and latest-ledger checkpoint without errors. They found no recoverable
-Quorum events because the older flow is outside RPC event retention, so a fresh
-current-origin Freighter-signed flow is still required before final submission.
+protected by a sensitive `CRON_SECRET`. Three successful hosted indexer runs,
+including the scheduled Vercel Cron run, advanced the cursor and latest-ledger
+checkpoint without errors. They found no recoverable Quorum events because the
+older flow is outside RPC event retention, so a fresh current-origin
+Freighter-signed flow is still required before final submission.
 MoneyGram SEP integration is implemented, but provider allowlist approval and a
 successful cash pickup are not proven.
 

@@ -125,8 +125,8 @@ It tracks real readiness, not feature claims or optimistic demo assumptions.
   deployment ID will always remain behind the public alias.
 - `CRON_SECRET` is configured as sensitive; its value is not recorded.
 - Missing indexer authorization returns HTTP 401.
-- Two authenticated runs completed without error and advanced both cursor and
-  latest-ledger state.
+- Three authenticated runs completed without error and advanced both cursor and
+  latest-ledger state, including the scheduled Vercel Cron run.
 - The canonical machine-readable record is
   `docs/HOSTED_RELEASE_EVIDENCE.json`.
 
