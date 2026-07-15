@@ -100,6 +100,18 @@ assert.equal(
   packageJson.scripts?.["submission:gate"],
   "node scripts/submission-gate.mjs",
 );
+assert.equal(
+  packageJson.scripts?.["browser:qa:provenance"],
+  "node scripts/browser-qa-provenance.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["browser:qa:provenance:smoke"],
+  "node scripts/browser-qa-provenance-smoke.mjs",
+);
+assert.equal(
+  packageJson.scripts?.["evidence:local:reuse-browser"],
+  "node scripts/collect-evidence.mjs --reuse-browser-qa",
+);
 
 assert.equal(hostedReleaseEvidence.schemaVersion, 1);
 assert.equal(hostedReleaseEvidence.network, "TESTNET");

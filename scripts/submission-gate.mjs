@@ -148,6 +148,16 @@ const checks = [
     args: ["run", "browser:qa:safety:smoke"],
   },
   {
+    id: "browser-qa-provenance",
+    command: "npm",
+    args: ["run", "browser:qa:provenance"],
+  },
+  {
+    id: "browser-qa-provenance-smoke",
+    command: "npm",
+    args: ["run", "browser:qa:provenance:smoke"],
+  },
+  {
     id: "evidence-lineage",
     command: "npm",
     args: ["run", "evidence:lineage:smoke"],

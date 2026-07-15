@@ -107,6 +107,8 @@ npm run anchor:config:smoke
 npm run anchor:eligibility:smoke
 npm run anchor:sep10:smoke
 npm run browser:qa
+npm run browser:qa:provenance
+npm run browser:qa:provenance:smoke
 npm run deploy:env:smoke
 npm run deploy:hosted:preflight:smoke
 npm run live:args:smoke
@@ -123,6 +125,7 @@ npm run live:evidence:audit:current
 npm run live:evidence:network
 npm run indexer:run
 npm run evidence:local
+npm run evidence:local:reuse-browser
 npm run readiness:audit
 npm run readiness:final
 npm run submission:hosted:probe
@@ -182,6 +185,13 @@ for the configured Quorum contracts. The same worker is exposed at
 `npm run browser:qa` runs a headless browser across desktop/mobile viewport
 checks and regenerates `docs/BROWSER_QA.md`.
 
+`npm run browser:qa:provenance` does not open a browser. It only accepts the
+recorded browser result when its latest Git commit is evidence-only, its source
+commit is an ancestor of `HEAD`, the browser document is unchanged, and the
+complete UI/QA input fingerprint (including runtime dependencies) is identical.
+`npm run browser:qa:provenance:smoke` proves that source, dependency, document,
+and mixed source/evidence mutations are rejected.
+
 `npm run live:args:smoke` verifies deterministic contract argument encoding for
 future Freighter-signed publish, checkout, check-in, and withdraw flows,
 including USDC decimal-to-atomic and atomic-to-decimal conversion.
@@ -231,7 +241,11 @@ account sequence fetch plus RPC simulation/assembly before Freighter signing.
 reports live deployment blockers such as missing `STELLAR_ACCOUNT` or missing
 `QUORUM_LIVE_SIGNING_APPROVED=I_APPROVE_TESTNET_SIGNING`.
 
-`npm run evidence:local` runs the local verification suite and writes `docs/DEMO_EVIDENCE.md`.
+`npm run evidence:local` runs the local verification suite, opens a local
+browser, and writes `docs/DEMO_EVIDENCE.md`. Use
+`npm run evidence:local:reuse-browser` only to refresh command evidence when
+`npm run browser:qa:provenance` proves the recorded browser inputs are
+unchanged; otherwise it fails closed and a fresh browser run is required.
 
 `npm run readiness:audit` is a non-signing final consistency check for the
 local evidence packet, readiness docs, live approval gates, and contract doctor
