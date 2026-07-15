@@ -32,6 +32,7 @@
     "indexer:security:smoke": "tsx scripts/indexer-security-smoke.ts",
     "settlement:smoke": "tsx scripts/settlement-smoke.ts",
     "browser:qa": "node scripts/browser-qa.mjs",
+    "browser:qa:safety:smoke": "node scripts/browser-qa-safety-smoke.mjs",
     "deploy:env:smoke": "tsx scripts/deploy-env-smoke.ts",
     "deploy:hosted:preflight": "tsx scripts/hosted-deployment-preflight.ts",
     "deploy:hosted:preflight:smoke": "tsx scripts/hosted-deployment-preflight.ts --smoke",
