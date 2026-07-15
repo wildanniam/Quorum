@@ -1,16 +1,15 @@
 # Quorum Demo Evidence
 
-> Historical verification snapshot from commit `72fc066`. It is not evidence
-> that the current Vercel deployment or current recovery branch is ready. Use
-> `docs/HACKATHON_PROOF_INVENTORY.md` and regenerate this file only against an
-> explicitly approved isolated database.
+Generated at: `2026-07-15T00:04:43.810Z`
 
-Generated at: `2026-07-07T02:32:45.403Z`
+> Command-level verification snapshot for the source state below. It does not
+> prove current hosted database health, indexer execution, wallet signing, or
+> MoneyGram provider completion.
 
 ## Source State
 
-- Branch: `codex/landing-figma-refactor`
-- Commit: `72fc066`
+- Branch: `codex/90-final-browser-qa`
+- Commit: `489c455`
 - Working tree when collected, excluding this generated evidence file:
 
 ```text
@@ -30,8 +29,13 @@ Generated at: `2026-07-07T02:32:45.403Z`
 | Wallet auth smoke | `npm run wallet:auth:smoke` | PASS | 0 |
 | API origin smoke | `npm run api:origin:smoke` | PASS | 0 |
 | Demo smoke | `npm run demo:smoke` | PASS | 0 |
+| Event lifecycle smoke | `npm run event:lifecycle:smoke` | PASS | 0 |
+| Product messaging smoke | `npm run product:messaging:smoke` | PASS | 0 |
+| Anchor config smoke | `npm run anchor:config:smoke` | PASS | 0 |
+| Anchor eligibility smoke | `npm run anchor:eligibility:smoke` | PASS | 0 |
 | Live policy smoke | `npm run demo:live-policy` | PASS | 0 |
 | Settlement smoke | `npm run settlement:smoke` | PASS | 0 |
+| Indexer security smoke | `npm run indexer:security:smoke` | PASS | 0 |
 | Browser QA | `npm run browser:qa` | PASS | 0 |
 | Deploy env smoke | `npm run deploy:env:smoke` | PASS | 0 |
 | Deploy hosted preflight smoke | `npm run deploy:hosted:preflight:smoke` | PASS | 0 |
@@ -52,6 +56,7 @@ Generated at: `2026-07-07T02:32:45.403Z`
 | Contract build | `npm run contracts:build` | PASS | 0 |
 | Contract approval smoke | `npm run contracts:approval:smoke` | PASS | 0 |
 | Contract doctor | `npm run contracts:doctor` | PASS | 0 |
+| Submission package smoke | `npm run submission:package:smoke` | PASS | 0 |
 
 Overall local verification: **PASS**
 
@@ -59,7 +64,7 @@ Overall local verification: **PASS**
 
 Event ID: `evt_apac_stellar_builder_meetup`
 
-Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-b475df`
+Generated pass token ID: `qpass-apac-stellar-builder-meetup-0001-066141`
 
 Covered checks:
 
@@ -67,6 +72,7 @@ Covered checks:
 - event-detail
 - draft-validation
 - publish-lifecycle
+- expired-publish-guard
 - contract-status
 - payment-asset-status
 - contract-action-policy
@@ -80,6 +86,9 @@ Covered checks:
 - proof-labels
 - collaborator-withdraw
 - duplicate-withdraw-guard
+- ended-checkout-guard
+- ended-event-ui
+- discover-ended-filter
 - pass-page
 - dashboard-proof
 - dashboard-payment-asset-readiness
@@ -100,7 +109,7 @@ the `npm run contracts:test` output:
 | QuorumCore | `target/wasm32v1-none/release/quorum_core.wasm` | yes | 14247 | `73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0` |
 | QuorumPassNFT | `target/wasm32v1-none/release/quorum_pass_nft.wasm` | yes | 5467 | `e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec` |
 
-## Deployment Readiness
+## Contract Tooling Readiness
 
 - Ready to deploy: `true`
 - RPC reachable: `true`
@@ -122,9 +131,11 @@ Warnings:
 
 - None reported by contracts:doctor.
 
-## Live Deployment Boundary
+## Hosted Evidence Boundary
 
-Live testnet deployment and app-side live transaction signing remain gated by a funded Stellar identity and explicit approval. The local proof flow is verified end to end; contract deployment is intentionally not attempted by this evidence command.
+This command does not deploy contracts, mutate hosted configuration, sign a
+wallet transaction, run the hosted indexer, or prove the current Vercel origin.
+Use `docs/HACKATHON_PROOF_INVENTORY.md` for release-level status.
 
 ## Command Details
 
@@ -138,13 +149,18 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > quorum@0.1.0 db:migrate
 > node scripts/db-migrate.mjs
 {
-  "databaseUrl": "postgresql://REDACTED:REDACTED@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require",
+  "databaseUrl": "postgresql://REDACTED:REDACTED@127.0.0.1:55432/quorum_release_evidence",
   "schema": "public",
-  "applied": [],
-  "totalMigrations": 4
+  "applied": [
+    "0001_initial_schema.sql",
+    "0002_live_proof_uniqueness.sql",
+    "0003_indexer_evidence_ledger.sql",
+    "0004_anchor_payouts.sql",
+    "0005_anchor_cashout_proof.sql"
+  ],
+  "totalMigrations": 5
 }
 ```
-
 ### DB seed
 
 - Command: `npm run db:seed`
@@ -157,7 +173,7 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 {
   "seededEventId": "evt_apac_stellar_builder_meetup",
   "seededFreeEventId": "evt_stellar_open_office_hours",
-  "publishedCount": 4
+  "publishedCount": 2
 }
 ```
 
@@ -172,8 +188,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 > node scripts/db-smoke.mjs
 {
   "event": {
-    "id": "evt_8306f756-b12a-4c2c-9895-79b00277ce50",
-    "slug": "smoke-8306f756",
+    "id": "evt_3c4cc381-296b-4e63-995f-e7f1423f336f",
+    "slug": "smoke-3c4cc381",
     "status": "draft"
   },
   "splitTotal": 100,
@@ -183,6 +199,8 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
     "unique-live-proof-indexes",
     "live-proof-hash-registry",
     "indexer-tables",
+    "anchor-cashout-proof-column",
+    "anchor-cashout-proof-index",
     "event-crud",
     "collaborator-split-total",
     "resource-crud",
@@ -214,15 +232,15 @@ Live testnet deployment and app-side live transaction signing remain gated by a 
 ▲ Next.js 16.2.7 (Turbopack)
 - Environments: .env.local
   Creating an optimized production build ...
-✓ Compiled successfully in 3.0s
+✓ Compiled successfully in 4.2s
   Running TypeScript ...
-  Finished TypeScript in 3.1s ...
+  Finished TypeScript in 4.9s ...
   Collecting page data using 7 workers ...
-  Generating static pages using 7 workers (0/14) ...
-  Generating static pages using 7 workers (3/14)
-  Generating static pages using 7 workers (6/14)
-  Generating static pages using 7 workers (10/14)
-✓ Generating static pages using 7 workers (14/14) in 173ms
+  Generating static pages using 7 workers (0/15) ...
+  Generating static pages using 7 workers (3/15)
+  Generating static pages using 7 workers (7/15)
+  Generating static pages using 7 workers (11/15)
+✓ Generating static pages using 7 workers (15/15) in 217ms
   Finalizing page optimization ...
 Route (app)
 ┌ ○ /
@@ -280,7 +298,7 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3042",
-  "walletAddress": "GCPMN6UF4PHDTI2UHB2PAFKDSV5AB3WZTQT7MZDPLQJATPOBBQILEAOK",
+  "walletAddress": "GCXPNKSHT26Q7ORVSE7WX6I5C73Q2VHEZ5RS55K5MMFG5IXIPFWLO3TV",
   "checks": [
     "reject-invalid-wallet-challenge-request",
     "issue-wallet-bound-challenge-cookie",
@@ -328,14 +346,15 @@ found 0 vulnerabilities
 {
   "ok": true,
   "baseUrl": "http://127.0.0.1:3035",
-  "databaseSchema": "quorum_demo_smoke_d76b742c_ec0c_4c0d_affe_2b186de8625e",
+  "databaseSchema": "quorum_demo_smoke_2923e301_5e29_4d0f_8b26_5dc80fb5fc3c",
   "eventId": "evt_apac_stellar_builder_meetup",
-  "tokenId": "qpass-apac-stellar-builder-meetup-0001-b475df",
+  "tokenId": "qpass-apac-stellar-builder-meetup-0001-066141",
   "checks": [
     "marketplace",
     "event-detail",
     "draft-validation",
     "publish-lifecycle",
+    "expired-publish-guard",
     "contract-status",
     "payment-asset-status",
     "contract-action-policy",
@@ -349,10 +368,93 @@ found 0 vulnerabilities
     "proof-labels",
     "collaborator-withdraw",
     "duplicate-withdraw-guard",
+    "ended-checkout-guard",
+    "ended-event-ui",
+    "discover-ended-filter",
     "pass-page",
     "dashboard-proof",
     "dashboard-payment-asset-readiness",
     "dashboard-action-policy"
+  ]
+}
+```
+
+### Event lifecycle smoke
+
+- Command: `npm run event:lifecycle:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 event:lifecycle:smoke
+> tsx scripts/event-lifecycle-smoke.ts
+Event lifecycle smoke passed.
+```
+
+### Product messaging smoke
+
+- Command: `npm run product:messaging:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 product:messaging:smoke
+> tsx scripts/product-messaging-smoke.ts
+{
+  "ok": true,
+  "checks": [
+    "classify-only-explorer-valid-hashes-as-live",
+    "separate-app-reference-from-live-transaction",
+    "separate-configured-contracts-from-proven-execution",
+    "label-wallet-network-as-detected",
+    "disclose-moneygram-provider-dependency",
+    "block-moneygram-ui-for-local-settlement-proof",
+    "label-mock-anchor-as-demo"
+  ]
+}
+```
+
+### Anchor config smoke
+
+- Command: `npm run anchor:config:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 anchor:config:smoke
+> tsx scripts/anchor-config-smoke.ts
+{
+  "checks": [
+    "default-mock-provider",
+    "moneygram-env-normalization",
+    "moneygram-signing-secret-required",
+    "reject-invalid-provider",
+    "reject-domain-paths",
+    "reject-invalid-signing-public-key",
+    "reject-invalid-signing-secret",
+    "reject-invalid-timeout"
+  ],
+  "ok": true
+}
+```
+
+### Anchor eligibility smoke
+
+- Command: `npm run anchor:eligibility:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 anchor:eligibility:smoke
+> tsx scripts/anchor-payout-eligibility-smoke.ts
+{
+  "ok": true,
+  "checks": [
+    "allow-live-settlement-for-moneygram",
+    "reject-local-settlement-for-moneygram",
+    "reject-missing-settlement-for-moneygram",
+    "preserve-local-proof-for-mock-provider",
+    "enforce-eligibility-before-provider-invocation"
   ]
 }
 ```
@@ -394,7 +496,8 @@ found 0 vulnerabilities
     "check-in-live-required",
     "check-in-short-live-token-required",
     "withdraw-live-required",
-    "no-local-proof-mutations"
+    "no-local-proof-mutations",
+    "ended-live-checkout-guard"
   ]
 }
 ```
@@ -413,12 +516,21 @@ found 0 vulnerabilities
     "indexer-schema",
     "indexer-idempotent-ingest",
     "indexer-state-cursor",
+    "indexer-failure-preserves-state",
+    "indexer-latest-ledger-monotonic",
+    "indexer-concurrent-run-lock",
+    "indexer-rejects-unconfigured-contract",
     "global-event-evidence-read-model",
     "event-proof-filter",
     "stellar-explorer-links",
     "collaborator-credit-ledger",
     "collaborator-debit-ledger",
-    "collaborator-withdrawable-balance"
+    "collaborator-withdrawable-balance",
+    "settlement-backed-anchor-opportunity",
+    "duplicate-active-cashout-rejected",
+    "failed-cashout-retry-reuses-record",
+    "separate-anchor-transfer-proof",
+    "single-contract-withdrawal"
   ],
   "evidenceKinds": [
     "anchor_payout",
@@ -440,6 +552,31 @@ found 0 vulnerabilities
 }
 ```
 
+### Indexer security smoke
+
+- Command: `npm run indexer:security:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 indexer:security:smoke
+> tsx scripts/indexer-security-smoke.ts
+{
+  "ok": true,
+  "checks": [
+    "reject-missing-indexer-cron-secret",
+    "reject-weak-indexer-cron-secret",
+    "reject-invalid-indexer-bearer",
+    "accept-valid-indexer-bearer",
+    "reject-indexer-cron-secret-line-breaks",
+    "validate-indexer-run-parameters",
+    "preserve-monotonic-indexer-checkpoint",
+    "indexer-route-fails-closed",
+    "indexer-route-rejects-invalid-query"
+  ]
+}
+```
+
 ### Browser QA
 
 - Command: `npm run browser:qa`
@@ -452,11 +589,28 @@ found 0 vulnerabilities
 {
   "ok": true,
   "browserQaPath": "/Users/wildanniam/Development/project/Quorum/docs/BROWSER_QA.md",
-  "generatedAt": "2026-07-07T02:35:33.628Z",
+  "generatedAt": "2026-07-15T00:06:30.387Z",
   "baseUrl": "http://127.0.0.1:3040",
-  "checkedPages": 10,
-  "failures": []
-}
+  "checkedPages": 39,
+  "failures": [],
+  "screenshots": [
+    "output/playwright/final-browser-qa/discover-wide-desktop.png",
+    "output/playwright/final-browser-qa/paid-event-detail-wide-desktop.png",
+    "output/playwright/final-browser-qa/checkout-wide-desktop.png",
+    "output/playwright/final-browser-qa/studio-wallet-gate-wide-desktop.png",
+    "output/playwright/final-browser-qa/create-event-wide-desktop.png",
+    "output/playwright/final-browser-qa/collaborator-ledger-wide-desktop.png",
+    "output/playwright/final-browser-qa/evidence-hub-wide-desktop.png",
+    "output/playwright/final-browser-qa/discover-tablet.png",
+    "output/playwright/final-browser-qa/paid-event-detail-tablet.png",
+    "output/playwright/final-browser-qa/checkout-tablet.png",
+    "output/playwright/final-browser-qa/studio-wallet-gate-tablet.png",
+    "output/playwright/final-browser-qa/create-event-tablet.png",
+    "output/playwright/final-browser-qa/collaborator-ledger-tablet.png",
+    "output/playwright/final-browser-qa/evidence-hub-tablet.png",
+    "output/playwright/final-browser-qa/discover-mobile.png",
+    "output/playwright/final-browser-qa/discover-mob
+... [truncated]
 ```
 
 ### Deploy env smoke
@@ -506,6 +660,8 @@ found 0 vulnerabilities
     "hosted-url-public-https",
     "production-session-secret-present",
     "server-postgres-database-url-present",
+    "database-migrations-current",
+    "hosted-indexer-cron-secret-ready",
     "hosted-anchor-client-domain-matches-url",
     "hosted-stellar-toml-signing-key-matches-anchor-env",
     "moneygram-sep1-discovery-ready",
@@ -520,6 +676,8 @@ found 0 vulnerabilities
     "reject-contract-id-mismatch",
     "reject-operator-signing-env",
     "reject-invalid-production-session-secret",
+    "reject-missing-indexer-cron-secret",
+    "reject-weak-indexer-cron-secret",
     "reject-non-postgres-database-url",
     "reject-hosted-postgres-url-without-sslmode",
     "reject-browser-supabase-env",
@@ -527,7 +685,8 @@ found 0 vulnerabilities
     "reject-local-contract-status",
     "reject-non-live-action-policy",
     "reject-anchor-client-domain-mismatch",
-    "reject-hosted-stellar-toml-signing-key-mismatch"
+    "reject-hosted-stellar-toml-signing-key-mismatch",
+    "reject-missing-database-migration"
   ]
 }
 ```
@@ -593,8 +752,8 @@ found 0 vulnerabilities
     "persist-after-success-only",
     "reject-finality-failure-without-persistence"
   ],
-  "databaseSchema": "quorum_live_flow_smoke_803d1f36_ed6f_46f5_9823_3e85c319c03f",
-  "persistedEventId": "evt_eb25fd80-0611-40c4-8ee6-2bb7ecd36526",
+  "databaseSchema": "quorum_live_flow_smoke_ea49e4cd_8b8c_43e4_bf3d_d093bac03845",
+  "persistedEventId": "evt_9dcb32c7-97c4-443c-8c23-4697f1bc8344",
   "persistedTokenId": "9001",
   "persistedFreeTokenId": "9002",
   "persistedWithdrawUsdc": "2.8",
@@ -619,7 +778,7 @@ found 0 vulnerabilities
 > tsx scripts/live-persistence-smoke.ts
 {
   "ok": true,
-  "databaseSchema": "quorum_live_persistence_smoke_2450d630_4017_4166_a4ea_e4ffc04fedcf",
+  "databaseSchema": "quorum_live_persistence_smoke_c35cb5cd_a49e_483e_a474_ed00c199bc55",
   "checks": [
     "record-live-publish",
     "record-live-pass",
@@ -929,26 +1088,26 @@ found 0 vulnerabilities
 > quorum@0.1.0 contracts:test
 > cargo test
 running 19 tests
-test test::admin_can_withdraw_platform_fee ... ok
-test test::purchase_mints_pass_and_splits_balance ... ok
 test test::organizer_can_check_in_pass ... ok
-test test::duplicate_check_in_is_idempotent ... ok
 test test::collaborator_can_withdraw_balance ... ok
 test test::demo_zero_fee_routes_full_amount_to_collaborators ... ok
-test test::emits_core_and_pass_proof_events ... ok
+test test::purchase_mints_pass_and_splits_balance ... ok
 test test::free_event_claim_mints_pass_without_balances ... ok
+test test::duplicate_check_in_is_idempotent ... ok
+test test::admin_can_withdraw_platform_fee ... ok
+test test::emits_core_and_pass_proof_events ... ok
 test test::rejects_check_in_for_unknown_token - should panic ... ok
 test test::rejects_invalid_split_total - should panic ... ok
-test test::rejects_duplicate_purchase - should panic ... ok
+test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
 test test::rejects_check_in_from_non_organizer - should panic ... ok
 test test::rejects_duplicate_free_claim - should panic ... ok
-test test::rejects_free_claim_with_nonzero_amount - should panic ... ok
-test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
+test test::rejects_duplicate_purchase - should panic ... ok
 test test::rejects_check_in_for_token_from_another_event - should panic ... ok
+test test::rejects_free_claim_when_capacity_is_full - should panic ... ok
 test test::rejects_paid_purchase_with_wrong_amount - should panic ... ok
 test test::rejects_withdraw_without_balance - should panic ... ok
 test test::rejects_paid_purchase_when_capacity_is_full - should panic ... ok
-test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.47s
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s
 running 7 tests
 test test::set_core_emits_even
 ... [truncated]
@@ -964,7 +1123,7 @@ test test::set_core_emits_even
 > quorum@0.1.0 contracts:build
 > stellar contract build
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_core/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.12s
+    Finished `release` profile [optimized] target(s) in 0.26s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_core.wasm (14247 bytes)
     Wasm Hash: 73ad1844be4fbcf16c76206b18461b020c68c6e230e4fb8b37d50e2dcddb2ac0
@@ -984,7 +1143,7 @@ test test::set_core_emits_even
       • withdraw
 ✅ Build Complete
 ℹ️  CARGO_BUILD_RUSTFLAGS=--remap-path-prefix=/Users/wildanniam/.cargo/registry/src= SOROBAN_SDK_BUILD_SYSTEM_SUPPORTS_SPEC_SHAKING_V2=1 cargo rustc --manifest-path=contracts/quorum_pass_nft/Cargo.toml --crate-type=cdylib --target=wasm32v1-none --release
-    Finished `release` profile [optimized] target(s) in 0.08s
+    Finished `release` profile [optimized] target(s) in 0.15s
 ℹ️  Build Summary:
     Wasm File: target/wasm32v1-none/release/quorum_pass_nft.wasm (5467 bytes)
     Wasm Hash: e78624a8bf8dbb1babdf808ff38bc29053fe8a91c3761ee64c519983797202ec
@@ -1087,4 +1246,30 @@ test test::set_core_emits_even
   },
   "config": 
 ... [truncated]
+```
+
+### Submission package smoke
+
+- Command: `npm run submission:package:smoke`
+- Exit code: `0`
+- Status: **PASS**
+
+```text
+> quorum@0.1.0 submission:package:smoke
+> node scripts/submission-package-smoke.mjs
+{
+  "ok": true,
+  "checks": [
+    "required-submission-artifacts",
+    "current-hosted-url",
+    "historical-live-evidence-label",
+    "production-migration-disclosure",
+    "hosted-release-evidence-shape",
+    "indexer-secret-non-disclosure",
+    "indexer-monotonic-progress",
+    "moneygram-provider-disclosure",
+    "judge-runbook-route-wiring",
+    "reject-stale-deployment-claims"
+  ]
+}
 ```
