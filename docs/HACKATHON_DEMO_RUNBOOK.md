@@ -36,7 +36,7 @@ Do not start the judge demo until all mandatory rows are green:
 | Evidence page | Loads records or a legitimate empty state, not a data-service error |
 | Candidate quality suite | Lint, build, targeted smokes pass |
 | Browser QA | Desktop, tablet, mobile pass with no horizontal overflow |
-| Final evidence audit | `npm run live:evidence:audit:current` and `npm run readiness:final` pass on the release commit |
+| Final evidence audit | `npm run live:evidence:audit:current`, `npm run live:evidence:network`, and `npm run readiness:final` pass on the release commit |
 
 If the evidence data service is degraded, use the historical proof packet for a
 technical review but do not pretend the final hosted flow is ready.
@@ -114,7 +114,9 @@ Freighter confirmation for each transaction.
 Use `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the approval sequence and
 `docs/LIVE_TESTNET_EVIDENCE.example.json` for the evidence shape. After the
 public packet is recorded, run `npm run live:evidence:audit:current`; the
-historical audit alone is not sufficient for the final release gate.
+historical audit alone is not sufficient for the final release gate. Then run
+`npm run live:evidence:network` to prove the recorded hashes and USDC effects on
+Stellar testnet.
 
 ## MoneyGram Rule
 

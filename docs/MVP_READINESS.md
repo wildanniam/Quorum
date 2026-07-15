@@ -56,8 +56,10 @@ approval, not a new product concept or another infrastructure migration.
 2. Trigger the authenticated hosted indexer and confirm fresh rows for that flow.
 3. Confirm evidence, event proof, pass, and ledger pages agree on the same hashes,
    token, wallets, and event.
-4. Run `npm run readiness:final` after recording the fresh evidence.
-5. Capture the demo video and submit only after explicit final approval.
+4. Run `npm run live:evidence:audit:current` and
+   `npm run live:evidence:network` after recording the fresh evidence.
+5. Run `npm run readiness:final` on the clean release commit.
+6. Capture the demo video and submit only after explicit final approval.
 
 ## Explicit Non-Claims
 

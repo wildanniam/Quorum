@@ -48,6 +48,8 @@
     "live:evidence:audit": "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled",
     "live:evidence:audit:current": "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled --require-current-origin --expected-origin=https://quorum-sandy-eight.vercel.app",
     "live:evidence:audit:smoke": "node scripts/live-evidence-audit-smoke.mjs",
+    "live:evidence:network": "node scripts/live-evidence-network-validate.mjs docs/LIVE_TESTNET_EVIDENCE.json",
+    "live:evidence:network:smoke": "node scripts/live-evidence-network-smoke.mjs",
     "live:deployment:validate": "node scripts/live-deployment-validate.mjs",
     "live:browser-flow:smoke": "tsx scripts/live-browser-flow-smoke.ts",
     "live:ui-wiring:smoke": "node scripts/live-ui-wiring-smoke.mjs",

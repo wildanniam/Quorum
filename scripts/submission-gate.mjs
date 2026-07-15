@@ -103,6 +103,11 @@ const checks = [
     args: ["run", "live:evidence:audit:smoke"],
   },
   {
+    id: "live-evidence-network-unit",
+    command: "npm",
+    args: ["run", "live:evidence:network:smoke"],
+  },
+  {
     id: "historical-live-evidence-shape",
     command: "npm",
     args: ["run", "live:evidence:audit"],

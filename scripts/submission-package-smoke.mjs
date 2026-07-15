@@ -64,10 +64,18 @@ assert.equal(
   packageJson.scripts?.["live:evidence:audit:current"],
   "node scripts/live-evidence-audit.mjs docs/LIVE_TESTNET_EVIDENCE.json --require-filled --require-current-origin --expected-origin=https://quorum-sandy-eight.vercel.app",
 );
+assert.equal(
+  packageJson.scripts?.["live:evidence:network"],
+  "node scripts/live-evidence-network-validate.mjs docs/LIVE_TESTNET_EVIDENCE.json",
+);
 assert.match(readme, /readiness:final/);
 assert.match(readme, /live:evidence:audit:current/);
+assert.match(readme, /live:evidence:network/);
 assert.match(runbook, /readiness:final/);
 assert.match(runbook, /live:evidence:audit:current/);
+assert.match(runbook, /live:evidence:network/);
+assert.match(inventory, /live:evidence:network/);
+assert.match(readiness, /live:evidence:network/);
 assert.equal(
   packageJson.scripts?.["submission:hosted:probe"],
   "node scripts/hosted-readiness-probe.mjs",

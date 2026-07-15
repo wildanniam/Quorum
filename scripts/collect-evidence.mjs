@@ -36,6 +36,7 @@ const checks = [
   { label: "Live XDR smoke", command: "npm", args: ["run", "live:xdr:smoke"] },
   { label: "Live evidence template", command: "npm", args: ["run", "live:evidence:template"] },
   { label: "Live evidence audit smoke", command: "npm", args: ["run", "live:evidence:audit:smoke"] },
+  { label: "Live evidence network smoke", command: "npm", args: ["run", "live:evidence:network:smoke"] },
   { label: "Live deployment validation", command: "npm", args: ["run", "live:deployment:validate"] },
   { label: "Live browser flow smoke", command: "npm", args: ["run", "live:browser-flow:smoke"] },
   { label: "Live UI wiring smoke", command: "npm", args: ["run", "live:ui-wiring:smoke"] },

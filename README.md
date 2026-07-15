@@ -118,6 +118,7 @@ npm run live:browser-flow:smoke
 npm run live:ui-wiring:smoke
 npm run live:deployment:validate
 npm run live:evidence:audit:current
+npm run live:evidence:network
 npm run indexer:run
 npm run evidence:local
 npm run readiness:audit
@@ -262,7 +263,9 @@ Read-only deployment evidence is recorded in
 `docs/LIVE_TESTNET_EVIDENCE.json` is a historical July 4 ngrok run. After an
 approved Vercel signing session, refresh that packet with current-origin URLs
 and unique app-flow transaction hashes, then run
-`npm run live:evidence:audit:current`. Use
+`npm run live:evidence:audit:current` and `npm run live:evidence:network`. The
+second command confirms the hashes, contract calls, signer roles, USDC effects,
+event IDs, and transaction order against Stellar testnet Horizon. Use
 `docs/MANUAL_FREIGHTER_SIGNING_RUNBOOK.md` for the manual browser wallet signing
 sequence.
 

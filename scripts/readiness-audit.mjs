@@ -127,6 +127,8 @@ const requiredPackageScripts = [
   "live:evidence:audit",
   "live:evidence:audit:current",
   "live:evidence:audit:smoke",
+  "live:evidence:network",
+  "live:evidence:network:smoke",
   "live:evidence:template",
   "live:deployment:validate",
   "live:flow:smoke",
@@ -756,6 +758,12 @@ function checkLiveBoundaries() {
         `--expected-origin=${CURRENT_HOSTED_ORIGIN}`,
       ])
     : null;
+  const currentOriginNetworkAudit = requireCurrentOriginEvidence
+    ? runJson("node", [
+        "scripts/live-evidence-network-validate.mjs",
+        "docs/LIVE_TESTNET_EVIDENCE.json",
+      ])
+    : null;
   const submissionPackage = runJson("node", ["scripts/submission-package-smoke.mjs"]);
 
   for (const term of requiredLiveHandoffTerms) {
@@ -833,6 +841,13 @@ function checkLiveBoundaries() {
       ? currentOriginAudit.failures.join(" ")
       : "Current-origin live evidence audit failed.";
     fail(`Current-origin live evidence is not ready: ${details}`);
+  }
+
+  if (currentOriginNetworkAudit && !currentOriginNetworkAudit.ok) {
+    const details = Array.isArray(currentOriginNetworkAudit.failures)
+      ? currentOriginNetworkAudit.failures.join(" ")
+      : "Current-origin Stellar transaction verification failed.";
+    fail(`Current-origin Stellar transactions are not verified: ${details}`);
   }
 
   if (!submissionPackage.ok) {
