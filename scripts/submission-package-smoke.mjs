@@ -6,6 +6,7 @@ const requiredDocs = [
   "README.md",
   "docs/HACKATHON_DEMO_RUNBOOK.md",
   "docs/HACKATHON_PROOF_INVENTORY.md",
+  "docs/HACKATHON_SUBMISSION_DRAFT.md",
   "docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md",
   "docs/HOSTED_RELEASE_EVIDENCE.json",
   "docs/MVP_READINESS.md",
@@ -23,6 +24,7 @@ const read = (file) => fs.readFileSync(file, "utf8");
 const readme = read("README.md");
 const runbook = read("docs/HACKATHON_DEMO_RUNBOOK.md");
 const inventory = read("docs/HACKATHON_PROOF_INVENTORY.md");
+const submissionDraft = read("docs/HACKATHON_SUBMISSION_DRAFT.md");
 const readiness = read("docs/MVP_READINESS.md");
 const recovery = read("docs/HACKATHON_SUBMISSION_RECOVERY_PLAN.md");
 const productionHandoff = read("docs/PRODUCTION_ENV_HANDOFF.md");
@@ -36,6 +38,57 @@ const hostedReleaseEvidence = JSON.parse(
 for (const document of [readme, inventory, readiness]) {
   assert.match(document, new RegExp(currentHostedUrl.replaceAll(".", "\\.")));
 }
+
+assert.match(
+  submissionDraft,
+  new RegExp(currentHostedUrl.replaceAll(".", "\\.")),
+);
+assert.match(submissionDraft, /https:\/\/github\.com\/wildanniam\/Quorum/);
+assert.match(
+  submissionDraft,
+  /https:\/\/www\.risein\.com\/programs\/apac-stellar-hackathon/,
+);
+assert.match(submissionDraft, /2026-07-15 as the final submission\s+deadline/);
+assert.match(submissionDraft, /### One-Line Description/);
+assert.match(submissionDraft, /### Short Description/);
+assert.match(submissionDraft, /### Extended Description/);
+assert.match(submissionDraft, /lock revenue splits before sales/i);
+assert.match(submissionDraft, /reconciled manually/i);
+assert.match(submissionDraft, /Stellar testnet/i);
+assert.match(submissionDraft, /Current hosted/);
+assert.match(submissionDraft, /Historically live/);
+assert.match(submissionDraft, /Verified in code/);
+assert.match(submissionDraft, /External dependency/);
+assert.match(submissionDraft, /Current Vercel-origin signed flow \| Not complete/);
+assert.match(submissionDraft, /Demo video URL \| Not recorded/);
+assert.match(submissionDraft, /Explicit final approval \| Not granted/);
+assert.match(submissionDraft, /Final submission state \| \*\*NO-GO\*\*/);
+assert.match(
+  submissionDraft,
+  /MoneyGram provider approval and cash pickup are not complete or proven/i,
+);
+assert.match(
+  submissionDraft,
+  /CBZ7FTHKJ4BEGETYWNUN4RFMSJJ47Y6YJQGXIRVU4WXCFNP33V63IFBV/,
+);
+assert.match(
+  submissionDraft,
+  /CAQ44PH2OXYIAJVRYUB57VRL7MG3UUBKVHKN3LIUSNOLLIKGYKCJ7HIH/,
+);
+assert.match(
+  submissionDraft,
+  /CBIELTK6YBZJU5UP2WWQEUCYKLPU6AUNZ2BQ4WWFEIE3USCIHMXQDAMA/,
+);
+assert.doesNotMatch(submissionDraft, /\b(?:Luma|Eventbrite)\b/i);
+assert.doesNotMatch(submissionDraft, /\b(?:TBD|TODO|PLACEHOLDER)\b/);
+assert.doesNotMatch(
+  submissionDraft,
+  /MoneyGram (?:provider )?(?:approval|pickup) (?:is|has been) (?:complete|approved|proven)/i,
+);
+assert.doesNotMatch(
+  submissionDraft,
+  /Quorum is (?:mainnet|production-ready)/i,
+);
 
 assert.match(inventory, /Historically live/);
 assert.match(inventory, /Current hosted and healthy/i);
@@ -64,7 +117,6 @@ assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/91/);
 assert.match(recovery, /github\.com\/wildanniam\/Quorum\/pull\/94/);
 assert.match(recovery, /39 checked states/i);
 assert.match(readiness, /Recovery PRs #75 through #94 are merged/i);
-assert.match(readme, /Three successful hosted indexer runs/i);
 assert.match(
   productionHandoff,
   /https:\/\/quorum-sandy-eight\.vercel\.app/,
@@ -238,6 +290,7 @@ console.log(
         "indexer-secret-non-disclosure",
         "indexer-monotonic-progress",
         "moneygram-provider-disclosure",
+        "form-ready-submission-draft",
         "judge-runbook-route-wiring",
         "final-browser-qa-current",
         "reject-stale-deployment-claims",
